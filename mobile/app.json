@@ -41,7 +41,8 @@
         {
           "photosPermission": "Allow Family Guy to access your photos."
         }
-      ]
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true

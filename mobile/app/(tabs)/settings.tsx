@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Switch, Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
@@ -8,7 +8,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { HeaderGradient } from '@/components/ui/HeaderGradient';
-import { registerPushToken } from '@/lib/notifications';
+import { registerPushToken, hasPushPermission } from '@/lib/notifications';
 import { colors, spacing, typography } from '@/constants/theme';
 
 export default function SettingsTab() {
@@ -17,14 +17,19 @@ export default function SettingsTab() {
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
 
+  useEffect(() => {
+    hasPushPermission().then(setNotifEnabled).catch(() => {});
+  }, []);
+
   async function toggleNotifications(val: boolean) {
     if (!val) { setNotifEnabled(false); return; }
     setNotifLoading(true);
     try {
-      await registerPushToken();
-      setNotifEnabled(true);
+      const granted = await registerPushToken();
+      setNotifEnabled(granted);
+      if (!granted) Alert.alert('Permission denied', 'Enable notifications in your device Settings.');
     } catch {
-      Alert.alert('Permission denied', 'Enable notifications in Settings.');
+      Alert.alert('Notifications unavailable', 'Could not register for push notifications.');
     } finally {
       setNotifLoading(false);
     }
