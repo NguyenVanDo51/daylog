@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
 import { Button } from '@/components/ui/Button';
+import { registerPushToken } from '@/lib/notifications';
 
 const TOKEN_KEY = 'auth_token';
 
@@ -38,6 +39,7 @@ export default function SignInScreen() {
   async function finishAuth(token: string, user: any) {
     await SecureStore.setItemAsync(TOKEN_KEY, token);
     setAuth(token, user);
+    registerPushToken().catch(() => {});
     try {
       const { data: albums } = await api.get('/albums', { headers: { Authorization: `Bearer ${token}` } });
       if (albums[0]) setAlbum(albums[0]);
