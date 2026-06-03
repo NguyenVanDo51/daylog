@@ -8,10 +8,16 @@ router.use(requireAuth);
 router.get('/', async (req, res, next) => {
   try {
     const { id: albumId } = req.params;
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
-    const cursor = req.query.cursor
-      ? JSON.parse(Buffer.from(req.query.cursor, 'base64').toString())
-      : null;
+    const raw = Number(req.query.limit);
+    const limit = Math.min(!isNaN(raw) && raw > 0 ? Math.floor(raw) : 20, 100);
+    let cursor = null;
+    if (req.query.cursor) {
+      try {
+        cursor = JSON.parse(Buffer.from(req.query.cursor, 'base64').toString());
+      } catch {
+        return res.status(400).json({ error: 'Invalid cursor' });
+      }
+    }
 
     const { rows: membership } = await pool.query(
       'SELECT 1 FROM album_members WHERE album_id = $1 AND user_id = $2',
