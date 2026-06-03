@@ -6,10 +6,15 @@ const { verifyAppleToken } = require('../services/appleAuth');
 const { verifyGoogleToken } = require('../services/googleAuth');
 
 function signJwt(userId) {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'test-secret', { expiresIn: '30d' });
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET env var is required');
+  return jwt.sign({ userId }, secret, { expiresIn: '30d' });
 }
 
 async function upsertUser({ column, sub, displayName, avatarUrl, apnsToken }) {
+  const ALLOWED_COLUMNS = new Set(['apple_sub', 'google_sub']);
+  if (!ALLOWED_COLUMNS.has(column)) throw new Error(`Invalid provider column: ${column}`);
+
   const { rows } = await pool.query(
     `INSERT INTO users (${column}, display_name, avatar_url, apns_token)
      VALUES ($1, $2, $3, $4)

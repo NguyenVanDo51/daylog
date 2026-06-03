@@ -8,7 +8,9 @@ async function requireAuth(req, res, next) {
   }
   const token = header.slice(7);
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'test-secret');
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return res.status(500).json({ error: 'Server misconfigured' });
+    const payload = jwt.verify(token, secret);
     const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [payload.userId]);
     if (!rows[0]) return res.status(401).json({ error: 'Unauthorized' });
     req.user = rows[0];
