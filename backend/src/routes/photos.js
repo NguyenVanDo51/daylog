@@ -33,12 +33,14 @@ router.post('/', async (req, res, next) => {
   try {
     const { album_id, r2_key, taken_at, caption, local_asset_id } = req.body;
     if (!album_id || !r2_key || !taken_at) return res.status(400).json({ error: 'album_id, r2_key, taken_at required' });
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(album_id)) return res.status(400).json({ error: 'album_id must be a valid UUID' });
     if (!(await requireMember(album_id, req.user.id))) return res.status(403).json({ error: 'Forbidden' });
 
     if (local_asset_id) {
       const { rows: existing } = await pool.query(
-        'SELECT * FROM photos WHERE album_id = $1 AND local_asset_id = $2',
-        [album_id, local_asset_id]
+        'SELECT * FROM photos WHERE album_id = $1 AND local_asset_id = $2 AND uploaded_by = $3',
+        [album_id, local_asset_id, req.user.id]
       );
       if (existing[0]) return res.status(200).json(existing[0]);
     }
