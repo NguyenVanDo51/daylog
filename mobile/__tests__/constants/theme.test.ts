@@ -2,10 +2,10 @@ import { colors, spacing, radii, shadows, typography } from '@/constants/theme';
 
 describe('theme tokens', () => {
   it('exports all color tokens', () => {
-    expect(colors.primary).toBe('#7C5CBF');
-    expect(colors.background).toBe('#F8F4FF');
-    expect(colors.surface).toBe('#F0EBFF');
-    expect(colors.textPrimary).toBe('#2D1F4E');
+    expect(colors.pink).toBe('#FF7AA8');
+    expect(colors.cream).toBe('#FFFBF0');
+    expect(colors.ink).toBe('#3D2A1F');
+    expect(colors.inkSoft).toBe('#7B5544');
   });
 
   it('exports spacing scale', () => {
@@ -21,12 +21,12 @@ describe('theme tokens', () => {
   });
 
   it('exports shadows', () => {
-    expect(shadows.card.shadowColor).toBe('#7C5CBF');
-    expect(shadows.fab.shadowColor).toBe('#A78BF0');
+    expect(shadows.card.shadowColor).toBe('#3D2A1F');
+    expect(shadows.fab.shadowColor).toBe('#FF7AA8');
   });
 
   it('exports typography', () => {
     expect(typography.heading.fontSize).toBe(22);
-    expect(typography.heading.fontWeight).toBe('800');
+    expect(typography.heading.fontFamily).toBe('Fredoka_600SemiBold');
   });
 });

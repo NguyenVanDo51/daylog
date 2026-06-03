@@ -1,88 +1,58 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
-import { Image } from 'expo-image';
-import { useLocalSearchParams, router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, useWindowDimensions, StatusBar } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTimeline, TimelinePhoto, TimelineItem } from '@/hooks/useTimeline';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { BlurView } from 'expo-blur';
+import { useTimeline } from '@/hooks/useTimeline';
 import { colors, spacing, typography } from '@/constants/theme';
+import { useSharedTransition } from '@/lib/sharedElement';
+import { t } from '@/lib/i18n';
+import { formatVnDate } from '@/lib/format';
 
-const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-const isPhoto = (i: TimelineItem): i is TimelinePhoto => i.type === 'photo';
+export default function PhotoViewer() {
+  const params = useLocalSearchParams<{ id: string; srcX?: string; srcY?: string; srcW?: string; srcH?: string }>();
+  const { data } = useTimeline();
+  const photos = (data?.pages.flatMap((p) => p.items) ?? []).filter((i: any) => i.type === 'photo');
+  const idx    = photos.findIndex((p: any) => p.id === params.id);
+  const photo  = photos[idx];
+  const { width, height } = useWindowDimensions();
 
-export default function PhotoViewerScreen() {
-  const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, isLoading } = useTimeline();
+  const source = (params.srcX && params.srcY && params.srcW && params.srcH) ? {
+    x: Number(params.srcX), y: Number(params.srcY), width: Number(params.srcW), height: Number(params.srcH),
+  } : null;
+  const style = useSharedTransition(source, width, height, true);
 
-  const photos: TimelinePhoto[] = data?.pages.flatMap((p) => p.items).filter(isPhoto) ?? [];
-  const initialIndex = photos.findIndex((p) => p.id === id);
-  const [currentIndex, setCurrentIndex] = useState(Math.max(initialIndex, 0));
-
-  const current = photos[currentIndex];
-  const closeBtn = (
-    <TouchableOpacity style={[styles.close, { top: insets.top + spacing.sm }]} onPress={() => router.back()}>
-      <Ionicons name="close" size={28} color={colors.white} />
-    </TouchableOpacity>
-  );
-
-  if (isLoading || photos.length === 0) {
-    return (
-      <View style={styles.container}>
-        {closeBtn}
-        <View style={styles.center}>
-          {isLoading ? <LoadingSpinner /> : <Text style={styles.empty}>Photo not found</Text>}
-        </View>
-      </View>
-    );
-  }
+  if (!photo) return null;
+  const taken = (photo as any).taken_at as string;
+  const counter = t('photo.counter', { i: idx + 1, n: photos.length });
 
   return (
     <View style={styles.container}>
-      {closeBtn}
+      <StatusBar hidden />
+      <Animated.Image source={{ uri: `${API_URL}/photos/${photo.id}/full` }} style={[style]} resizeMode="contain" />
 
-      <FlatList
-        data={photos}
-        horizontal
-        pagingEnabled
-        initialScrollIndex={Math.max(initialIndex, 0)}
-        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
-        keyExtractor={(p) => p.id}
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-          setCurrentIndex(idx);
-        }}
-        renderItem={({ item }) => (
-          <View style={styles.page}>
-            <Image
-              source={{ uri: `${API_URL}/photos/${item.id}/full` }}
-              style={styles.photo}
-              contentFit="contain"
-            />
-          </View>
-        )}
-      />
+      <BlurView intensity={30} tint="dark" style={styles.topBar}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+          <Ionicons name="close" size={22} color={colors.white} />
+        </TouchableOpacity>
+        <Text style={styles.meta}>{counter} · {formatVnDate(new Date(taken))}</Text>
+        <View style={styles.iconBtn} />
+      </BlurView>
 
-      {current?.caption && (
-        <View style={styles.captionBar}>
-          <Text style={styles.caption}>{current.caption}</Text>
-        </View>
+      {(photo as any).caption && (
+        <Text style={styles.caption}>{(photo as any).caption}</Text>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: colors.black },
-  close:      { position: 'absolute', left: spacing['2xl'], zIndex: 10 },
-  center:     { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty:      { ...typography.body, color: colors.white },
-  page:       { width, justifyContent: 'center', alignItems: 'center' },
-  photo:      { width, height: '100%' },
-  captionBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.lg },
-  caption:    { ...typography.body, color: colors.white },
+  container: { flex: 1, backgroundColor: '#1A1A1A' },
+  topBar:    { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 50, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  meta:      { ...typography.bodySmall, color: colors.white },
+  iconBtn:   { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  caption:   { ...typography.handAccent, color: colors.white, fontSize: 18, position: 'absolute', bottom: 60, left: spacing.lg, right: spacing.lg, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 6 },
 });

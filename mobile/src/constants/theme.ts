@@ -1,19 +1,29 @@
 export const colors = {
-  primary:       '#7C5CBF',
-  primaryLight:  '#A78BF0',
-  primaryPastel: '#C9B8F5',
-  surface:       '#F0EBFF',
-  background:    '#F8F4FF',
-  border:        '#E0D4FF',
-  textPrimary:   '#2D1F4E',
-  textSecondary: '#7A6AAA',
-  textMuted:     '#B0A0CC',
-  white:         '#FFFFFF',
-  gradientStart: '#7C5CBF',
-  gradientEnd:   '#A78BF0',
-  error:         '#E53E3E',
-  success:       '#38A169',
-  black:         '#000000',
+  // Base
+  cream:        '#FFFBF0',
+  ink:          '#3D2A1F',
+  inkSoft:      '#7B5544',
+  inkMuted:     '#B5A89C',
+
+  // 5 sticker accents
+  pink:         '#FF7AA8',
+  pinkDeep:     '#E55B8C',
+  yellow:       '#FFD66B',
+  mint:         '#7FD7B5',
+  peach:        '#FF8E66',
+  sky:          '#7FB7FA',
+
+  // Surface
+  white:        '#FFFFFF',
+  border:       '#3D2A1F',   // ink, used for sticker borders at 1.5-2px
+  borderSoft:   '#F0E6D6',   // hairline divider, used in Quiet tier
+
+  // Functional aliases
+  background:   '#FFFBF0',  // cream — sheet / screen background
+  textPrimary:  '#3D2A1F',  // ink — primary text colour
+  error:        '#E55B8C',
+  success:      '#7FD7B5',
+  black:        '#000000',
 } as const;
 
 export const spacing = {
@@ -33,32 +43,44 @@ export const radii = {
   md:   18,
   lg:   28,
   full: 9999,
+  sticker:    [36, 12, 36, 12] as const,
+  stickerAlt: [12, 36, 12, 36] as const,
 } as const;
 
 export const shadows = {
   card: {
-    shadowColor:   '#7C5CBF',
-    shadowOpacity: 0.10,
-    shadowRadius:  12,
+    shadowColor:   '#3D2A1F',
+    shadowOpacity: 0.08,
+    shadowRadius:  10,
     shadowOffset:  { width: 0, height: 2 },
-    elevation:     3,
+    elevation:     2,
+  },
+  sticker: {
+    shadowColor:   '#3D2A1F',
+    shadowOpacity: 1,
+    shadowRadius:  0,
+    shadowOffset:  { width: 3, height: 3 },
+    elevation:     4,
   },
   fab: {
-    shadowColor:   '#A78BF0',
+    shadowColor:   '#FF7AA8',
     shadowOpacity: 0.45,
-    shadowRadius:  16,
-    shadowOffset:  { width: 0, height: 4 },
+    shadowRadius:  14,
+    shadowOffset:  { width: 0, height: 6 },
     elevation:     8,
   },
 } as const;
 
 export const typography = {
-  heading:    { fontSize: 22, fontWeight: '800' as const, color: colors.textPrimary },
-  title:      { fontSize: 18, fontWeight: '700' as const, color: colors.textPrimary },
-  subheading: { fontSize: 14, fontWeight: '600' as const, color: colors.textPrimary },
-  body:       { fontSize: 13, fontWeight: '400' as const, color: colors.textSecondary },
-  label:      { fontSize: 10, fontWeight: '700' as const, letterSpacing: 0.8 },
-  caption:    { fontSize: 9,  fontWeight: '500' as const, color: colors.textMuted },
+  display:     { fontFamily: 'Fredoka_700Bold',     fontSize: 28, color: colors.ink },
+  heading:     { fontFamily: 'Fredoka_600SemiBold', fontSize: 22, color: colors.ink },
+  title:       { fontFamily: 'Fredoka_600SemiBold', fontSize: 18, color: colors.ink },
+  body:        { fontFamily: 'Fredoka_500Medium',   fontSize: 14, color: colors.ink },
+  bodySmall:   { fontFamily: 'Fredoka_500Medium',   fontSize: 12, color: colors.inkSoft },
+  pill:        { fontFamily: 'Fredoka_600SemiBold', fontSize: 11, color: colors.ink, letterSpacing: 0.3 },
+  caption:     { fontFamily: 'Fredoka_500Medium',   fontSize: 10, color: colors.inkMuted },
+  handAccent:  { fontFamily: 'Caveat_600SemiBold',  fontSize: 18, color: colors.pink },
+  handLarge:   { fontFamily: 'Caveat_700Bold',      fontSize: 28, color: colors.pink },
 } as const;
 
 export type ColorKey = keyof typeof colors;

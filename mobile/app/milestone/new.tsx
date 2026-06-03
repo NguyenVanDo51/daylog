@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useCreateMilestone } from '@/hooks/useMilestones';
 import { TextInput } from '@/components/ui/TextInput';
 import { Button } from '@/components/ui/Button';
 import { colors, spacing, typography } from '@/constants/theme';
+import { t } from '@/lib/i18n';
 
 export default function NewMilestoneScreen() {
   const [title, setTitle] = useState('');
@@ -13,41 +14,38 @@ export default function NewMilestoneScreen() {
   const { mutateAsync, isPending } = useCreateMilestone();
 
   async function handleSave() {
-    if (!title.trim()) { Alert.alert('Title required'); return; }
+    if (!title.trim()) { Alert.alert(t('milestone.name_ph')); return; }
     await mutateAsync({ title: title.trim(), note: note.trim() || undefined, occurred_at: date });
     router.back();
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.heading}>New Moment 🌟</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.cancel}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView contentContainerStyle={styles.form}>
-        <TextInput label="Title *" placeholder="e.g. First Steps!" value={title} onChangeText={setTitle} />
-        <TextInput label="Date" placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} />
-        <TextInput
-          label="Note"
-          placeholder="Tell the story..."
-          value={note}
-          onChangeText={setNote}
-          multiline
-          numberOfLines={4}
-          style={{ height: 100, textAlignVertical: 'top' }}
-        />
-        <Button label="Save Moment" onPress={handleSave} fullWidth loading={isPending} />
-      </ScrollView>
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.handle} />
+      <Text style={styles.eyebrow}>{t('milestone.new_eyebrow')}</Text>
+      <Text style={styles.heading}>{t('milestone.new_title')}</Text>
+
+      <TextInput placeholder={t('milestone.name_ph')} value={title} onChangeText={setTitle} />
+      <TextInput placeholder="YYYY-MM-DD" value={date} onChangeText={setDate} />
+      <TextInput
+        placeholder={t('milestone.note_ph')}
+        value={note}
+        onChangeText={setNote}
+        multiline
+        numberOfLines={4}
+        caveatPlaceholder
+        style={{ height: 100, textAlignVertical: 'top' }}
+      />
+
+      <Button label={t('milestone.save')} onPress={handleSave} fullWidth loading={isPending} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing['2xl'], paddingTop: spacing['4xl'] },
-  heading:   { ...typography.title, color: colors.textPrimary },
-  cancel:    { ...typography.subheading, color: colors.primary },
-  form:      { padding: spacing['2xl'], gap: spacing.md },
+  container: { flex: 1, backgroundColor: colors.cream },
+  content:   { padding: spacing['2xl'], gap: spacing.sm },
+  handle:    { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: colors.inkMuted, marginBottom: spacing.md },
+  eyebrow:   { ...typography.handAccent, color: colors.pink },
+  heading:   { ...typography.heading, color: colors.ink, marginBottom: spacing.md },
 });

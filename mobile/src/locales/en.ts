@@ -1,0 +1,16 @@
+export const en = {
+  tabs:    { home: 'Home', moments: 'Moments', family: 'Family', me: 'Me' },
+  greeting:{ morning: 'Good morning', noon: 'Good afternoon', afternoon: 'Good afternoon', evening: 'Good evening', night: 'Good night' },
+  home:    { album_default: "Baby's Album", badge_age: '{{months}} months', badge_members: '{{count}} family', badge_photos: '{{count}} photos', empty_message: 'No photos yet — add your first memory!' },
+  moments: { title: 'Moments 🌟', eyebrow: '~ moments to remember ~', empty_message: 'No milestones yet — record your first one ✦' },
+  family:  { title: 'Family 👨‍👩‍👧', invite_title: 'Invite family', copy_link: 'Copy invite link', scan_qr: 'Scan QR code', role_admin: 'Admin', role_member: 'Member', joined_on: 'joined on {{date}}' },
+  settings:{ title: 'Settings', push_label: 'Push notifications', signout: 'Sign out', version: 'Version {{v}}' },
+  signin:  { tagline: 'capture every tiny moment', apple: 'Sign in with Apple', google: 'Sign in with Google', privacy: 'By signing in, you agree to our Privacy Policy.', failed: 'Sign in failed' },
+  upload:  { title: 'New photos', eyebrow: '~ add photos ~', caption_ph: 'short note for the photo...', uploading: 'uploading {{done}}/{{total}}...', compressing: 'compressing...', cta: 'Upload {{n}} photos', cta_one: 'Upload 1 photo', cancel: 'Cancel' },
+  milestone:{ new_title: 'New milestone', new_eyebrow: '~ add a milestone ~', name_ph: 'Milestone name', note_ph: 'short note... (optional)', save: 'Save milestone ✦', pick_cover: 'Pick cover photo' },
+  invite:  { sheet_eyebrow: '~ invite someone ~', link_label: 'invite link', expires: 'Expires in 7 days', copied: 'Copied!', copied_body: 'Invite link copied to clipboard.' },
+  qr:      { sheet_title: 'scan this code ✦', valid_for: 'Valid for 5 minutes', perm_title: 'Camera permission', perm_body: 'Camera is needed to scan QR codes.', perm_grant: 'Grant permission', joined_title: 'Joined!', joined_body: 'You joined the album.' },
+  join:    { invited_msg: "You're invited to join ~", members_info: '{{members}} members · {{photos}} photos', cta: 'Join album' },
+  photo:   { counter: '{{i}} / {{n}}', close: 'Close' },
+  common:  { cancel: 'Cancel', done: 'Done', error: 'Something went wrong' },
+};

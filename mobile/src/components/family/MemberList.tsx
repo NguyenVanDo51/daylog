@@ -3,7 +3,9 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import type { Member } from '@/hooks/useMembers';
-import { colors, spacing, typography } from '@/constants/theme';
+import { colors, radii, shadows, spacing, typography } from '@/constants/theme';
+import { t } from '@/lib/i18n';
+import { formatVnDate, formatVnMonth } from '@/lib/format';
 
 export function MemberList({ members }: { members: Member[] }) {
   return (
@@ -13,12 +15,17 @@ export function MemberList({ members }: { members: Member[] }) {
       scrollEnabled={false}
       renderItem={({ item }) => (
         <View style={styles.row}>
-          <Avatar uri={item.avatar_url} name={item.display_name} size={40} />
+          <Avatar uri={item.avatar_url} name={item.display_name} size={40} ring shadow />
           <View style={styles.info}>
             <Text style={styles.name}>{item.display_name}</Text>
-            <Text style={styles.joined}>Joined {new Date(item.joined_at).toLocaleDateString()}</Text>
+            <Text style={styles.joined}>
+              {t('family.joined_on', { date: `${formatVnDate(new Date(item.joined_at))} ${formatVnMonth(new Date(item.joined_at))}` })}
+            </Text>
           </View>
-          <Badge label={item.role} variant={item.role === 'admin' ? 'primary' : 'surface'} />
+          <Badge
+            label={item.role === 'admin' ? t('family.role_admin') : t('family.role_member')}
+            color={item.role === 'admin' ? 'yellow' : 'mint'}
+          />
         </View>
       )}
     />
@@ -26,8 +33,13 @@ export function MemberList({ members }: { members: Member[] }) {
 }
 
 const styles = StyleSheet.create({
-  row:    { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
+  row: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.md,
+    marginVertical: spacing.xs, gap: spacing.md,
+    backgroundColor: colors.white, borderRadius: radii.md,
+    borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.ink, ...shadows.sticker,
+  },
   info:   { flex: 1 },
-  name:   { ...typography.subheading, color: colors.textPrimary },
-  joined: { ...typography.caption, color: colors.textMuted },
+  name:   { ...typography.title, color: colors.ink },
+  joined: { fontFamily: 'Caveat_500Medium', fontSize: 14, color: colors.inkMuted },
 });

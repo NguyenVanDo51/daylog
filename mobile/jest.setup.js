@@ -145,6 +145,11 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
   GoogleSigninButton: 'GoogleSigninButton',
 }));
 
+// expo-localization — used by src/lib/i18n.ts.
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'vi', languageTag: 'vi', regionCode: 'VN' }],
+}));
+
 // react-native-reanimated — transitive dep via expo-router/gesture-handler.
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 
@@ -156,5 +161,11 @@ jest.mock('react-native-safe-area-context', () => {
     SafeAreaView: ({ children }) => children,
     useSafeAreaInsets: () => inset,
     useSafeAreaFrame: () => ({ x: 0, y: 0, width: 390, height: 844 }),
+    initialWindowMetrics: { insets: inset, frame: { x: 0, y: 0, width: 0, height: 0 } },
   };
 });
+
+// @lodev09/react-native-true-sheet — native sheet component used by SheetModal and UploadSheet.
+jest.mock('@lodev09/react-native-true-sheet', () => ({
+  TrueSheet: 'TrueSheet',
+}));
