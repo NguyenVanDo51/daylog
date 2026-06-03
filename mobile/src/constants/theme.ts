@@ -19,6 +19,7 @@ export const colors = {
   borderSoft:   '#F0E6D6',   // hairline divider, used in Quiet tier
 
   // Functional aliases
+  background:   '#FFFBF0',  // cream — sheet / screen background
   error:        '#E55B8C',
   success:      '#7FD7B5',
   black:        '#000000',
