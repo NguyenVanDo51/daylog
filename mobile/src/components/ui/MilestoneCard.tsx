@@ -1,24 +1,25 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radii, spacing, typography } from '@/constants/theme';
+import { colors, radii, shadows, spacing, typography } from '@/constants/theme';
+import { formatVnDate, formatVnMonth } from '@/lib/format';
+
+const ACCENTS = [colors.pink, colors.yellow, colors.mint, colors.peach, colors.sky] as const;
 
 interface MilestoneCardProps {
   title: string;
   note?: string | null;
   occurredAt: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  index?: number;
   onPress?: () => void;
 }
 
-export function MilestoneCard({ title, note, occurredAt, icon = 'star', onPress }: MilestoneCardProps) {
-  const date = new Date(occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+export function MilestoneCard({ title, note, occurredAt, index = 0, onPress }: MilestoneCardProps) {
+  const d = new Date(occurredAt);
+  const date = `${formatVnDate(d)} · ${formatVnMonth(d)} ${d.getFullYear()}`;
+  const accent = ACCENTS[index % ACCENTS.length];
   return (
     <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.85}>
-      <View style={styles.accent} />
-      <View style={styles.iconWrap}>
-        <Ionicons name={icon} size={18} color={colors.pink} />
-      </View>
+      <View style={[styles.accent, { backgroundColor: accent }]} />
       <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
         {note && <Text style={styles.note} numberOfLines={2}>{note}</Text>}
@@ -29,11 +30,20 @@ export function MilestoneCard({ title, note, occurredAt, icon = 'star', onPress 
 }
 
 const styles = StyleSheet.create({
-  card:    { flexDirection: 'row', backgroundColor: colors.white, borderRadius: radii.sm, marginVertical: spacing.xs, overflow: 'hidden' },
-  accent:  { width: 3, backgroundColor: colors.pink },
-  iconWrap:{ padding: spacing.md, alignItems: 'center', justifyContent: 'center' },
-  content: { flex: 1, padding: spacing.md, paddingLeft: spacing.xs },
-  title:   { ...typography.body, color: colors.ink, marginBottom: 2 },
-  note:    { ...typography.bodySmall, color: colors.inkSoft, marginBottom: 2 },
-  date:    { ...typography.caption },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: radii.md,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.ink,
+    marginVertical: spacing.sm,
+    overflow: 'hidden',
+    ...shadows.sticker,
+  },
+  accent:  { width: 6 },
+  content: { flex: 1, padding: spacing.lg, gap: 4 },
+  title:   { ...typography.title, color: colors.ink },
+  note:    { fontFamily: 'Caveat_500Medium', fontSize: 16, color: colors.inkSoft },
+  date:    { fontFamily: 'Caveat_500Medium', fontSize: 14, color: colors.inkMuted },
 });
