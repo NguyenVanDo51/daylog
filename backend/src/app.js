@@ -9,6 +9,7 @@ app.use('/photos', require('./routes/photos'));
 app.use('/', require('./routes/milestones'));
 app.use('/', require('./routes/invites'));
 app.use('/albums/:id/timeline', require('./routes/timeline'));
+app.use('/albums/:id/members', require('./routes/members'));
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;
