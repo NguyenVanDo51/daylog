@@ -5,3 +5,7 @@ jest.mock('react-native-reanimated', () => ({
     cubic: (t) => t,
   },
 }));
+
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'vi', languageTag: 'vi', regionCode: 'VN' }],
+}));
