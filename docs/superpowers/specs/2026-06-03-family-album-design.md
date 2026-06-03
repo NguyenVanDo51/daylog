@@ -37,13 +37,15 @@ A shared family photo album mobile app where parents and family members can save
 
 Single Express.js API (monolith) handling all business logic. Photos upload directly from the app to Cloudflare R2 via presigned URLs — the API never handles large binary data. PostgreSQL stores all metadata.
 
-### Upload Flow
+### Upload Flow (manual and auto-sync)
 
 1. App requests a presigned upload URL from the API
 2. App uploads photo directly to Cloudflare R2
-3. App notifies the API with photo metadata (R2 key, taken_at from EXIF, caption)
+3. App notifies the API with photo metadata (R2 key, taken_at from EXIF, caption, local_asset_id)
 4. API generates thumbnail, stores metadata in PostgreSQL
 5. API sends APNs push notification to all album members
+
+Auto-sync follows the same flow, triggered by `PHPhotoLibrary` change observer instead of user action. The `local_asset_id` field ensures idempotency — re-syncing the same asset is a no-op.
 
 ### Component Responsibilities
 
@@ -69,6 +71,7 @@ users
 albums
   id UUID PK
   name VARCHAR
+  child_birthdate DATE             -- used for age-based timeline labels
   cover_photo_id UUID → photos
   created_by UUID → users
   created_at TIMESTAMPTZ
@@ -88,6 +91,7 @@ photos
   thumbnail_key TEXT
   taken_at TIMESTAMPTZ        -- from EXIF, not upload time
   caption TEXT
+  local_asset_id VARCHAR       -- iOS PHAsset localIdentifier, prevents duplicate auto-sync
   created_at TIMESTAMPTZ
 
 milestones
@@ -133,7 +137,7 @@ invites
 ### 3. Timeline
 - Chronological feed of photos + milestones merged by date
 - Infinite scroll with cursor-based pagination
-- Date group headers (month + year)
+- Date group headers show **baby's age** ("2 months old", "8 months old") derived from `albums.child_birthdate` + `taken_at`, with month/year as secondary label
 - Tap photo to view full-resolution
 - Milestone cards appear inline at correct date position
 
@@ -150,7 +154,16 @@ invites
 - Join album by tapping link or scanning QR code
 - View list of album members
 
-### 6. Push Notifications
+### 6. Auto-Sync
+- On first setup, user grants Photos library access
+- App registers a `PHPhotoLibrary` change observer (iOS native)
+- When new photos are added to the device camera roll, app detects them in the background and uploads automatically to the family album
+- `photos.local_asset_id` (iOS `PHAsset.localIdentifier`) is stored to prevent duplicate uploads on re-sync
+- User can toggle auto-sync on/off in settings
+- Sync runs when the app is backgrounded; respects iOS background app refresh limits
+- Failed uploads are queued and retried on next foreground or background refresh
+
+### 7. Push Notifications
 - Push to all members when a new photo is added
 - Push to all members when a milestone is created
 
@@ -182,3 +195,4 @@ Apple's App Store guidelines require Sign in with Apple whenever any third-party
 - R2 presigned URL expiry → client retries with a fresh URL
 - Failed photo registration (after R2 upload) → client shows retry option, orphaned R2 objects cleaned up by a nightly job
 - Invite token expired or max uses reached → API returns 410 Gone, app shows "this invite has expired" message
+- Auto-sync upload failure → queued locally, retried on next foreground launch or background refresh; user sees a subtle badge on the upload indicator
