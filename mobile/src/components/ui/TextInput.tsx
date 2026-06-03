@@ -4,15 +4,21 @@ import { colors, radii, spacing, typography } from '@/constants/theme';
 
 interface LabeledTextInputProps extends TextInputProps {
   label?: string;
+  caveatPlaceholder?: boolean;
 }
 
-export function TextInput({ label, style, ...props }: LabeledTextInputProps) {
+export function TextInput({ label, style, caveatPlaceholder, ...props }: LabeledTextInputProps) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.wrapper}>
       {label && <Text style={styles.label}>{label}</Text>}
       <RNTextInput
-        style={[styles.input, focused && styles.focused, style]}
+        style={[
+          styles.input,
+          caveatPlaceholder && !props.value ? styles.caveatStyle : null,
+          focused && styles.focused,
+          style,
+        ]}
         placeholderTextColor={colors.inkMuted}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -27,13 +33,15 @@ const styles = StyleSheet.create({
   label:   { ...typography.body, marginBottom: spacing.xs, color: colors.inkSoft },
   input: {
     backgroundColor: colors.white,
-    borderRadius: radii.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    borderRadius: radii.md,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colors.ink,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    ...typography.bodySmall,
+    ...typography.body,
     color: colors.ink,
   },
-  focused: { borderColor: colors.pink },
+  focused:     { borderColor: colors.pink, borderStyle: 'solid' },
+  caveatStyle: { fontFamily: 'Caveat_500Medium', fontSize: 16 },
 });

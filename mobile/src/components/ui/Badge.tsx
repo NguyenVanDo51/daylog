@@ -1,23 +1,38 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, radii, spacing } from '@/constants/theme';
+import { colors, radii, spacing, typography } from '@/constants/theme';
+
+type AccentColor = 'pink' | 'yellow' | 'mint' | 'peach' | 'sky';
 
 interface BadgeProps {
   label: string;
-  variant?: 'primary' | 'surface';
+  color?: AccentColor;
 }
 
-export function Badge({ label, variant = 'primary' }: BadgeProps) {
+const accent: Record<AccentColor, string> = {
+  pink:   colors.pink,
+  yellow: colors.yellow,
+  mint:   colors.mint,
+  peach:  colors.peach,
+  sky:    colors.sky,
+};
+
+export function Badge({ label, color = 'pink' }: BadgeProps) {
   return (
-    <View style={[styles.base, variant === 'surface' && styles.surface]}>
-      <Text style={[styles.text, variant === 'surface' && styles.surfaceText]}>{label}</Text>
+    <View style={[styles.base, { backgroundColor: accent[color] }]}>
+      <Text style={styles.text}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  base:        { backgroundColor: colors.pink, borderRadius: radii.full, paddingHorizontal: spacing.md, paddingVertical: 3 },
-  surface:     { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
-  text:        { fontSize: 10, fontWeight: '700', color: colors.white, letterSpacing: 0.3 },
-  surfaceText: { color: colors.inkSoft },
+  base: {
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.ink,
+  },
+  text: { ...typography.pill, color: colors.ink },
 });
