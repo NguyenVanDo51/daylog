@@ -6,7 +6,7 @@ const { generateQRCode } = require('../services/qrcode');
 const { randomBytes } = require('crypto');
 
 function generateToken() {
-  return randomBytes(6).toString('base64url');
+  return randomBytes(16).toString('base64url');
 }
 
 router.post('/albums/:albumId/invites', requireAuth, async (req, res, next) => {
@@ -27,7 +27,7 @@ router.post('/albums/:albumId/invites', requireAuth, async (req, res, next) => {
 
     await pool.query(
       `INSERT INTO invites (album_id, token, created_by, expires_at, max_uses) VALUES ($1, $2, $3, $4, $5)`,
-      [albumId, token, req.user.id, expiresAt, max_uses || null]
+      [albumId, token, req.user.id, expiresAt, max_uses ?? null]
     );
 
     const deepLink = `familyguy://join/${token}`;
@@ -62,12 +62,24 @@ router.post('/invites/:token/join', requireAuth, async (req, res, next) => {
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) return res.status(410).json({ error: 'Invite expired' });
     if (invite.max_uses && invite.use_count >= invite.max_uses) return res.status(410).json({ error: 'Invite limit reached' });
 
-    await pool.query(
-      `INSERT INTO album_members (album_id, user_id, role) VALUES ($1, $2, 'member')
-       ON CONFLICT (album_id, user_id) DO NOTHING`,
-      [invite.album_id, req.user.id]
-    );
-    await pool.query('UPDATE invites SET use_count = use_count + 1 WHERE id = $1', [invite.id]);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rowCount } = await client.query(
+        `INSERT INTO album_members (album_id, user_id, role) VALUES ($1, $2, 'member')
+         ON CONFLICT (album_id, user_id) DO NOTHING`,
+        [invite.album_id, req.user.id]
+      );
+      if (rowCount > 0) {
+        await client.query('UPDATE invites SET use_count = use_count + 1 WHERE id = $1', [invite.id]);
+      }
+      await client.query('COMMIT');
+    } catch (txErr) {
+      await client.query('ROLLBACK');
+      throw txErr;
+    } finally {
+      client.release();
+    }
 
     res.json({ album_id: invite.album_id });
   } catch (err) { next(err); }
