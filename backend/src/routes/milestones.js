@@ -4,9 +4,7 @@ const { requireAuth } = require('../middleware/auth');
 const { pool } = require('../db/client');
 const { sendPush } = require('../services/apns');
 
-router.use(requireAuth);
-
-router.post('/albums/:albumId/milestones', async (req, res, next) => {
+router.post('/albums/:albumId/milestones', requireAuth, async (req, res, next) => {
   try {
     const { albumId } = req.params;
     const { title, note, occurred_at, cover_photo_id } = req.body;
@@ -38,7 +36,7 @@ router.post('/albums/:albumId/milestones', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get('/albums/:albumId/milestones', async (req, res, next) => {
+router.get('/albums/:albumId/milestones', requireAuth, async (req, res, next) => {
   try {
     const { rows: membership } = await pool.query(
       'SELECT 1 FROM album_members WHERE album_id = $1 AND user_id = $2',
@@ -54,7 +52,7 @@ router.get('/albums/:albumId/milestones', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.patch('/milestones/:id', async (req, res, next) => {
+router.patch('/milestones/:id', requireAuth, async (req, res, next) => {
   try {
     const { rows: existing } = await pool.query(
       `SELECT m.* FROM milestones m
@@ -85,7 +83,7 @@ router.patch('/milestones/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/milestones/:id', async (req, res, next) => {
+router.delete('/milestones/:id', requireAuth, async (req, res, next) => {
   try {
     const { rows: existing } = await pool.query(
       `SELECT m.* FROM milestones m

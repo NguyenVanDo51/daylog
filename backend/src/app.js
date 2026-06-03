@@ -7,7 +7,7 @@ app.use('/auth', require('./routes/auth'));
 app.use('/albums', require('./routes/albums'));
 app.use('/photos', require('./routes/photos'));
 app.use('/', require('./routes/milestones'));
-app.use('/invites', require('./routes/invites'));
+app.use('/', require('./routes/invites'));
 app.use('/albums/:id/timeline', require('./routes/timeline'));
 
 app.use((err, req, res, next) => {
