@@ -6,7 +6,7 @@ app.use(express.json());
 app.use('/auth', require('./routes/auth'));
 app.use('/albums', require('./routes/albums'));
 app.use('/photos', require('./routes/photos'));
-app.use('/milestones', require('./routes/milestones'));
+app.use('/', require('./routes/milestones'));
 app.use('/invites', require('./routes/invites'));
 app.use('/albums/:id/timeline', require('./routes/timeline'));
 
