@@ -25,18 +25,20 @@ export default function RootLayout() {
           });
           setAuth(stored, data);
           registerPushToken().catch(() => {});
-          router.replace('/(tabs)');
         } catch {
           await SecureStore.deleteItemAsync(TOKEN_KEY);
           clearAuth();
-          router.replace('/(auth)');
         }
-      } else {
-        router.replace('/(auth)');
       }
       setReady(true);
     })();
   }, []);
+
+  // Navigate only after the Stack is mounted (ready=true triggers re-render first)
+  useEffect(() => {
+    if (!ready) return;
+    router.replace(token ? '/(tabs)' : '/(auth)');
+  }, [ready]);
 
   if (!ready) return null;
 

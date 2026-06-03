@@ -1,8 +1,20 @@
 module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['./tests/setup.js'],
+  setupFilesAfterEnv: ['./tests/setup.ts'],
   testTimeout: 15000,
-  transformIgnorePatterns: [
-    '/node_modules/(?!(uuid)/)',
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
+  },
+  transformIgnorePatterns: ['/node_modules/(?!(uuid)/)'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/index.ts',
+    '!src/db/schema.ts',
+    '!src/db/migrations/**',
+    '!src/**/*.test.ts',
   ],
+  coverageThreshold: {
+    global: { statements: 90, branches: 90, functions: 90, lines: 90 },
+  },
 };

@@ -4,6 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
+import {
+  GoogleSignin,
+  isSuccessResponse,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { colors, spacing, typography } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
@@ -12,6 +17,12 @@ import { Button } from '@/components/ui/Button';
 import { registerPushToken } from '@/lib/notifications';
 
 const TOKEN_KEY = 'auth_token';
+
+GoogleSignin.configure({
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  scopes: ['profile', 'email'],
+});
 
 export default function SignInScreen() {
   const { setAuth } = useAuthStore();
@@ -31,6 +42,23 @@ export default function SignInScreen() {
       await finishAuth(data.token, data.user);
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert('Sign in failed', e.message);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleGoogle() {
+    try {
+      setLoading('google');
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) return;
+      const idToken = response.data.idToken;
+      if (!idToken) throw new Error('No idToken returned from Google');
+      const { data } = await api.post('/auth/google', { idToken });
+      await finishAuth(data.token, data.user);
+    } catch (e: any) {
+      if (e.code === statusCodes.SIGN_IN_CANCELLED) return;
+      Alert.alert('Sign in failed', e.message ?? 'Unknown error');
     } finally {
       setLoading(null);
     }
@@ -69,7 +97,7 @@ export default function SignInScreen() {
           />
           <Button
             label="Sign in with Google"
-            onPress={() => Alert.alert('Google sign-in', 'Coming soon')}
+            onPress={handleGoogle}
             variant="ghost"
             fullWidth
             loading={loading === 'google'}

@@ -18,18 +18,20 @@ export function UploadSheet({ visible, onClose }: UploadSheetProps) {
   const [caption, setCaption] = useState('');
 
   useEffect(() => {
-    if (visible) {
-      pickImages().then((a) => {
-        if (!a.length) { onClose(); return; }
-        setAssets(a);
-        setSelected(new Set(a.map((x) => x.uri)));
-      });
-    } else {
+    if (!visible) {
       setAssets([]);
       setSelected(new Set());
       setCaption('');
     }
   }, [visible]);
+
+  function handleShown() {
+    pickImages().then((a) => {
+      if (!a.length) { onClose(); return; }
+      setAssets(a);
+      setSelected(new Set(a.map((x) => x.uri)));
+    });
+  }
 
   function toggleSelect(uri: string) {
     setSelected((prev) => {
@@ -46,7 +48,7 @@ export function UploadSheet({ visible, onClose }: UploadSheetProps) {
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose} onShow={handleShown}>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Add Photos</Text>

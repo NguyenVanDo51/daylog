@@ -20,7 +20,7 @@ export function useUpload() {
 
   async function pickImages(): Promise<UploadAsset[]> {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       exif: true,
       quality: 1,
