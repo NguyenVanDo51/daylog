@@ -20,3 +20,8 @@ jest.mock('react-native-safe-area-context', () => {
     initialWindowMetrics: { insets: { top: 0, right: 0, bottom: 0, left: 0 }, frame: { x: 0, y: 0, width: 0, height: 0 } },
   };
 });
+
+// @lodev09/react-native-true-sheet — native sheet component used by SheetModal and UploadSheet.
+jest.mock('@lodev09/react-native-true-sheet', () => ({
+  TrueSheet: 'TrueSheet',
+}));
