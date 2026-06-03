@@ -151,7 +151,77 @@ jest.mock('expo-localization', () => ({
 }));
 
 // react-native-reanimated — transitive dep via expo-router/gesture-handler.
-jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+// Using a custom mock instead of require('react-native-reanimated/mock') because
+// react-native-worklets (a dep of reanimated 4.x) fails native init in Jest.
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  const { View, Text, Image, ScrollView } = require('react-native');
+  const identity = (x) => x;
+  const noopAnimFn = (val) => val;
+  return {
+    default: {
+      Value: jest.fn(),
+      createAnimatedComponent: (c) => c,
+      timing: jest.fn(),
+      spring: jest.fn(),
+      add: jest.fn(),
+      multiply: jest.fn(),
+      View,
+      Text,
+      Image,
+      ScrollView,
+    },
+    Easing: {
+      out: identity,
+      in: identity,
+      inOut: identity,
+      linear: identity,
+      ease: 0,
+      quad: identity,
+      cubic: identity,
+      exp: identity,
+      elastic: () => identity,
+      back: () => identity,
+      bounce: identity,
+      bezier: () => identity,
+      circle: identity,
+      sin: identity,
+      poly: () => identity,
+      step0: identity,
+      step1: identity,
+    },
+    useSharedValue: jest.fn((v) => ({ value: v })),
+    useAnimatedStyle: jest.fn((fn) => fn()),
+    useAnimatedScrollHandler: jest.fn(() => ({})),
+    useAnimatedRef: jest.fn(() => ({ current: null })),
+    useDerivedValue: jest.fn((fn) => ({ value: fn() })),
+    useAnimatedGestureHandler: jest.fn(() => ({})),
+    withTiming: jest.fn((v) => v),
+    withSpring: jest.fn((v) => v),
+    withRepeat: jest.fn((v) => v),
+    withSequence: jest.fn((...args) => args[0]),
+    withDelay: jest.fn((_, v) => v),
+    cancelAnimation: jest.fn(),
+    runOnJS: jest.fn((fn) => fn),
+    runOnUI: jest.fn((fn) => fn),
+    interpolate: jest.fn((v) => v),
+    interpolateColor: jest.fn(() => '#000000'),
+    createAnimatedComponent: (c) => c,
+    Animated: {
+      Value: jest.fn(),
+      View,
+      Text,
+      Image,
+      ScrollView,
+      createAnimatedComponent: (c) => c,
+    },
+    View,
+    Text,
+    Image,
+    ScrollView,
+    FlatList: require('react-native').FlatList,
+  };
+});
 
 // react-native-safe-area-context — used by root layout, photo viewer, header gradient.
 jest.mock('react-native-safe-area-context', () => {
