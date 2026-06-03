@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { Button } from '@/components/ui/Button';
 import { TextInput } from '@/components/ui/TextInput';
 import { Confetti } from '@/components/ui/Confetti';
@@ -15,6 +16,7 @@ interface UploadSheetProps {
 }
 
 export function UploadSheet({ visible, onClose }: UploadSheetProps) {
+  const ref = useRef<TrueSheet>(null);
   const { pickImages, uploadImages, uploading, progress } = useUpload();
   const [assets, setAssets] = useState<UploadAsset[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -23,15 +25,20 @@ export function UploadSheet({ visible, onClose }: UploadSheetProps) {
 
   useEffect(() => {
     if (visible) {
-      pickImages().then((a) => {
-        if (!a.length) { onClose(); return; }
-        setAssets(a);
-        setSelected(new Set(a.map((x) => x.uri)));
-      });
+      ref.current?.present();
     } else {
+      ref.current?.dismiss();
       setAssets([]); setSelected(new Set()); setCaption(''); setCelebrate(false);
     }
   }, [visible]);
+
+  function handlePresent() {
+    pickImages().then((a) => {
+      if (!a.length) { onClose(); return; }
+      setAssets(a);
+      setSelected(new Set(a.map((x) => x.uri)));
+    });
+  }
 
   function toggleSelect(uri: string) {
     setSelected((prev) => {
@@ -56,41 +63,45 @@ export function UploadSheet({ visible, onClose }: UploadSheetProps) {
     : '';
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.handle} />
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>{t('upload.eyebrow')}</Text>
-            <Text style={styles.title}>{t('upload.title')}</Text>
-          </View>
-          <Button label={t('upload.cancel')} onPress={onClose} variant="ghost" tier="quiet" />
+    <TrueSheet
+      ref={ref}
+      sizes={['92%']}
+      cornerRadius={24}
+      backgroundColor={colors.background}
+      onDismiss={onClose}
+      onPresent={handlePresent}
+    >
+      <View style={styles.handle} />
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.eyebrow}>{t('upload.eyebrow')}</Text>
+          <Text style={styles.title}>{t('upload.title')}</Text>
         </View>
+        <Button label={t('upload.cancel')} onPress={onClose} variant="ghost" tier="quiet" />
+      </View>
 
-        <ScrollView contentContainerStyle={styles.content}>
-          <PhotoThumbnailGrid assets={assets} selected={selected} onToggle={toggleSelect} />
-          <TextInput
-            placeholder={t('upload.caption_ph')}
-            value={caption}
-            onChangeText={setCaption}
-            style={styles.captionInput}
-            caveatPlaceholder
-          />
-          {uploading && <Text style={styles.progress}>{progressLabel}</Text>}
-        </ScrollView>
+      <ScrollView contentContainerStyle={styles.content}>
+        <PhotoThumbnailGrid assets={assets} selected={selected} onToggle={toggleSelect} />
+        <TextInput
+          placeholder={t('upload.caption_ph')}
+          value={caption}
+          onChangeText={setCaption}
+          style={styles.captionInput}
+          caveatPlaceholder
+        />
+        {uploading && <Text style={styles.progress}>{progressLabel}</Text>}
+      </ScrollView>
 
-        <View style={styles.footer}>
-          <Button label={ctaLabel} onPress={handleUpload} fullWidth loading={uploading} disabled={!count} />
-        </View>
+      <View style={styles.footer}>
+        <Button label={ctaLabel} onPress={handleUpload} fullWidth loading={uploading} disabled={!count} />
+      </View>
 
-        <Confetti visible={celebrate} />
-      </SafeAreaView>
-    </Modal>
+      <Confetti visible={celebrate} />
+    </TrueSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: colors.cream },
   handle:       { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: colors.inkMuted, marginTop: spacing.md },
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing['2xl'] },
   eyebrow:      { ...typography.handAccent, color: colors.pink },
