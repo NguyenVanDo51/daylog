@@ -1,22 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '@/constants/theme';
+import { Text, StyleSheet } from 'react-native';
+import { spacing, typography } from '@/constants/theme';
 
 interface SectionHeaderProps {
   title: string;
 }
 
 export function SectionHeader({ title }: SectionHeaderProps) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.text}>{title.toUpperCase()}</Text>
-      <View style={styles.rule} />
-    </View>
-  );
+  return <Text style={styles.text}>~ {title} ~</Text>;
 }
 
 const styles = StyleSheet.create({
-  row:  { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.sm },
-  text: { ...typography.pill, color: colors.inkSoft, marginRight: spacing.sm },
-  rule: { flex: 1, height: 1, backgroundColor: colors.border },
+  text: { ...typography.handAccent, fontSize: 20, marginTop: spacing['2xl'], marginBottom: spacing.sm },
 });
