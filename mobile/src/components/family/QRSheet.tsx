@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +17,10 @@ export function QRSheet({ visible, onClose }: QRSheetProps) {
   const qc = useQueryClient();
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+
+  useEffect(() => {
+    if (!visible) setScanned(false);
+  }, [visible]);
 
   async function handleBarCodeScanned({ data }: { data: string }) {
     if (scanned) return;
