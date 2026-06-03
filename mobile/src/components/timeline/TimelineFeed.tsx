@@ -1,22 +1,21 @@
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { FlatList, StyleSheet, RefreshControl, View } from 'react-native';
 import { useTimeline, TimelineItem } from '@/hooks/useTimeline';
 import { MonthHeader } from './MonthHeader';
 import { PhotoRow } from './PhotoRow';
 import { MilestoneCard } from '@/components/ui/MilestoneCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { SkeletonRow } from '@/components/ui/SkeletonRow';
 import { colors, spacing } from '@/constants/theme';
 import { router } from 'expo-router';
+import { formatVnMonth, formatVnAge } from '@/lib/format';
+import { t } from '@/lib/i18n';
 
 function getMonthLabel(isoDate: string, birthdate: string | null): string {
   const d = new Date(isoDate);
-  const month = d.toLocaleString('en-US', { month: 'long' }).toUpperCase();
-  const year = d.getFullYear();
-  if (!birthdate) return `${month} · ${year}`;
-  const birth = new Date(birthdate);
-  const months = (d.getFullYear() - birth.getFullYear()) * 12 + d.getMonth() - birth.getMonth();
-  return `${month} · ${months} MONTHS`;
+  const month = formatVnMonth(d);
+  if (!birthdate) return `${month} · ${d.getFullYear()}`;
+  return `${month} · ${formatVnAge(birthdate, d)}`;
 }
 
 interface FlatListItem {
@@ -25,6 +24,7 @@ interface FlatListItem {
   label?: string;
   photos?: any[];
   milestone?: any;
+  index?: number;
 }
 
 export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null }) {
@@ -36,14 +36,17 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
     const result: FlatListItem[] = [];
     let currentMonth = '';
     let photoBuffer: any[] = [];
+    let rowIndex = 0;
 
     const flushPhotos = () => {
       while (photoBuffer.length > 0) {
-        const batch = photoBuffer.splice(0, photoBuffer.length >= 3 ? 3 : 2);
-        result.push({ type: 'photoRow', key: `row-${batch[0].id}`, photos: batch });
+        const batch = photoBuffer.splice(0, 2);
+        result.push({ type: 'photoRow', key: `row-${batch[0].id}`, photos: batch, index: rowIndex });
+        rowIndex++;
       }
     };
 
+    let mIdx = 0;
     for (const item of allItems) {
       const dateStr = item.type === 'photo' ? item.taken_at : item.occurred_at;
       const monthKey = dateStr.slice(0, 7);
@@ -54,10 +57,10 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       }
       if (item.type === 'photo') {
         photoBuffer.push(item);
-        if (photoBuffer.length >= 3) flushPhotos();
+        if (photoBuffer.length >= 2) flushPhotos();
       } else {
         flushPhotos();
-        result.push({ type: 'milestone', key: `ms-${item.id}`, milestone: item });
+        result.push({ type: 'milestone', key: `ms-${item.id}`, milestone: item, index: mIdx++ });
       }
     }
     flushPhotos();
@@ -68,8 +71,16 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (isLoading) return <LoadingSpinner />;
-  if (!items.length) return <EmptyState emoji="🌸" message="No photos yet! Tap ➕ to add your first memory." />;
+  if (isLoading) {
+    return (
+      <View style={styles.skel}>
+        <SkeletonRow rowIndex={0} />
+        <SkeletonRow rowIndex={1} />
+        <SkeletonRow rowIndex={2} />
+      </View>
+    );
+  }
+  if (!items.length) return <EmptyState emoji="🌸" message={t('home.empty_message')} />;
 
   return (
     <FlatList
@@ -81,12 +92,13 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.pink} />}
       renderItem={({ item }) => {
         if (item.type === 'month') return <MonthHeader label={item.label!} />;
-        if (item.type === 'photoRow') return <PhotoRow photos={item.photos!} />;
+        if (item.type === 'photoRow') return <PhotoRow photos={item.photos!} rowIndex={item.index} />;
         return (
           <MilestoneCard
             title={item.milestone.title}
             note={item.milestone.note}
             occurredAt={item.milestone.occurred_at}
+            index={item.index}
             onPress={() => router.push(`/milestone/${item.milestone.id}`)}
           />
         );
@@ -97,4 +109,5 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing['2xl'], paddingBottom: spacing['4xl'] },
+  skel:    { paddingHorizontal: spacing['2xl'], paddingTop: spacing.lg },
 });
