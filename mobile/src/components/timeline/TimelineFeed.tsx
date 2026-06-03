@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, View, StyleSheet, RefreshControl } from 'react-native';
+import { FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useTimeline, TimelineItem } from '@/hooks/useTimeline';
 import { MonthHeader } from './MonthHeader';
 import { PhotoRow } from './PhotoRow';
