@@ -72,7 +72,13 @@ router.patch('/milestones/:id', async (req, res, next) => {
          occurred_at = COALESCE($3, occurred_at),
          cover_photo_id = COALESCE($4, cover_photo_id)
        WHERE id = $5 RETURNING *`,
-      [title || null, note || null, occurred_at || null, cover_photo_id || null, req.params.id]
+      [
+        title !== undefined ? title : null,
+        note !== undefined ? note : null,
+        occurred_at !== undefined ? occurred_at : null,
+        cover_photo_id !== undefined ? cover_photo_id : null,
+        req.params.id
+      ]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
