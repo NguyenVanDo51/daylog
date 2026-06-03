@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
+import { registerPushToken } from '@/lib/notifications';
 
 const TOKEN_KEY = 'auth_token';
 
@@ -23,6 +24,7 @@ export default function RootLayout() {
             headers: { Authorization: `Bearer ${stored}` },
           });
           setAuth(stored, data);
+          registerPushToken().catch(() => {});
           router.replace('/(tabs)');
         } catch {
           await SecureStore.deleteItemAsync(TOKEN_KEY);
