@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Button } from '@/components/ui/Button';
+import { SheetModal } from '@/components/ui/SheetModal';
 import { api } from '@/lib/api';
 import { useAlbumStore } from '@/stores/albumStore';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,40 +37,34 @@ export function QRSheet({ visible, onClose }: QRSheetProps) {
     }
   }
 
-  if (!permission) return null;
-  if (!permission.granted) {
-    return (
-      <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-        <SafeAreaView style={styles.container}>
-          <View style={styles.handle} />
+  return (
+    <SheetModal visible={visible} onClose={onClose} size="large">
+      <View style={styles.handle} />
+
+      {!permission ? null : !permission.granted ? (
+        <>
           <Text style={styles.heading}>{t('qr.perm_title')}</Text>
           <Text style={styles.body}>{t('qr.perm_body')}</Text>
           <Button label={t('qr.perm_grant')} onPress={requestPermission} fullWidth />
           <Button label={t('common.cancel')} onPress={onClose} variant="ghost" fullWidth />
-        </SafeAreaView>
-      </Modal>
-    );
-  }
-
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.handle} />
-        <Text style={styles.eyebrow}>{t('qr.sheet_title')}</Text>
-        {visible && (
-          <View style={styles.scannerFrame}>
-            <CameraView style={styles.scanner} onBarcodeScanned={handleBarCodeScanned} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} />
-          </View>
-        )}
-        <Text style={styles.validity}>{t('qr.valid_for')}</Text>
-        <Button label={t('common.cancel')} onPress={onClose} variant="ghost" fullWidth />
-      </SafeAreaView>
-    </Modal>
+        </>
+      ) : (
+        <>
+          <Text style={styles.eyebrow}>{t('qr.sheet_title')}</Text>
+          {visible && (
+            <View style={styles.scannerFrame}>
+              <CameraView style={styles.scanner} onBarcodeScanned={handleBarCodeScanned} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} />
+            </View>
+          )}
+          <Text style={styles.validity}>{t('qr.valid_for')}</Text>
+          <Button label={t('common.cancel')} onPress={onClose} variant="ghost" fullWidth />
+        </>
+      )}
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, padding: spacing['2xl'], backgroundColor: colors.cream, gap: spacing.md },
   handle:       { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: colors.inkMuted, marginBottom: spacing.md },
   eyebrow:      { ...typography.handAccent, color: colors.pink, textAlign: 'center' },
   heading:      { ...typography.heading, color: colors.ink },
