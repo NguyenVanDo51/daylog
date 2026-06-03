@@ -30,6 +30,7 @@ A shared family photo album mobile app where parents and family members can save
 | Photo storage | Cloudflare R2 (zero egress fees) |
 | Auth | Sign in with Apple (required) + Google Sign-In (optional) |
 | Push notifications | APNs (Apple Push Notification Service) |
+| Image compression | react-native-compressor (on-device → WebP) + Sharp.js (server thumbnails) |
 
 ---
 
@@ -45,7 +46,7 @@ Single Express.js API (monolith) handling all business logic. Photos upload dire
 4. API generates thumbnail, stores metadata in PostgreSQL
 5. API sends APNs push notification to all album members
 
-Auto-sync follows the same flow, triggered by `PHPhotoLibrary` change observer instead of user action. The `local_asset_id` field ensures idempotency — re-syncing the same asset is a no-op.
+Auto-sync follows the same flow, triggered by `PHPhotoLibrary` change observer instead of user action. The `local_asset_id` field ensures idempotency — re-syncing the same asset is a no-op. Both paths compress to WebP before upload.
 
 ### Component Responsibilities
 
@@ -129,10 +130,13 @@ invites
 
 ### 2. Photo Upload
 - Pick one or multiple photos from iOS Photos library
-- Upload original quality to Cloudflare R2 via presigned URL
-- Auto-generate thumbnail server-side
+- Compress locally on-device before upload: convert to **WebP at quality 0.85**, original dimensions preserved (using `react-native-compressor`)
+- Upload compressed WebP to Cloudflare R2 via presigned URL — original file stays on device untouched
+- Auto-generate WebP thumbnail server-side (Sharp.js)
 - Add optional caption per photo
 - `taken_at` populated from EXIF metadata (falls back to upload time)
+
+> WebP is the universal storage format: supported on iOS 14+, Android API 17+, and all modern browsers. This ensures quality consistency when Android and web are added post-MVP, with no server-side format conversion needed.
 
 ### 3. Timeline
 - Chronological feed of photos + milestones merged by date
