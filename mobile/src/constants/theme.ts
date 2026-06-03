@@ -20,6 +20,7 @@ export const colors = {
 
   // Functional aliases
   background:   '#FFFBF0',  // cream — sheet / screen background
+  textPrimary:  '#3D2A1F',  // ink — primary text colour
   error:        '#E55B8C',
   success:      '#7FD7B5',
   black:        '#000000',
