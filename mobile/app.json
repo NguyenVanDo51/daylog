@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Family Guy",
+    "slug": "family-guy",
+    "version": "1.0.0",
+    "scheme": "familyguy",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8F4FF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.familyguy.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "We need access to your photos to upload memories.",
+        "NSCameraUsageDescription": "We need camera access for QR scanning."
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#7C5CBF"
+        }
+      ],
+      [
+        "expo-barcode-scanner",
+        {
+          "cameraPermission": "Allow Family Guy to use the camera to scan QR codes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Family Guy to access your photos."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
