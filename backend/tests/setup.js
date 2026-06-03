@@ -1,5 +1,5 @@
 const { pool } = require('../src/db/client');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -19,7 +19,7 @@ async function createTestUser(overrides = {}) {
   const { rows } = await pool.query(
     `INSERT INTO users (apple_sub, display_name, avatar_url)
      VALUES ($1, $2, $3) RETURNING *`,
-    [overrides.apple_sub || uuidv4(), overrides.display_name || 'Test User', overrides.avatar_url || null]
+    [overrides.apple_sub || randomUUID(), overrides.display_name || 'Test User', overrides.avatar_url || null]
   );
   return rows[0];
 }
