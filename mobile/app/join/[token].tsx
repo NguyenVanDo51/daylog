@@ -56,8 +56,8 @@ export default function JoinScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: spacing['3xl'] },
+  container: { flex: 1, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', padding: spacing['3xl'] },
   emoji:     { fontSize: 72, marginBottom: spacing.lg },
-  heading:   { ...typography.heading, color: colors.textPrimary, marginBottom: spacing.sm },
-  body:      { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing['3xl'] },
+  heading:   { ...typography.heading, color: colors.ink, marginBottom: spacing.sm },
+  body:      { ...typography.bodySmall, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing['3xl'] },
 });

@@ -22,7 +22,7 @@ export default function MilestoneDetailScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+          <Ionicons name="chevron-back" size={24} color={colors.pink} />
         </TouchableOpacity>
         <Text style={styles.heading}>Moment</Text>
         <View style={{ width: 24 }} />
@@ -38,12 +38,12 @@ export default function MilestoneDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.cream },
   header:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing['2xl'], paddingTop: spacing['4xl'] },
-  heading:   { ...typography.title, color: colors.textPrimary },
+  heading:   { ...typography.title, color: colors.ink },
   content:   { padding: spacing['2xl'], alignItems: 'center' },
   icon:      { fontSize: 64, marginBottom: spacing.lg },
-  title:     { ...typography.heading, color: colors.textPrimary, textAlign: 'center', marginBottom: spacing.sm },
-  date:      { ...typography.subheading, color: colors.textSecondary, marginBottom: spacing['2xl'] },
-  note:      { ...typography.body, color: colors.textSecondary, lineHeight: 22, textAlign: 'center' },
+  title:     { ...typography.heading, color: colors.ink, textAlign: 'center', marginBottom: spacing.sm },
+  date:      { ...typography.body, color: colors.inkSoft, marginBottom: spacing['2xl'] },
+  note:      { ...typography.bodySmall, color: colors.inkSoft, lineHeight: 22, textAlign: 'center' },
 });

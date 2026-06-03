@@ -12,8 +12,8 @@ export function MonthHeader({ label }: MonthHeaderProps) {
 
 const styles = StyleSheet.create({
   text: {
-    ...typography.label,
-    color: colors.primary,
+    ...typography.pill,
+    color: colors.pink,
     marginTop: spacing['2xl'],
     marginBottom: spacing.sm,
   },

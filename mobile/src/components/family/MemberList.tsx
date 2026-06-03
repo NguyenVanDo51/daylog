@@ -28,6 +28,6 @@ export function MemberList({ members }: { members: Member[] }) {
 const styles = StyleSheet.create({
   row:    { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   info:   { flex: 1 },
-  name:   { ...typography.subheading, color: colors.textPrimary },
-  joined: { ...typography.caption, color: colors.textMuted },
+  name:   { ...typography.body, color: colors.ink },
+  joined: { ...typography.caption, color: colors.inkMuted },
 });

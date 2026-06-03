@@ -40,7 +40,7 @@ export default function FamilyTab() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.cream },
   heading:   { ...typography.heading, color: colors.white },
   content:   { padding: spacing['2xl'] },
   actions:   { gap: spacing.md, marginTop: spacing.sm },

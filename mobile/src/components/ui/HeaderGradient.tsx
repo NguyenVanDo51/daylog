@@ -12,7 +12,7 @@ export function HeaderGradient({ children }: HeaderGradientProps) {
   const insets = useSafeAreaInsets();
   return (
     <LinearGradient
-      colors={[colors.gradientStart, colors.gradientEnd]}
+      colors={[colors.peach, colors.pink]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.gradient, { paddingTop: insets.top + spacing.lg }]}

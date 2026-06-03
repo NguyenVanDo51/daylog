@@ -17,7 +17,7 @@ export function MilestoneCard({ title, note, occurredAt, icon = 'star', onPress 
     <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.85}>
       <View style={styles.accent} />
       <View style={styles.iconWrap}>
-        <Ionicons name={icon} size={18} color={colors.primary} />
+        <Ionicons name={icon} size={18} color={colors.pink} />
       </View>
       <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
@@ -29,11 +29,11 @@ export function MilestoneCard({ title, note, occurredAt, icon = 'star', onPress 
 }
 
 const styles = StyleSheet.create({
-  card:    { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radii.sm, marginVertical: spacing.xs, overflow: 'hidden' },
-  accent:  { width: 3, backgroundColor: colors.primary },
+  card:    { flexDirection: 'row', backgroundColor: colors.white, borderRadius: radii.sm, marginVertical: spacing.xs, overflow: 'hidden' },
+  accent:  { width: 3, backgroundColor: colors.pink },
   iconWrap:{ padding: spacing.md, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, padding: spacing.md, paddingLeft: spacing.xs },
-  title:   { ...typography.subheading, color: colors.textPrimary, marginBottom: 2 },
-  note:    { ...typography.body, color: colors.textSecondary, marginBottom: 2 },
+  title:   { ...typography.body, color: colors.ink, marginBottom: 2 },
+  note:    { ...typography.bodySmall, color: colors.inkSoft, marginBottom: 2 },
   date:    { ...typography.caption },
 });

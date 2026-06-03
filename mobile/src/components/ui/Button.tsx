@@ -24,7 +24,7 @@ export function Button({ label, onPress, variant = 'primary', fullWidth, loading
   return (
     <TouchableOpacity style={containerStyle} onPress={onPress} disabled={disabled || loading} activeOpacity={0.8}>
       {loading
-        ? <ActivityIndicator color={variant === 'ghost' ? colors.primary : colors.white} />
+        ? <ActivityIndicator color={variant === 'ghost' ? colors.pink : colors.white} />
         : <Text style={[styles.label, variant === 'ghost' && styles.ghostLabel, variant === 'danger' && styles.dangerLabel]}>{label}</Text>
       }
     </TouchableOpacity>
@@ -33,12 +33,12 @@ export function Button({ label, onPress, variant = 'primary', fullWidth, loading
 
 const styles = StyleSheet.create({
   base:        { paddingVertical: spacing.md, paddingHorizontal: spacing['2xl'], borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  primary:     { backgroundColor: colors.primary },
-  ghost:       { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary },
+  primary:     { backgroundColor: colors.pink },
+  ghost:       { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.pink },
   danger:      { backgroundColor: colors.error },
   fullWidth:   { width: '100%' },
   disabled:    { opacity: 0.5 },
-  label:       { ...typography.subheading, color: colors.white, fontWeight: '700' },
-  ghostLabel:  { color: colors.primary },
+  label:       { ...typography.body, color: colors.white, fontWeight: '700' },
+  ghostLabel:  { color: colors.pink },
   dangerLabel: { color: colors.white },
 });

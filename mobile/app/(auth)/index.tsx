@@ -48,7 +48,7 @@ export default function SignInScreen() {
   }
 
   return (
-    <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} style={styles.container}>
+    <LinearGradient colors={[colors.peach, colors.pink]} style={styles.container}>
       <View style={styles.bubbles}>
         {[...Array(6)].map((_, i) => (
           <View key={i} style={[styles.bubble, { width: 40 + i * 20, height: 40 + i * 20, left: (i * 60) % 300, top: (i * 90) % 400, opacity: 0.08 + i * 0.02 }]} />
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   content:   { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] },
   logo:      { fontSize: 72, marginBottom: spacing.lg },
   appName:   { ...typography.heading, color: colors.white, fontSize: 32, marginBottom: spacing.xs },
-  tagline:   { ...typography.body, color: 'rgba(255,255,255,0.8)', marginBottom: spacing['4xl'] },
+  tagline:   { ...typography.bodySmall, color: 'rgba(255,255,255,0.8)', marginBottom: spacing['4xl'] },
   buttons:   { width: '100%', gap: spacing.md },
   appleBtn:  { height: 48, width: '100%', marginBottom: spacing.xs },
   privacy:   { ...typography.caption, color: 'rgba(255,255,255,0.6)', marginTop: spacing['3xl'], textAlign: 'center' },

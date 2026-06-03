@@ -45,9 +45,9 @@ export default function NewMilestoneScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.cream },
   header:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing['2xl'], paddingTop: spacing['4xl'] },
-  heading:   { ...typography.title, color: colors.textPrimary },
-  cancel:    { ...typography.subheading, color: colors.primary },
+  heading:   { ...typography.title, color: colors.ink },
+  cancel:    { ...typography.body, color: colors.pink },
   form:      { padding: spacing['2xl'], gap: spacing.md },
 });

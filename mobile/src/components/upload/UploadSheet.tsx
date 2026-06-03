@@ -82,11 +82,11 @@ export function UploadSheet({ visible, onClose }: UploadSheetProps) {
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: colors.background },
+  container:    { flex: 1, backgroundColor: colors.cream },
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing['2xl'] },
-  title:        { ...typography.title, color: colors.textPrimary },
+  title:        { ...typography.title, color: colors.ink },
   content:      { padding: spacing['2xl'] },
   captionInput: { marginTop: spacing.lg },
-  progress:     { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.md },
+  progress:     { ...typography.bodySmall, color: colors.inkSoft, textAlign: 'center', marginTop: spacing.md },
   footer:       { padding: spacing['2xl'] },
 });

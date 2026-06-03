@@ -13,7 +13,7 @@ export function TextInput({ label, style, ...props }: LabeledTextInputProps) {
       {label && <Text style={styles.label}>{label}</Text>}
       <RNTextInput
         style={[styles.input, focused && styles.focused, style]}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={colors.inkMuted}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         {...props}
@@ -24,16 +24,16 @@ export function TextInput({ label, style, ...props }: LabeledTextInputProps) {
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: spacing.md },
-  label:   { ...typography.subheading, marginBottom: spacing.xs, color: colors.textSecondary },
+  label:   { ...typography.body, marginBottom: spacing.xs, color: colors.inkSoft },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: radii.sm,
     borderWidth: 1.5,
     borderColor: colors.border,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    ...typography.body,
-    color: colors.textPrimary,
+    ...typography.bodySmall,
+    color: colors.ink,
   },
-  focused: { borderColor: colors.primary },
+  focused: { borderColor: colors.pink },
 });

@@ -65,7 +65,7 @@ export default function SettingsTab() {
             <Switch
               value={notifEnabled}
               onValueChange={toggleNotifications}
-              trackColor={{ true: colors.primary }}
+              trackColor={{ true: colors.pink }}
               disabled={notifLoading}
             />
           </View>
@@ -78,14 +78,14 @@ export default function SettingsTab() {
 }
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: colors.background },
+  container:   { flex: 1, backgroundColor: colors.cream },
   heading:     { ...typography.heading, color: colors.white },
   content:     { padding: spacing['2xl'], gap: spacing.md },
   profileCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   profileInfo: { flex: 1 },
-  name:        { ...typography.title, color: colors.textPrimary },
-  email:       { ...typography.body, color: colors.textSecondary },
+  name:        { ...typography.title, color: colors.ink },
+  email:       { ...typography.bodySmall, color: colors.inkSoft },
   section:     { gap: spacing.md },
   row:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rowLabel:    { ...typography.subheading, color: colors.textPrimary },
+  rowLabel:    { ...typography.body, color: colors.ink },
 });

@@ -16,8 +16,8 @@ export function Badge({ label, variant = 'primary' }: BadgeProps) {
 }
 
 const styles = StyleSheet.create({
-  base:        { backgroundColor: colors.primary, borderRadius: radii.full, paddingHorizontal: spacing.md, paddingVertical: 3 },
-  surface:     { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  base:        { backgroundColor: colors.pink, borderRadius: radii.full, paddingHorizontal: spacing.md, paddingVertical: 3 },
+  surface:     { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
   text:        { fontSize: 10, fontWeight: '700', color: colors.white, letterSpacing: 0.3 },
-  surfaceText: { color: colors.textSecondary },
+  surfaceText: { color: colors.inkSoft },
 });

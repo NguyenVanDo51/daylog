@@ -80,9 +80,9 @@ const styles = StyleSheet.create({
   container:  { flex: 1, backgroundColor: colors.black },
   close:      { position: 'absolute', left: spacing['2xl'], zIndex: 10 },
   center:     { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty:      { ...typography.body, color: colors.white },
+  empty:      { ...typography.bodySmall, color: colors.white },
   page:       { width, justifyContent: 'center', alignItems: 'center' },
   photo:      { width, height: '100%' },
   captionBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: spacing.lg },
-  caption:    { ...typography.body, color: colors.white },
+  caption:    { ...typography.bodySmall, color: colors.white },
 });

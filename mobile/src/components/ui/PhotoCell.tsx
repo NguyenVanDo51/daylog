@@ -22,7 +22,7 @@ export function PhotoCell({ uri, caption, size, onPress, style }: PhotoCellProps
 }
 
 const styles = StyleSheet.create({
-  container: { borderRadius: radii.xs, overflow: 'hidden', backgroundColor: colors.surface },
+  container: { borderRadius: radii.xs, overflow: 'hidden', backgroundColor: colors.white },
   image:     { width: '100%', height: '100%' },
   caption: {
     position: 'absolute', bottom: 0, left: 0, right: 0,

@@ -10,7 +10,7 @@ function FABButton({ onPress }: { onPress: () => void }) {
   return (
     <TouchableOpacity onPress={onPress} style={styles.fabWrap} activeOpacity={0.85}>
       <LinearGradient
-        colors={[colors.gradientStart, colors.gradientEnd]}
+        colors={[colors.peach, colors.pink]}
         style={styles.fab}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -29,8 +29,8 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
+          tabBarActiveTintColor: colors.pink,
+          tabBarInactiveTintColor: colors.inkMuted,
           tabBarStyle: { borderTopColor: colors.border, backgroundColor: colors.white },
           tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
         }}

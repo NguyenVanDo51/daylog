@@ -59,8 +59,8 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: colors.background },
-  greeting:   { ...typography.body, color: 'rgba(255,255,255,0.85)', marginBottom: 4 },
+  container:  { flex: 1, backgroundColor: colors.cream },
+  greeting:   { ...typography.bodySmall, color: 'rgba(255,255,255,0.85)', marginBottom: 4 },
   albumName:  { ...typography.title, color: colors.white, marginBottom: spacing.sm },
   avatarRow:  { flexDirection: 'row', gap: -8, marginTop: spacing.sm },
 });

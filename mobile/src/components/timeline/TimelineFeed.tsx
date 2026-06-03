@@ -78,7 +78,7 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       contentContainerStyle={styles.content}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.3}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.pink} />}
       renderItem={({ item }) => {
         if (item.type === 'month') return <MonthHeader label={item.label!} />;
         if (item.type === 'photoRow') return <PhotoRow photos={item.photos!} />;

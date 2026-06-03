@@ -19,5 +19,5 @@ export function EmptyState({ emoji, message }: EmptyStateProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing['4xl'] },
   emoji:     { fontSize: 48, marginBottom: spacing.lg },
-  message:   { ...typography.body, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },
+  message:   { ...typography.bodySmall, color: colors.inkMuted, textAlign: 'center', lineHeight: 20 },
 });

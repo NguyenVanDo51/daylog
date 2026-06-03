@@ -17,6 +17,6 @@ export function SectionHeader({ title }: SectionHeaderProps) {
 
 const styles = StyleSheet.create({
   row:  { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.sm },
-  text: { ...typography.label, color: colors.textSecondary, marginRight: spacing.sm },
+  text: { ...typography.pill, color: colors.inkSoft, marginRight: spacing.sm },
   rule: { flex: 1, height: 1, backgroundColor: colors.border },
 });

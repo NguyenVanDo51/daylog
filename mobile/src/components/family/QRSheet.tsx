@@ -65,8 +65,8 @@ export function QRSheet({ visible, onClose }: QRSheetProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing['2xl'], backgroundColor: colors.background, gap: spacing.md },
-  heading:   { ...typography.heading, color: colors.textPrimary },
-  body:      { ...typography.body, color: colors.textSecondary },
+  container: { flex: 1, padding: spacing['2xl'], backgroundColor: colors.cream, gap: spacing.md },
+  heading:   { ...typography.heading, color: colors.ink },
+  body:      { ...typography.bodySmall, color: colors.inkSoft },
   scanner:   { flex: 1, borderRadius: 12, overflow: 'hidden' },
 });

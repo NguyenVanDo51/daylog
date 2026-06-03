@@ -21,7 +21,7 @@ export function PhotoThumbnailGrid({ assets, selected, onToggle }: PhotoThumbnai
           <Image source={{ uri: a.uri }} style={{ width: cellSize, height: cellSize, borderRadius: radii.xs }} />
           {selected.has(a.uri) && (
             <View style={styles.check}>
-              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+              <Ionicons name="checkmark-circle" size={20} color={colors.pink} />
             </View>
           )}
         </TouchableOpacity>

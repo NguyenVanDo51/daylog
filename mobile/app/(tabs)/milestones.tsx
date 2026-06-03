@@ -46,13 +46,13 @@ export default function MilestonesTab() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.cream },
   heading:   { ...typography.heading, color: colors.white },
   list:      { padding: spacing['2xl'] },
   fab: {
     position: 'absolute', bottom: 90, right: spacing['2xl'],
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.pink,
     alignItems: 'center', justifyContent: 'center',
     ...shadows.fab,
   },

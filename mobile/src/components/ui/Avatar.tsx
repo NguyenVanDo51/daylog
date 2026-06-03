@@ -23,7 +23,7 @@ export function Avatar({ uri, name, size = 36 }: AvatarProps) {
 }
 
 const styles = StyleSheet.create({
-  image:    { backgroundColor: colors.primaryPastel },
-  fallback: { backgroundColor: colors.primaryPastel, alignItems: 'center', justifyContent: 'center' },
-  initials: { color: colors.primary, fontWeight: '700' },
+  image:    { backgroundColor: colors.yellow },
+  fallback: { backgroundColor: colors.yellow, alignItems: 'center', justifyContent: 'center' },
+  initials: { color: colors.pink, fontWeight: '700' },
 });

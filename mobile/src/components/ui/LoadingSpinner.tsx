@@ -5,7 +5,7 @@ import { colors } from '@/constants/theme';
 export function LoadingSpinner() {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size="large" color={colors.pink} />
     </View>
   );
 }
