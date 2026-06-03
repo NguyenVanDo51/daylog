@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { router } from 'expo-router';
 import { PhotoCell } from '@/components/ui/PhotoCell';
 import { spacing } from '@/constants/theme';
 import type { TimelinePhoto } from '@/hooks/useTimeline';
@@ -27,7 +26,7 @@ export function PhotoRow({ photos, rowIndex = 0 }: PhotoRowProps) {
           caption={p.caption}
           size={cellSize}
           index={rowIndex * 2 + i}
-          onPress={() => router.push(`/photo/${p.id}`)}
+          photoId={p.id}
         />
       ))}
     </View>
