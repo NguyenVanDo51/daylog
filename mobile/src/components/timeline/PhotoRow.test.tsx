@@ -19,6 +19,11 @@ function makePhoto(overrides: Partial<TimelinePhoto> = {}): TimelinePhoto {
     thumbnail_key: 'thumbs/p1.webp',
     taken_at: '2026-01-01T00:00:00Z',
     caption: null,
+    media_type: 'photo',
+    source: 'upload',
+    duration_ms: null,
+    width: null,
+    height: null,
     ...overrides,
   };
 }

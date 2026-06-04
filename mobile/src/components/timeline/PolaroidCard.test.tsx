@@ -23,6 +23,8 @@ const basePhoto: TimelinePhoto = {
   media_type: 'photo',
   source: 'capture',
   duration_ms: null,
+  width: null,
+  height: null,
 };
 
 describe('PolaroidCard', () => {

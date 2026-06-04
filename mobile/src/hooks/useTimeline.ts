@@ -12,6 +12,8 @@ export interface TimelinePhoto {
   media_type: 'photo' | 'video';
   source: 'capture' | 'upload';
   duration_ms: number | null;
+  width: number | null;
+  height: number | null;
 }
 
 export interface TimelineMilestone {
