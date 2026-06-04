@@ -176,14 +176,12 @@ describe('RootLayout', () => {
     // QueryClientProvider should have wrapped the Stack tree.
     expect(utils.getByTestId('query-client-provider')).toBeTruthy();
 
-    // Eight routes are declared by the layout: (auth), (tabs), milestone/new,
-    // milestone/[id], photo/[id], capture, capture-review, join/[token].
+    // Six routes are declared by the layout: (auth), (tabs), photo/[id],
+    // capture, capture-review, join/[token].
     const names = __recordedStackScreens.map((s: any) => s.name);
     expect(names).toEqual([
       '(auth)',
       '(tabs)',
-      'milestone/new',
-      'milestone/[id]',
       'photo/[id]',
       'capture',
       'capture-review',
@@ -194,7 +192,6 @@ describe('RootLayout', () => {
     const byName = Object.fromEntries(
       __recordedStackScreens.map((s: any) => [s.name, s]),
     );
-    expect(byName['milestone/new'].options?.presentation).toBe('modal');
     expect(byName['photo/[id]'].options?.presentation).toBe('fullScreenModal');
     expect(byName['capture'].options?.presentation).toBe('fullScreenModal');
 

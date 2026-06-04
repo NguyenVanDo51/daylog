@@ -28,13 +28,6 @@ jest.mock('@/components/timeline/MasonryBlock', () => {
   };
 });
 
-jest.mock('@/components/timeline/MilestoneRow', () => {
-  const { View } = require('react-native');
-  return {
-    MilestoneRow: ({ milestone }: any) => <View testID="milestone-row" />,
-  };
-});
-
 import React from 'react';
 import { FlatList } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
@@ -56,17 +49,6 @@ function photo(id: string, takenAt: string, caption: string | null = null) {
     duration_ms: null,
     width: null,
     height: null,
-  };
-}
-
-function milestone(id: string, occurredAt: string, title = 'First steps', note: string | null = null) {
-  return {
-    type: 'milestone' as const,
-    id,
-    title,
-    note,
-    occurred_at: occurredAt,
-    icon: null,
   };
 }
 
@@ -173,73 +155,6 @@ describe('TimelineFeed', () => {
     const { getAllByTestId } = render(<TimelineFeed />);
     // day 15 photos flush when day 16 starts, day 16 photo flushes at end → 2 blocks
     expect(getAllByTestId('masonry-block')).toHaveLength(2);
-  });
-
-  it('renders milestone rows for milestone items', () => {
-    mockUseTimeline.mockReturnValue(
-      makeReturn({
-        data: {
-          pages: [
-            {
-              items: [
-                milestone('m1', '2026-01-10T00:00:00Z', 'First word'),
-              ],
-              nextCursor: null,
-            },
-          ],
-        },
-      }),
-    );
-    const { getAllByTestId } = render(<TimelineFeed />);
-    expect(getAllByTestId('milestone-row')).toHaveLength(1);
-  });
-
-  it('interleaves day headers, masonry blocks, and milestone rows', () => {
-    mockUseTimeline.mockReturnValue(
-      makeReturn({
-        data: {
-          pages: [
-            {
-              items: [
-                photo('a', '2026-01-01T00:00:00Z'),
-                milestone('m1', '2026-01-10T00:00:00Z', 'First word'),
-                photo('b', '2026-01-15T00:00:00Z'),
-              ],
-              nextCursor: null,
-            },
-          ],
-        },
-      }),
-    );
-    const { getAllByTestId } = render(<TimelineFeed />);
-    expect(getAllByTestId(/^day-heading-/)).toHaveLength(3);
-    expect(getAllByTestId('masonry-block')).toHaveLength(2);
-    expect(getAllByTestId('milestone-row')).toHaveLength(1);
-  });
-
-  it('flushes photo buffer before a milestone on the same day', () => {
-    mockUseTimeline.mockReturnValue(
-      makeReturn({
-        data: {
-          pages: [
-            {
-              items: [
-                photo('a', '2026-01-01T00:00:00Z'),
-                photo('b', '2026-01-01T01:00:00Z'),
-                milestone('m1', '2026-01-01T02:00:00Z'),
-                photo('c', '2026-01-01T03:00:00Z'),
-              ],
-              nextCursor: null,
-            },
-          ],
-        },
-      }),
-    );
-    const { getAllByTestId } = render(<TimelineFeed />);
-    // 1 day header; 2 masonry blocks (photos before + photos after milestone); 1 milestone
-    expect(getAllByTestId(/^day-heading-/)).toHaveLength(1);
-    expect(getAllByTestId('masonry-block')).toHaveLength(2);
-    expect(getAllByTestId('milestone-row')).toHaveLength(1);
   });
 
   it('flattens items across multiple pages', () => {
@@ -369,7 +284,7 @@ describe('TimelineFeed', () => {
             {
               items: [
                 photo('a', '2026-01-01T00:00:00Z'),
-                milestone('m1', '2026-01-10T00:00:00Z'),
+                photo('b', '2026-01-10T00:00:00Z'),
               ],
               nextCursor: null,
             },
@@ -386,7 +301,7 @@ describe('TimelineFeed', () => {
       list.props.renderItem({ item, index: 0, separators: {} as any });
       types.add(item.type);
     }
-    expect(types).toEqual(new Set(['dayHeader', 'masonryBlock', 'milestone']));
+    expect(types).toEqual(new Set(['dayHeader', 'masonryBlock']));
   });
 
   it('tapping day heading calls onJumpToDay with the dateKey', () => {

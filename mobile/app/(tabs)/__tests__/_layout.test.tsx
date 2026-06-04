@@ -173,19 +173,18 @@ describe('TabLayout', () => {
     });
   });
 
-  it('declares the expected 5 Tabs.Screen entries in order', () => {
+  it('declares the expected 4 Tabs.Screen entries in order', () => {
     render(<TabLayout />);
     const names = recordedScreens.map((s) => s.name);
-    expect(names).toEqual(['index', 'milestones', 'upload', 'family', 'settings']);
+    expect(names).toEqual(['index', 'upload', 'family', 'settings']);
   });
 
-  it('configures the home / milestones / family / settings tabs with the right titles and Ionicons', () => {
+  it('configures the home / family / settings tabs with the right titles and Ionicons', () => {
     const utils = render(<TabLayout />);
     const byName = Object.fromEntries(recordedScreens.map((s) => [s.name, s]));
 
     // Vietnamese tab titles
     expect(byName.index.options.title).toBe('Nhà');
-    expect(byName.milestones.options.title).toBe('Khoảnh khắc');
     expect(byName.family.options.title).toBe('Gia đình');
     expect(byName.settings.options.title).toBe('Tôi');
 
@@ -193,7 +192,6 @@ describe('TabLayout', () => {
     // each call to tabBarIcon. Verify each expected icon is present in the
     // rendered tree.
     expect(utils.getByTestId('Ionicons-home')).toBeTruthy();
-    expect(utils.getByTestId('Ionicons-star')).toBeTruthy();
     expect(utils.getByTestId('Ionicons-people')).toBeTruthy();
     expect(utils.getByTestId('Ionicons-settings-outline')).toBeTruthy();
   });

@@ -36,7 +36,6 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen name="index"     options={{ title: t('tabs.home'),    tabBarIcon: ({ color, size }) => <Ionicons name="home"            size={size} color={color} /> }} />
-        <Tabs.Screen name="milestones"options={{ title: t('tabs.moments'), tabBarIcon: ({ color, size }) => <Ionicons name="star"            size={size} color={color} /> }} />
         <Tabs.Screen name="upload"    options={{ title: '',                tabBarButton: () => <FABButton onPress={() => setUploadVisible(true)} /> }} />
         <Tabs.Screen name="family"    options={{ title: t('tabs.family'),  tabBarIcon: ({ color, size }) => <Ionicons name="people"          size={size} color={color} /> }} />
         <Tabs.Screen name="settings"  options={{ title: t('tabs.me'),      tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} /> }} />

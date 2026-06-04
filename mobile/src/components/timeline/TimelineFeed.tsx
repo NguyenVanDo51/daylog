@@ -1,9 +1,8 @@
 import React, { useCallback } from 'react';
 import { FlatList, StyleSheet, RefreshControl, View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { useTimeline, TimelineItem, TimelineMilestone } from '@/hooks/useTimeline';
+import { useTimeline } from '@/hooks/useTimeline';
 import { useDayLabelsRange } from '@/hooks/useDayLabels';
 import { MasonryBlock, MasonryBlockData, distributeMasonry } from './MasonryBlock';
-import { MilestoneRow } from './MilestoneRow';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRow } from '@/components/ui/SkeletonRow';
 import { colors, spacing, typography } from '@/constants/theme';
@@ -16,12 +15,11 @@ const H_PADDING = 6;
 const COL_GAP = 4;
 
 interface FlatListItem {
-  type: 'dayHeader' | 'masonryBlock' | 'milestone';
+  type: 'dayHeader' | 'masonryBlock';
   key: string;
   label?: string;       // formatted date string
   dateKey?: string;     // YYYY-MM-DD for label lookup
   block?: MasonryBlockData;
-  milestone?: TimelineMilestone;
 }
 
 interface TimelineFeedProps {
@@ -45,7 +43,7 @@ export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
 
   const items = React.useMemo<FlatListItem[]>(() => {
     if (!data) return [];
-    const allItems: TimelineItem[] = data.pages.flatMap((p) => p.items);
+    const allItems: TimelinePhoto[] = data.pages.flatMap((p) => p.items).filter((it: any) => it.type === 'photo');
     const result: FlatListItem[] = [];
     let currentDay = '';
     let photoBuffer: TimelinePhoto[] = [];
@@ -58,7 +56,7 @@ export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
     };
 
     for (const item of allItems) {
-      const dateStr = item.type === 'photo' ? item.taken_at : item.occurred_at;
+      const dateStr = item.taken_at;
       const dayKey = dateStr.slice(0, 10);
 
       if (dayKey !== currentDay) {
@@ -67,12 +65,7 @@ export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
         result.push({ type: 'dayHeader', key: `day-${dayKey}`, label: formatVnDayLabel(dateStr), dateKey: dayKey });
       }
 
-      if (item.type === 'photo') {
-        photoBuffer.push(item as TimelinePhoto);
-      } else {
-        flushPhotos(dayKey, item.id);
-        result.push({ type: 'milestone', key: `ms-${item.id}`, milestone: item as TimelineMilestone });
-      }
+      photoBuffer.push(item);
     }
     if (photoBuffer.length > 0) flushPhotos(currentDay, photoBuffer[0].id);
 
@@ -130,10 +123,7 @@ export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
             </TouchableOpacity>
           );
         }
-        if (item.type === 'masonryBlock') {
-          return <MasonryBlock block={item.block!} columnWidth={columnWidth} />;
-        }
-        return <MilestoneRow milestone={item.milestone!} />;
+        return <MasonryBlock block={item.block!} columnWidth={columnWidth} />;
       }}
     />
   );

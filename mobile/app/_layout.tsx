@@ -52,8 +52,6 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="milestone/new" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="milestone/[id]" />
           <Stack.Screen name="photo/[id]" options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="capture" options={{ presentation: 'fullScreenModal', headerShown: false }} />
           <Stack.Screen name="capture-review" options={{ headerShown: false }} />
