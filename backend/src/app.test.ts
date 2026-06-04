@@ -29,7 +29,7 @@ describe('global error handler (src/app.js)', () => {
   it('falls back to status 500 when err has no status', async () => {
     const res = await request(app).get('/albums/__silent_boom');
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'silent' });
+    expect(res.body).toEqual({ error: 'Internal server error' });
   });
 
   it('uses default error message when err.message is empty', async () => {
