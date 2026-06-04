@@ -57,4 +57,56 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+router.put('/:date', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const albumId = req.params.id as string;
+    const date = req.params.date as string;
+    if (!isValidUUID(albumId)) return res.status(400).json({ error: 'Invalid albumId' });
+    if (!dateRegex.test(date)) return res.status(400).json({ error: 'Invalid date' });
+
+    const label = typeof req.body?.label === 'string' ? req.body.label.trim() : '';
+    if (!label) return res.status(400).json({ error: 'label required' });
+
+    if (!(await isAlbumMember(albumId, req.user!.id))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const [row] = await db
+      .insert(dayLabels)
+      .values({ albumId, date, label, updatedBy: req.user!.id, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: [dayLabels.albumId, dayLabels.date],
+        set: { label, updatedBy: req.user!.id, updatedAt: new Date() },
+      })
+      .returning({
+        date: dayLabels.date,
+        label: dayLabels.label,
+        updated_at: dayLabels.updatedAt,
+        updated_by: dayLabels.updatedBy,
+      });
+
+    res.json(row);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:date', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const albumId = req.params.id as string;
+    const date = req.params.date as string;
+    if (!isValidUUID(albumId)) return res.status(400).json({ error: 'Invalid albumId' });
+    if (!dateRegex.test(date)) return res.status(400).json({ error: 'Invalid date' });
+
+    if (!(await isAlbumMember(albumId, req.user!.id))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    await db.delete(dayLabels).where(and(eq(dayLabels.albumId, albumId), eq(dayLabels.date, date)));
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 export = router;
