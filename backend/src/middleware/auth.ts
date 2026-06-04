@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { users, albumMembers } from '../db/schema';
+import { users } from '../db/schema';
 
 // Augment Express's Request to include `user`. Put this in a global declaration so
 // route handlers can use `req.user.id` without casting.
@@ -53,13 +53,4 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   req.user = found[0];
   next();
-}
-
-export async function requireAlbumAdmin(albumId: string, userId: string): Promise<boolean> {
-  const rows = await db
-    .select({ role: albumMembers.role })
-    .from(albumMembers)
-    .where(and(eq(albumMembers.albumId, albumId), eq(albumMembers.userId, userId)))
-    .limit(1);
-  return rows[0]?.role === 'admin';
 }
