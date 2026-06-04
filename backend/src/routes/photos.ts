@@ -6,12 +6,11 @@ import { users, albumMembers, photos } from '../db/schema';
 import { getPresignedPutUrl } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/apns';
+import { isValidUUID } from '../lib/validation';
 
 const router = express.Router();
 
 router.use(requireAuth);
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function requireMember(albumId: string, userId: string): Promise<boolean> {
   const rows = await db
@@ -40,7 +39,7 @@ router.post('/presign', async (req: Request, res: Response, next: NextFunction) 
   try {
     const { album_id } = req.body ?? {};
     if (!album_id) return res.status(400).json({ error: 'album_id required' });
-    if (!UUID_RE.test(album_id)) {
+    if (!isValidUUID(album_id)) {
       return res.status(400).json({ error: 'album_id must be a valid UUID' });
     }
     if (!(await requireMember(album_id, req.user!.id))) {
@@ -60,7 +59,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     if (!album_id || !r2_key || !taken_at) {
       return res.status(400).json({ error: 'album_id, r2_key, taken_at required' });
     }
-    if (!UUID_RE.test(album_id)) {
+    if (!isValidUUID(album_id)) {
       return res.status(400).json({ error: 'album_id must be a valid UUID' });
     }
     if (!(await requireMember(album_id, req.user!.id))) {
