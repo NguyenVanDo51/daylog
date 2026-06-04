@@ -9,7 +9,7 @@ jest.mock('@/stores/albumStore', () => ({
 }));
 
 import React from 'react';
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCalendar } from '@/hooks/useCalendar';
 import { api } from '@/lib/api';
@@ -49,7 +49,9 @@ describe('useCalendar', () => {
   test('does not fetch when albumId is null', async () => {
     mockAlbumId = null;
     const { result } = renderHook(() => useCalendar(2025, 6), { wrapper: makeWrapper() });
-    await new Promise((r) => setTimeout(r, 20));
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(mockApi.get).not.toHaveBeenCalled();
     expect(result.current.fetchStatus).toBe('idle');
   });
