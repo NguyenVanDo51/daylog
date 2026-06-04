@@ -21,7 +21,7 @@ import { useCaptureStore, getCooldownRemaining } from '@/stores/captureStore';
 
 export default function HomeScreen() {
   const [storageModalVisible, setStorageModalVisible] = useState(false);
-  const [feedMode, setFeedMode] = useState<'feed' | 'calendar'>('feed');
+  const [feedMode, setFeedMode] = useState<'feed' | 'calendar'>('calendar');
   const user = useAuthStore((s) => s.user);
   const albumName = useAlbumStore((s) => s.albumName);
   const childBirthdate = useAlbumStore((s) => s.childBirthdate);

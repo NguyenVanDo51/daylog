@@ -87,11 +87,11 @@ beforeEach(() => {
 });
 
 describe('HomeScreen (timeline tab)', () => {
-  it('renders the TimelineFeed when album exists', () => {
+  it('renders the CalendarView when album exists (default mode is calendar)', () => {
     mockUseAlbum.mockReturnValue({ data: { child_birthdate: null } });
     mockUseMembers.mockReturnValue({ data: [] });
     const { getByTestId, getByText } = render(<Screen />);
-    expect(getByTestId('timeline-feed')).toBeTruthy();
+    expect(getByTestId('mock-calendar-view')).toBeTruthy();
     expect(getByText(/Test/)).toBeTruthy();
   });
 
@@ -147,7 +147,7 @@ describe('HomeScreen (timeline tab)', () => {
     const { UNSAFE_getAllByType } = render(<Screen />);
     const { TouchableOpacity } = require('react-native');
     const touchables = UNSAFE_getAllByType(TouchableOpacity);
-    // Avatar row is [0]; toggle-feed is [1]; toggle-calendar is [2]; camera btn is [3].
+    // Avatar row is [0]; toggle-feed is [1]; toggle-calendar is [2]. Camera only shown in feed mode.
     const avatarRow = touchables[0];
     fireEvent.press(avatarRow);
     expect(mockRouter.push).toHaveBeenCalledWith('/(tabs)/family');
@@ -155,21 +155,22 @@ describe('HomeScreen (timeline tab)', () => {
 
   it('does not render the avatar row when members is empty', () => {
     mockUseMembers.mockReturnValue({ data: [] });
-    const { getByTestId, queryByTestId } = render(<Screen />);
-    // Toggle buttons and camera are rendered; avatar row is not.
+    const { getByTestId } = render(<Screen />);
+    // Toggle buttons are rendered; avatar row is not.
     expect(getByTestId('toggle-feed')).toBeTruthy();
     expect(getByTestId('toggle-calendar')).toBeTruthy();
-    // Camera is visible in feed mode (default)
-    expect(queryByTestId('mock-calendar-view')).toBeNull();
+    // Calendar is visible in calendar mode (default)
+    expect(getByTestId('mock-calendar-view')).toBeTruthy();
   });
 
   it('does not render the avatar row when members is undefined', () => {
     mockUseMembers.mockReturnValue({ data: undefined });
-    const { getByTestId, queryByTestId } = render(<Screen />);
+    const { getByTestId } = render(<Screen />);
     // Toggle buttons are rendered; avatar row is not.
     expect(getByTestId('toggle-feed')).toBeTruthy();
     expect(getByTestId('toggle-calendar')).toBeTruthy();
-    expect(queryByTestId('mock-calendar-view')).toBeNull();
+    // Calendar is visible in calendar mode (default)
+    expect(getByTestId('mock-calendar-view')).toBeTruthy();
   });
 
   it('renders a morning greeting in the morning hours', () => {
@@ -207,19 +208,21 @@ describe('HomeScreen (timeline tab)', () => {
   it('renders without crashing if user is null', () => {
     authState.user = null;
     const { getByTestId } = render(<Screen />);
-    expect(getByTestId('timeline-feed')).toBeTruthy();
+    expect(getByTestId('mock-calendar-view')).toBeTruthy();
   });
 
-  it('toggle switches between feed and calendar', () => {
+  it('toggle switches between calendar and feed', () => {
     mockUseAlbum.mockReturnValue({ data: { child_birthdate: null } });
     mockUseMembers.mockReturnValue({ data: [] });
     const { getByTestId, queryByTestId } = render(<Screen />);
-    expect(queryByTestId('mock-calendar-view')).toBeNull();
+    // Default is calendar
+    expect(getByTestId('mock-calendar-view')).toBeTruthy();
+    expect(queryByTestId('timeline-feed')).toBeNull();
+    fireEvent.press(getByTestId('toggle-feed'));
     expect(getByTestId('timeline-feed')).toBeTruthy();
+    expect(queryByTestId('mock-calendar-view')).toBeNull();
     fireEvent.press(getByTestId('toggle-calendar'));
     expect(getByTestId('mock-calendar-view')).toBeTruthy();
-    fireEvent.press(getByTestId('toggle-feed'));
-    expect(queryByTestId('mock-calendar-view')).toBeNull();
-    expect(getByTestId('timeline-feed')).toBeTruthy();
+    expect(queryByTestId('timeline-feed')).toBeNull();
   });
 });
