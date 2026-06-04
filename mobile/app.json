@@ -51,7 +51,8 @@
       ],
       "expo-image",
       "expo-font",
-      "expo-localization"
+      "expo-localization",
+      "expo-media-library"
     ],
     "experiments": {
       "typedRoutes": true

@@ -10,7 +10,7 @@ interface Props {
 export function ReactionBadge({ reactions }: Props) {
   if (!reactions.length) return null;
   const total = reactions.reduce((s, r) => s + r.count, 0);
-  const top2 = reactions
+  const top2 = [...reactions]
     .sort((a, b) => b.count - a.count)
     .slice(0, 2)
     .map((r) => r.emoji)
