@@ -6,6 +6,8 @@ import { compressToWebP } from '@/lib/compression';
 import { extractTakenAt } from '@/lib/exif';
 import { useAlbumStore } from '@/stores/albumStore';
 import { useUploadStore } from '@/stores/uploadStore';
+import { usePendingUploadStore } from '@/stores/pendingUploadStore';
+import { runWithConcurrency } from '@/lib/concurrency';
 
 export interface UploadAsset {
   uri: string;
@@ -13,12 +15,21 @@ export interface UploadAsset {
   takenAt: string | null;
 }
 
+interface PendingAsset extends UploadAsset {
+  pendingId: string;
+}
+
 export function useUpload() {
   const qc = useQueryClient();
   const albumId = useAlbumStore((s) => s.albumId);
   const addSynced = useUploadStore((s) => s.addSynced);
+  const addPending = usePendingUploadStore((s) => s.addPending);
+  const markDone = usePendingUploadStore((s) => s.markDone);
+  const markError = usePendingUploadStore((s) => s.markError);
+  const clearAll = usePendingUploadStore((s) => s.clearAll);
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [failedCount, setFailedCount] = useState(0);
 
   async function pickImages(): Promise<UploadAsset[]> {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -35,24 +46,31 @@ export function useUpload() {
     }));
   }
 
-  async function uploadImages(assets: UploadAsset[], caption?: string) {
+  async function uploadImages(assets: UploadAsset[], caption?: string): Promise<void> {
     setUploading(true);
     setProgress(0);
-    try {
-      for (let i = 0; i < assets.length; i++) {
-        const asset = assets[i];
-        // 1. Presign
+    setFailedCount(0);
+
+    const pendingAssets: PendingAsset[] = assets.map((a, i) => ({
+      ...a,
+      pendingId: `${Date.now()}-${i}`,
+    }));
+
+    addPending(pendingAssets.map((a) => ({ id: a.pendingId, localUri: a.uri })));
+
+    let done = 0;
+    let failed = 0;
+
+    async function uploadOne(asset: PendingAsset): Promise<void> {
+      try {
         const { data: presign } = await api.post('/photos/presign', { album_id: albumId });
-        // 2. Compress
         const compressedUri = await compressToWebP(asset.uri);
-        // 3. Upload to R2
         const blob = await fetch(compressedUri).then((r) => r.blob());
         await fetch(presign.url, {
           method: 'PUT',
           body: blob,
           headers: { 'Content-Type': 'image/webp' },
         });
-        // 4. Register
         await api.post('/photos', {
           album_id: albumId,
           r2_key: presign.key,
@@ -60,17 +78,29 @@ export function useUpload() {
           caption: caption || null,
           local_asset_id: asset.localAssetId ?? null,
         });
-        // 5. Track synced photo for Storage Freedom
         if (asset.localAssetId) {
           addSynced({ localAssetId: asset.localAssetId, compressedBytes: blob.size });
         }
-        setProgress((i + 1) / assets.length);
+        markDone(asset.pendingId);
+      } catch {
+        markError(asset.pendingId);
+        failed++;
+      } finally {
+        done++;
+        setProgress(done / assets.length);
       }
-      qc.invalidateQueries({ queryKey: ['timeline', albumId] });
-    } finally {
-      setUploading(false);
     }
+
+    await runWithConcurrency(
+      pendingAssets.map((a) => () => uploadOne(a)),
+      3,
+    );
+
+    qc.invalidateQueries({ queryKey: ['timeline', albumId] });
+    setFailedCount(failed);
+    setUploading(false);
+    setTimeout(() => clearAll(), 400);
   }
 
-  return { pickImages, uploadImages, uploading, progress };
+  return { pickImages, uploadImages, uploading, progress, failedCount };
 }
