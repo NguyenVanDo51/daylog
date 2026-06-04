@@ -3,6 +3,7 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { albums, albumMembers, photos } from '../db/schema';
+import { isValidUUID } from '../lib/validation';
 
 const router = express.Router();
 
@@ -70,6 +71,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const albumId = req.params.id as string;
+    if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
     const membership = await db
       .select()
       .from(albumMembers)
@@ -106,6 +108,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const albumId = req.params.id as string;
+    if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
     const membership = await db
       .select()
       .from(albumMembers)

@@ -117,12 +117,13 @@ describe('Invites', () => {
     expect(rows[0].max_uses).toBeNull();
   });
 
-  it('POST /albums/:id/invites with non-UUID albumId triggers catch (500)', async () => {
+  it('POST /albums/:id/invites returns 400 when albumId is not a valid UUID', async () => {
     const res = await request(app)
       .post(`/albums/not-a-uuid/invites`)
       .set(headers)
       .send({});
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid albumId/);
   });
 
   it('GET /invites/:token returns 404 for nonexistent token', async () => {

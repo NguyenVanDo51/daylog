@@ -145,11 +145,12 @@ describe('GET /albums/:id/timeline', () => {
     expect(res.body.next_cursor).toBeTruthy();
   });
 
-  it('returns 500 when :id is not a valid UUID (catch branch)', async () => {
+  it('returns 400 when albumId is not a valid UUID', async () => {
     const res = await request(app)
       .get('/albums/not-a-uuid/timeline')
       .set(headers);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid albumId/);
   });
 
   it('returns empty items and null next_cursor for an empty album', async () => {

@@ -3,6 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { albumMembers } from '../db/schema';
+import { isValidUUID } from '../lib/validation';
 
 const router = express.Router({ mergeParams: true });
 
@@ -33,6 +34,7 @@ type Cursor = {
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const albumId = req.params.id as string;
+    if (!isValidUUID(albumId)) return res.status(400).json({ error: 'Invalid albumId' });
     const raw = Number(req.query.limit);
     const limit = Math.min(!isNaN(raw) && raw > 0 ? Math.floor(raw) : 20, 100);
     let cursor: Cursor | null = null;

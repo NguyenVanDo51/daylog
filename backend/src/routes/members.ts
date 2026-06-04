@@ -3,6 +3,7 @@ import { eq, and, asc, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { users, albumMembers } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
+import { isValidUUID } from '../lib/validation';
 
 const router = express.Router({ mergeParams: true });
 router.use(requireAuth);
@@ -10,6 +11,7 @@ router.use(requireAuth);
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const albumId = req.params.id as string;
+    if (!isValidUUID(albumId)) return res.status(400).json({ error: 'Invalid albumId' });
     const membership = await db
       .select({ x: sql<number>`1` })
       .from(albumMembers)

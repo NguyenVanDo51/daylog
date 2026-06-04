@@ -36,9 +36,10 @@ describe('GET /albums/:id/members', () => {
     expect(res.status).toBe(403);
   });
 
-  it('returns 500 when membership query throws (invalid UUID)', async () => {
+  it('returns 400 when albumId is not a valid UUID', async () => {
     const res = await request(app).get('/albums/not-a-uuid/members').set(headers);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid albumId/);
   });
 
   it('returns members ordered by joined_at ASC', async () => {

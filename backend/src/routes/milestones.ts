@@ -4,6 +4,7 @@ import { db } from '../db';
 import { users, albumMembers, milestones } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
 import { sendPush } from '../services/apns';
+import { isValidUUID } from '../lib/validation';
 
 const router = express.Router();
 
@@ -36,6 +37,7 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const albumId = req.params.albumId as string;
+      if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
       const { title, note, occurred_at, cover_photo_id } = req.body ?? {};
       if (!title || !occurred_at) {
         res.status(400).json({ error: 'title and occurred_at required' });
@@ -88,6 +90,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const albumId = req.params.albumId as string;
+      if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
       if (!(await isAlbumMember(albumId, req.user!.id))) {
         res.status(403).json({ error: 'Forbidden' });
         return;
@@ -112,6 +115,7 @@ router.patch(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const milestoneId = req.params.id as string;
+      if (!isValidUUID(milestoneId)) { res.status(400).json({ error: 'Invalid milestoneId' }); return; }
       // Access check: caller must be a member of the milestone's owning album.
       const existing = await db
         .select({ id: milestones.id })
@@ -181,6 +185,7 @@ router.delete(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const milestoneId = req.params.id as string;
+      if (!isValidUUID(milestoneId)) { res.status(400).json({ error: 'Invalid milestoneId' }); return; }
       const existing = await db
         .select({ id: milestones.id, role: albumMembers.role })
         .from(milestones)

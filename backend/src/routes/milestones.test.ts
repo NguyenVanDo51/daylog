@@ -108,12 +108,13 @@ describe('Milestones', () => {
     expect(res.status).toBe(403);
   });
 
-  it('POST with non-UUID albumId triggers catch and returns 500', async () => {
+  it('POST returns 400 when albumId is not a valid UUID', async () => {
     const res = await request(app)
       .post(`/albums/not-a-uuid/milestones`)
       .set(headers)
       .send({ title: 'First steps', occurred_at: '2024-09-15T00:00:00Z' });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid albumId/);
   });
 
   it('POST success without other members calls sendPush with empty tokens', async () => {
@@ -161,11 +162,12 @@ describe('Milestones', () => {
     expect(res.status).toBe(403);
   });
 
-  it('GET with non-UUID albumId triggers catch and returns 500', async () => {
+  it('GET returns 400 when albumId is not a valid UUID', async () => {
     const res = await request(app)
       .get(`/albums/not-a-uuid/milestones`)
       .set(headers);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid albumId/);
   });
 
   // --- PATCH ---
@@ -272,12 +274,13 @@ describe('Milestones', () => {
     expect(res.status).toBe(403);
   });
 
-  it('PATCH with non-UUID id triggers catch and returns 500', async () => {
+  it('PATCH returns 400 when milestoneId is not a valid UUID', async () => {
     const res = await request(app)
       .patch(`/milestones/not-a-uuid`)
       .set(headers)
       .send({ title: 'Bad id' });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid milestoneId/);
   });
 
   // --- DELETE ---
@@ -324,10 +327,11 @@ describe('Milestones', () => {
     expect(res.status).toBe(403);
   });
 
-  it('DELETE with non-UUID id triggers catch and returns 500', async () => {
+  it('DELETE returns 400 when milestoneId is not a valid UUID', async () => {
     const res = await request(app)
       .delete(`/milestones/not-a-uuid`)
       .set(headers);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid milestoneId/);
   });
 });

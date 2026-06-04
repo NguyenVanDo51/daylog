@@ -6,6 +6,7 @@ import { inviteLookupLimiter } from '../lib/rateLimit';
 import { db } from '../db';
 import { invites, albums, albumMembers } from '../db/schema';
 import { generateQRCode } from '../services/qrcode';
+import { isValidUUID } from '../lib/validation';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.post(
   async (req: Request<{ albumId: string }, unknown, CreateInviteBody>, res: Response, next: NextFunction) => {
     try {
       const { albumId } = req.params;
+      if (!isValidUUID(albumId)) return res.status(400).json({ error: 'Invalid albumId' });
       const { expires_in_days, max_uses } = req.body;
 
       const membership = await db

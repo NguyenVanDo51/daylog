@@ -193,19 +193,21 @@ describe('Albums error paths and edge cases', () => {
     expect(res.body.name).toBe('Unchanged Album');
   });
 
-  it('GET /albums/:id with non-UUID id returns 500 (catch branch forwards db error)', async () => {
+  it('GET /albums/:id returns 400 when albumId is not a valid UUID', async () => {
     const res = await request(app).get('/albums/not-a-uuid').set(headers);
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid albumId/);
   });
 
-  it('PATCH /albums/:id with non-UUID id returns 500 (catch branch forwards db error)', async () => {
+  it('PATCH /albums/:id returns 400 when albumId is not a valid UUID', async () => {
     const res = await request(app)
       .patch('/albums/not-a-uuid')
       .set(headers)
       .send({ name: 'whatever' });
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid albumId/);
   });
 
   it('POST /albums without child_birthdate falls back to null (binary-expr branch)', async () => {
