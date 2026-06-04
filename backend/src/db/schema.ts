@@ -124,6 +124,25 @@ export const milestones = pgTable(
   })
 );
 
+export const dayLabels = pgTable(
+  'day_labels',
+  {
+    id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+    albumId: uuid('album_id')
+      .notNull()
+      .references(() => albums.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    label: text('label').notNull(),
+    updatedBy: uuid('updated_by')
+      .notNull()
+      .references(() => users.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqAlbumDate: uniqueIndex('day_labels_album_date_uniq').on(t.albumId, t.date),
+  })
+);
+
 export const invites = pgTable('invites', {
   id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
   albumId: uuid('album_id')
