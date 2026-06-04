@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1780497753446" clover="3.2.0">
+  <project timestamp="1780497753446" name="All files">
+    <metrics statements="33" coveredstatements="33" conditionals="12" coveredconditionals="12" methods="6" coveredmethods="6" elements="51" coveredelements="51" complexity="0" loc="33" ncloc="33" packages="1" files="1" classes="1"/>
+    <file name="index.tsx" path="/Users/do.nguyen/personal/family-guy/mobile/app/(auth)/index.tsx">
+      <metrics statements="33" coveredstatements="33" conditionals="12" coveredconditionals="12" methods="6" coveredmethods="6"/>
+      <line num="19" count="1" type="stmt"/>
+      <line num="21" count="1" type="stmt"/>
+      <line num="28" count="37" type="stmt"/>
+      <line num="29" count="37" type="stmt"/>
+      <line num="30" count="37" type="stmt"/>
+      <line num="33" count="6" type="stmt"/>
+      <line num="34" count="6" type="stmt"/>
+      <line num="35" count="6" type="stmt"/>
+      <line num="41" count="4" type="stmt"/>
+      <line num="42" count="4" type="stmt"/>
+      <line num="44" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="46" count="6" type="stmt"/>
+      <line num="51" count="6" type="stmt"/>
+      <line num="52" count="6" type="stmt"/>
+      <line num="53" count="6" type="stmt"/>
+      <line num="54" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="55" count="2" type="stmt"/>
+      <line num="56" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="57" count="1" type="stmt"/>
+      <line num="58" count="1" type="stmt"/>
+      <line num="60" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="61" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="63" count="6" type="stmt"/>
+      <line num="68" count="5" type="stmt"/>
+      <line num="69" count="5" type="stmt"/>
+      <line num="70" count="5" type="stmt"/>
+      <line num="71" count="5" type="stmt"/>
+      <line num="72" count="5" type="stmt"/>
+      <line num="73" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="75" count="5" type="stmt"/>
+      <line num="78" count="37" type="stmt"/>
+      <line num="82" count="222" type="stmt"/>
+      <line num="113" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>
