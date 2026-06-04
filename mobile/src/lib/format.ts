@@ -21,3 +21,11 @@ export function greetingForHour(hour: number): string {
   if (hour >= 18 && hour < 22) return 'Chào buổi tối';
   return 'Chào buổi khuya';
 }
+
+const DOW_VI = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+
+export function formatVnDayLabel(isoDate: string): string {
+  const d = new Date(isoDate);
+  const dow = DOW_VI[d.getDay()];
+  return `${dow}, ${d.getDate()} tháng ${d.getMonth() + 1}`;
+}
