@@ -145,6 +145,20 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
   GoogleSigninButton: 'GoogleSigninButton',
 }));
 
+// @expo/vector-icons — pulls in expo-font/expo-asset which are not installed for jest.
+// Mock all icon sets used across the app with a lightweight View-based stub.
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const makeIcon = (name) => (props) => React.createElement(View, { testID: name, ...props });
+  return {
+    Ionicons: makeIcon('Ionicons'),
+    MaterialIcons: makeIcon('MaterialIcons'),
+    FontAwesome: makeIcon('FontAwesome'),
+    AntDesign: makeIcon('AntDesign'),
+  };
+});
+
 // expo-localization — used by src/lib/i18n.ts.
 jest.mock('expo-localization', () => ({
   getLocales: () => [{ languageCode: 'vi', languageTag: 'vi', regionCode: 'VN' }],
@@ -238,4 +252,13 @@ jest.mock('react-native-safe-area-context', () => {
 // @lodev09/react-native-true-sheet — native sheet component used by SheetModal and UploadSheet.
 jest.mock('@lodev09/react-native-true-sheet', () => ({
   TrueSheet: 'TrueSheet',
+}));
+
+// expo-media-library — used by StorageFreedomModal.
+jest.mock('expo-media-library', () => ({
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted', granted: true }),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted', granted: true }),
+  getAssetsAsync: jest.fn().mockResolvedValue({ assets: [], totalCount: 0 }),
+  deleteAssetsAsync: jest.fn().mockResolvedValue({ status: 'success' }),
+  PermissionStatus: { GRANTED: 'granted', DENIED: 'denied', UNDETERMINED: 'undetermined' },
 }));
