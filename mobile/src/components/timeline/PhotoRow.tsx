@@ -27,6 +27,7 @@ export function PhotoRow({ photos, rowIndex = 0 }: PhotoRowProps) {
           size={cellSize}
           index={rowIndex * 2 + i}
           photoId={p.id}
+          showReactions
         />
       ))}
     </View>

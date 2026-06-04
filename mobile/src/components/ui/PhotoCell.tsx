@@ -1,8 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { TouchableOpacity, Image, Text, View, StyleSheet, ViewStyle } from 'react-native';
 import { router } from 'expo-router';
 import { colors, radii, shadows, typography, spacing } from '@/constants/theme';
 import { tap } from '@/lib/haptics';
+import { ReactionPicker } from './ReactionPicker';
+import { ReactionBadge } from './ReactionBadge';
+import { useReactions, useReact } from '@/hooks/useReactions';
 
 interface PhotoCellProps {
   uri: string;
@@ -12,12 +15,16 @@ interface PhotoCellProps {
   photoId?: string;
   onPress?: () => void;
   style?: ViewStyle;
+  showReactions?: boolean;
 }
 
-export function PhotoCell({ uri, caption, size, index = 0, photoId, onPress, style }: PhotoCellProps) {
+export function PhotoCell({ uri, caption, size, index = 0, photoId, onPress, style, showReactions }: PhotoCellProps) {
   const ref = useRef<View>(null);
   const useAlt = index % 2 === 1;
   const [tl, tr, br, bl] = useAlt ? radii.stickerAlt : radii.sticker;
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const { data: reactionData = [] } = useReactions(showReactions ? (photoId ?? '') : '');
+  const { add } = useReact(photoId ?? '');
 
   function handlePress() {
     tap();
@@ -35,6 +42,8 @@ export function PhotoCell({ uri, caption, size, index = 0, photoId, onPress, sty
       <TouchableOpacity
         ref={ref as any}
         onPress={handlePress}
+        onLongPress={() => { if (showReactions) setPickerVisible(true); }}
+        delayLongPress={350}
         style={[
           { width: size, height: size,
             borderTopLeftRadius: tl, borderTopRightRadius: tr, borderBottomRightRadius: br, borderBottomLeftRadius: bl },
@@ -44,7 +53,15 @@ export function PhotoCell({ uri, caption, size, index = 0, photoId, onPress, sty
         activeOpacity={0.9}
       >
         <Image source={{ uri }} style={styles.image} resizeMode="cover" />
+        {showReactions && <ReactionBadge reactions={reactionData} />}
       </TouchableOpacity>
+      {showReactions && (
+        <ReactionPicker
+          visible={pickerVisible}
+          onSelect={(emoji) => add.mutate(emoji)}
+          onDismiss={() => setPickerVisible(false)}
+        />
+      )}
       {caption && (
         <Text style={styles.caption} numberOfLines={1}>{caption}</Text>
       )}
