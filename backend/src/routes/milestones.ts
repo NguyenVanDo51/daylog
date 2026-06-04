@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { and, desc, eq, isNotNull, ne, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { users, albumMembers, milestones } from '../db/schema';
+import { users, albumMembers, milestones, photos } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
 import { sendPush } from '../services/apns';
 import { isValidUUID } from '../lib/validation';
@@ -118,7 +118,7 @@ router.patch(
       if (!isValidUUID(milestoneId)) { res.status(400).json({ error: 'Invalid milestoneId' }); return; }
       // Access check: caller must be a member of the milestone's owning album.
       const existing = await db
-        .select({ id: milestones.id })
+        .select({ id: milestones.id, albumId: milestones.albumId })
         .from(milestones)
         .innerJoin(albumMembers, eq(albumMembers.albumId, milestones.albumId))
         .where(
@@ -131,6 +131,22 @@ router.patch(
       }
 
       const { title, note, occurred_at, cover_photo_id } = req.body ?? {};
+
+      if (cover_photo_id !== undefined && cover_photo_id !== null) {
+        if (!isValidUUID(cover_photo_id)) {
+          res.status(400).json({ error: 'Invalid cover_photo_id' });
+          return;
+        }
+        const matchingPhoto = await db
+          .select({ id: photos.id })
+          .from(photos)
+          .where(and(eq(photos.id, cover_photo_id), eq(photos.albumId, existing[0].albumId)))
+          .limit(1);
+        if (!matchingPhoto[0]) {
+          res.status(400).json({ error: 'cover_photo_id does not belong to this album' });
+          return;
+        }
+      }
 
       // Mirror the original SQL's COALESCE($n, col) behavior: only overwrite
       // columns when the caller actually supplied a non-null value. If none

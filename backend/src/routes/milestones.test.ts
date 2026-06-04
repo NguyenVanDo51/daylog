@@ -283,6 +283,27 @@ describe('Milestones', () => {
     expect(res.body.error).toMatch(/Invalid milestoneId/);
   });
 
+  it('PATCH returns 400 when cover_photo_id belongs to a different album', async () => {
+    const { rows: [ms] } = await pool.query(
+      `INSERT INTO milestones (album_id, created_by, title, occurred_at) VALUES ($1, $2, 'Test', NOW()) RETURNING id`,
+      [album.id, user.id]
+    );
+
+    const other = await createTestUser({ apple_sub: 'other-cover' });
+    const otherAlbum = await createTestAlbum(other.id);
+    const { rows: [photo] } = await pool.query(
+      `INSERT INTO photos (album_id, uploaded_by, r2_key, taken_at) VALUES ($1, $2, 'k', NOW()) RETURNING id`,
+      [otherAlbum.id, other.id]
+    );
+
+    const res = await request(app)
+      .patch(`/milestones/${ms.id}`)
+      .set(authHeader(user))
+      .send({ cover_photo_id: photo.id });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/cover_photo_id does not belong to this album/);
+  });
+
   // --- DELETE ---
 
   it('DELETE by non-member returns 403', async () => {

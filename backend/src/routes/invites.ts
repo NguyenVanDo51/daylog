@@ -35,6 +35,19 @@ router.post(
         .limit(1);
       if (!membership[0]) return res.status(403).json({ error: 'Forbidden' });
 
+      if (expires_in_days !== undefined) {
+        const days = Number(expires_in_days);
+        if (!Number.isInteger(days) || days < 1) {
+          return res.status(400).json({ error: 'expires_in_days must be a positive integer' });
+        }
+      }
+      if (max_uses !== undefined) {
+        const uses = Number(max_uses);
+        if (!Number.isInteger(uses) || uses < 1) {
+          return res.status(400).json({ error: 'max_uses must be a positive integer' });
+        }
+      }
+
       const token = generateToken();
       const expiresAt: Date | null = expires_in_days
         ? new Date(Date.now() + expires_in_days * 86400000)

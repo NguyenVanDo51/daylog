@@ -198,4 +198,32 @@ describe('Invites', () => {
     const { rows } = await pool.query('SELECT use_count FROM invites WHERE token = $1', [token]);
     expect(rows[0].use_count).toBe(1);
   });
+
+  describe('POST /albums/:albumId/invites — param validation', () => {
+    it('returns 400 when expires_in_days is 0', async () => {
+      const res = await request(app)
+        .post(`/albums/${album.id}/invites`)
+        .set(authHeader(user))
+        .send({ expires_in_days: 0 });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/expires_in_days must be a positive integer/);
+    });
+
+    it('returns 400 when expires_in_days is negative', async () => {
+      const res = await request(app)
+        .post(`/albums/${album.id}/invites`)
+        .set(authHeader(user))
+        .send({ expires_in_days: -5 });
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when max_uses is 0', async () => {
+      const res = await request(app)
+        .post(`/albums/${album.id}/invites`)
+        .set(authHeader(user))
+        .send({ max_uses: 0 });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/max_uses must be a positive integer/);
+    });
+  });
 });
