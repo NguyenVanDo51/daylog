@@ -46,6 +46,11 @@ function photo(id: string, caption: string | null = null) {
     thumbnail_key: `thumbs/${id}.webp`,
     taken_at: '2026-01-01T00:00:00Z',
     caption,
+    media_type: 'photo' as const,
+    source: 'upload' as const,
+    duration_ms: null,
+    width: null,
+    height: null,
   };
 }
 

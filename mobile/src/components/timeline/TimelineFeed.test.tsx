@@ -43,6 +43,11 @@ function photo(id: string, takenAt: string, caption: string | null = null) {
     thumbnail_key: `thumbs/${id}.webp`,
     taken_at: takenAt,
     caption,
+    media_type: 'photo' as const,
+    source: 'upload' as const,
+    duration_ms: null,
+    width: null,
+    height: null,
   };
 }
 
