@@ -288,3 +288,230 @@ describe('POST /photos', () => {
     expect(res.body.error).toMatch(/Invalid or unrecognized r2_key/);
   });
 });
+
+// --- New tests for content_type presign ---
+
+describe('POST /photos/presign — content_type', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+  let album: Awaited<ReturnType<typeof createTestAlbum>>;
+  let headers: ReturnType<typeof authHeader>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    album = await createTestAlbum(user.id);
+    headers = authHeader(user);
+    mockPresign.mockResolvedValue({ url: 'https://r2.example.com/presigned', key: 'photos/abc.mp4' });
+  });
+
+  it('accepts content_type video/mp4', async () => {
+    const res = await request(app)
+      .post('/photos/presign')
+      .set(headers)
+      .send({ album_id: album.id, content_type: 'video/mp4' });
+    expect(res.status).toBe(200);
+    expect(mockPresign).toHaveBeenCalledWith('video/mp4');
+  });
+
+  it('accepts content_type image/jpeg', async () => {
+    const res = await request(app)
+      .post('/photos/presign')
+      .set(headers)
+      .send({ album_id: album.id, content_type: 'image/jpeg' });
+    expect(res.status).toBe(200);
+    expect(mockPresign).toHaveBeenCalledWith('image/jpeg');
+  });
+
+  it('rejects unknown content_type', async () => {
+    const res = await request(app)
+      .post('/photos/presign')
+      .set(headers)
+      .send({ album_id: album.id, content_type: 'application/pdf' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/content_type/);
+  });
+
+  it('defaults to image/webp when content_type is omitted', async () => {
+    mockPresign.mockResolvedValue({ url: 'https://r2.example.com/presigned', key: 'photos/abc.webp' });
+    const res = await request(app)
+      .post('/photos/presign')
+      .set(headers)
+      .send({ album_id: album.id });
+    expect(res.status).toBe(200);
+    expect(mockPresign).toHaveBeenCalledWith('image/webp');
+  });
+});
+
+// --- New tests for POST /photos capture fields ---
+
+describe('POST /photos — capture fields', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+  let album: Awaited<ReturnType<typeof createTestAlbum>>;
+  let headers: ReturnType<typeof authHeader>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    album = await createTestAlbum(user.id);
+    headers = authHeader(user);
+    mockGenThumb.mockResolvedValue('thumb_key');
+    mockSendPush.mockResolvedValue(undefined);
+  });
+
+  it('creates a capture photo and returns source + media_type', async () => {
+    await createPresignToken(user.id, 'key-capture-photo');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-capture-photo',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'photo',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.source).toBe('capture');
+    expect(res.body.media_type).toBe('photo');
+  });
+
+  it('creates a capture video with duration_ms and thumbnail_r2_key', async () => {
+    await createPresignToken(user.id, 'key-video');
+    await createPresignToken(user.id, 'key-video-thumb');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-video',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'video',
+        duration_ms: 1800,
+        thumbnail_r2_key: 'key-video-thumb',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.media_type).toBe('video');
+    expect(res.body.duration_ms).toBe(1800);
+    expect(res.body.thumbnail_key).toBe('key-video-thumb');
+  });
+
+  it('rejects video missing duration_ms', async () => {
+    await createPresignToken(user.id, 'key-vid2');
+    await createPresignToken(user.id, 'key-vid2-thumb');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-vid2',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'video',
+        thumbnail_r2_key: 'key-vid2-thumb',
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/duration_ms/);
+  });
+
+  it('rejects video with duration_ms > 2000', async () => {
+    await createPresignToken(user.id, 'key-vid3');
+    await createPresignToken(user.id, 'key-vid3-thumb');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-vid3',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'video',
+        duration_ms: 3000,
+        thumbnail_r2_key: 'key-vid3-thumb',
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/duration_ms/);
+  });
+
+  it('rejects video missing thumbnail_r2_key', async () => {
+    await createPresignToken(user.id, 'key-vid4');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-vid4',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'video',
+        duration_ms: 1000,
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/thumbnail_r2_key/);
+  });
+
+  it('sends capture push with Vietnamese title and body', async () => {
+    await createPresignToken(user.id, 'key-capture-push');
+    await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-capture-push',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'photo',
+      });
+    expect(mockSendPush).toHaveBeenCalledWith(
+      expect.any(Array),
+      'Khoảnh khắc mới',
+      expect.stringContaining('vừa gửi'),
+      expect.any(Object)
+    );
+  });
+
+  it('enforces 30-minute rate limit on captures', async () => {
+    // First capture — should succeed
+    await createPresignToken(user.id, 'key-rl-1');
+    const first = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-rl-1',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'photo',
+      });
+    expect(first.status).toBe(201);
+
+    // Second capture immediately — should 429
+    await createPresignToken(user.id, 'key-rl-2');
+    const second = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-rl-2',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'photo',
+      });
+    expect(second.status).toBe(429);
+    expect(second.body.error).toBe('rate_limited');
+    expect(second.body.retry_after_seconds).toBeGreaterThan(0);
+  });
+
+  it('does NOT rate-limit source=upload', async () => {
+    await createPresignToken(user.id, 'key-upload-notlimited');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-upload-notlimited',
+        taken_at: new Date().toISOString(),
+        source: 'upload',
+        media_type: 'photo',
+      });
+    expect(res.status).toBe(201);
+  });
+});
