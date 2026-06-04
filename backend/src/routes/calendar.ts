@@ -1,8 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, between, eq, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
-import { albumMembers } from '../db/schema';
+import { albumMembers, dayLabels } from '../db/schema';
 import { isValidUUID } from '../lib/validation';
 
 const router = express.Router({ mergeParams: true });
@@ -68,13 +68,29 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       ORDER BY day
     `);
 
-    const result: Record<string, { photo: boolean; capture: boolean; milestone: boolean }> = {};
+    const result: Record<string, { photo: boolean; capture: boolean; milestone: boolean; label?: string }> = {};
     for (const row of rows.rows) {
       result[row.day] = {
         photo: row.has_upload,
         capture: row.has_capture,
         milestone: row.has_milestone,
       };
+    }
+
+    const fromDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const toDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    const labelRows = await db
+      .select({ date: dayLabels.date, label: dayLabels.label })
+      .from(dayLabels)
+      .where(and(eq(dayLabels.albumId, albumId), between(dayLabels.date, fromDate, toDate)));
+
+    for (const r of labelRows) {
+      if (!result[r.date]) {
+        result[r.date] = { photo: false, capture: false, milestone: false };
+      }
+      (result[r.date] as any).label = r.label;
     }
 
     res.json(result);

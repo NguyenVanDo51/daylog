@@ -1,5 +1,7 @@
 import request from 'supertest';
 import { pool } from '../db';
+import { db } from '../db';
+import { dayLabels } from '../db/schema';
 import { createTestUser, createTestAlbum, authHeader } from '../../tests/setup';
 const app = require('../app');
 
@@ -80,5 +82,21 @@ describe('GET /albums/:id/calendar', () => {
       .get(`/albums/${album.id}/calendar?year=2025&month=6`)
       .set(authHeader(other));
     expect(res.status).toBe(403);
+  });
+
+  it('includes day labels for the month', async () => {
+    await db.insert(dayLabels).values({
+      albumId: album.id,
+      date: '2026-06-15',
+      label: 'Sinh nhật',
+      updatedBy: user.id,
+    });
+
+    const res = await request(app)
+      .get(`/albums/${album.id}/calendar?year=2026&month=6`)
+      .set(headers);
+
+    expect(res.status).toBe(200);
+    expect(res.body['2026-06-15'].label).toBe('Sinh nhật');
   });
 });
