@@ -13,9 +13,14 @@ const r2 = new S3Client({
 
 const BUCKET = process.env.R2_BUCKET || '';
 
-export async function getPresignedPutUrl(): Promise<{ url: string; key: string }> {
-  const key = `photos/${randomUUID()}.webp`;
-  const command = new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: 'image/webp' });
+export async function getPresignedPutUrl(
+  contentType: 'image/webp' | 'image/jpeg' | 'video/mp4' = 'image/webp'
+): Promise<{ url: string; key: string }> {
+  const ext = contentType === 'video/mp4' ? 'mp4'
+    : contentType === 'image/jpeg' ? 'jpg'
+    : 'webp';
+  const key = `photos/${randomUUID()}.${ext}`;
+  const command = new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType });
   const url = await getSignedUrl(r2, command, { expiresIn: 3600 });
   return { url, key };
 }
