@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, RefreshControl, View, Text, useWindowDimensions } from 'react-native';
+import { FlatList, StyleSheet, RefreshControl, View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTimeline, TimelineItem, TimelineMilestone } from '@/hooks/useTimeline';
 import { useDayLabelsRange } from '@/hooks/useDayLabels';
 import { MasonryBlock, MasonryBlockData, distributeMasonry } from './MasonryBlock';
@@ -24,7 +24,11 @@ interface FlatListItem {
   milestone?: TimelineMilestone;
 }
 
-export function TimelineFeed() {
+interface TimelineFeedProps {
+  onJumpToDay?: (dateKey: string) => void;
+}
+
+export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage, refetch, isRefetching } =
     useTimeline();
   const { width: screenWidth } = useWindowDimensions();
@@ -102,8 +106,8 @@ export function TimelineFeed() {
       renderItem={({ item }) => {
         if (item.type === 'dayHeader') {
           const customLabel = item.dateKey ? labelByDate.get(item.dateKey) : undefined;
-          return (
-            <View style={styles.dayHeaderContainer} testID={`day-header-${item.key}`}>
+          const inner = (
+            <>
               {customLabel ? (
                 <>
                   <Text style={styles.dayHeaderLabel}>{customLabel}</Text>
@@ -112,7 +116,18 @@ export function TimelineFeed() {
               ) : (
                 <Text style={styles.dayHeader}>{item.label}</Text>
               )}
-            </View>
+            </>
+          );
+          return (
+            <TouchableOpacity
+              style={styles.dayHeaderContainer}
+              testID={`day-heading-${item.dateKey}`}
+              onPress={() => item.dateKey && onJumpToDay?.(item.dateKey)}
+              disabled={!onJumpToDay}
+              activeOpacity={onJumpToDay ? 0.6 : 1}
+            >
+              {inner}
+            </TouchableOpacity>
           );
         }
         if (item.type === 'masonryBlock') {

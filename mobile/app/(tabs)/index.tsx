@@ -22,6 +22,7 @@ import { useCaptureStore, getCooldownRemaining } from '@/stores/captureStore';
 export default function HomeScreen() {
   const [storageModalVisible, setStorageModalVisible] = useState(false);
   const [feedMode, setFeedMode] = useState<'feed' | 'calendar'>('calendar');
+  const [calendarInitialDate, setCalendarInitialDate] = useState<string | undefined>(undefined);
   const user = useAuthStore((s) => s.user);
   const albumName = useAlbumStore((s) => s.albumName);
   const childBirthdate = useAlbumStore((s) => s.childBirthdate);
@@ -103,8 +104,11 @@ export default function HomeScreen() {
       <StorageBadge onPress={() => setStorageModalVisible(true)} />
 
       {feedMode === 'feed'
-        ? <TimelineFeed />
-        : <CalendarView />
+        ? <TimelineFeed onJumpToDay={(dateKey) => {
+            setCalendarInitialDate(dateKey);
+            setFeedMode('calendar');
+          }} />
+        : <CalendarView initialDateKey={calendarInitialDate} />
       }
 
       <StorageFreedomModal

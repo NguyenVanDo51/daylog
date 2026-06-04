@@ -37,7 +37,7 @@ jest.mock('@/components/timeline/MilestoneRow', () => {
 
 import React from 'react';
 import { FlatList } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { TimelineFeed } from '@/components/timeline/TimelineFeed';
 import { useTimeline } from '@/hooks/useTimeline';
 
@@ -128,7 +128,7 @@ describe('TimelineFeed', () => {
       }),
     );
     const { getAllByTestId } = render(<TimelineFeed />);
-    const headers = getAllByTestId(/^day-header-day-/);
+    const headers = getAllByTestId(/^day-heading-/);
     expect(headers).toHaveLength(2);
   });
 
@@ -149,7 +149,7 @@ describe('TimelineFeed', () => {
       }),
     );
     const { getAllByTestId } = render(<TimelineFeed />);
-    const headers = getAllByTestId(/^day-header-day-/);
+    const headers = getAllByTestId(/^day-heading-/);
     expect(headers).toHaveLength(1);
   });
 
@@ -212,7 +212,7 @@ describe('TimelineFeed', () => {
       }),
     );
     const { getAllByTestId } = render(<TimelineFeed />);
-    expect(getAllByTestId(/^day-header-day-/)).toHaveLength(3);
+    expect(getAllByTestId(/^day-heading-/)).toHaveLength(3);
     expect(getAllByTestId('masonry-block')).toHaveLength(2);
     expect(getAllByTestId('milestone-row')).toHaveLength(1);
   });
@@ -237,7 +237,7 @@ describe('TimelineFeed', () => {
     );
     const { getAllByTestId } = render(<TimelineFeed />);
     // 1 day header; 2 masonry blocks (photos before + photos after milestone); 1 milestone
-    expect(getAllByTestId(/^day-header-day-/)).toHaveLength(1);
+    expect(getAllByTestId(/^day-heading-/)).toHaveLength(1);
     expect(getAllByTestId('masonry-block')).toHaveLength(2);
     expect(getAllByTestId('milestone-row')).toHaveLength(1);
   });
@@ -255,7 +255,7 @@ describe('TimelineFeed', () => {
     );
     const { getAllByTestId } = render(<TimelineFeed />);
     // both photos same day → 1 day header, 1 masonry block
-    expect(getAllByTestId(/^day-header-day-/)).toHaveLength(1);
+    expect(getAllByTestId(/^day-heading-/)).toHaveLength(1);
     expect(getAllByTestId('masonry-block')).toHaveLength(1);
   });
 
@@ -387,6 +387,26 @@ describe('TimelineFeed', () => {
       types.add(item.type);
     }
     expect(types).toEqual(new Set(['dayHeader', 'masonryBlock', 'milestone']));
+  });
+
+  it('tapping day heading calls onJumpToDay with the dateKey', () => {
+    mockUseTimeline.mockReturnValue(
+      makeReturn({
+        data: {
+          pages: [
+            {
+              items: [photo('a', '2026-06-04T10:00:00Z')],
+              nextCursor: null,
+            },
+          ],
+        },
+      }),
+    );
+
+    const onJump = jest.fn();
+    const { getByTestId } = render(<TimelineFeed onJumpToDay={onJump} />);
+    fireEvent.press(getByTestId('day-heading-2026-06-04'));
+    expect(onJump).toHaveBeenCalledWith('2026-06-04');
   });
 
   it('day heading shows day label when present', () => {
