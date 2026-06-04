@@ -75,6 +75,8 @@ export const photos = pgTable(
     mediaType: varchar('media_type', { length: 8 }).notNull().default('photo'),
     source: varchar('source', { length: 8 }).notNull().default('upload'),
     durationMs: integer('duration_ms'),
+    width: integer('width'),
+    height: integer('height'),
   },
   (t) => ({
     byAlbumTakenAt: index('idx_photos_album_taken_at').on(t.albumId, t.takenAt.desc()),
