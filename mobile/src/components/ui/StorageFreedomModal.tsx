@@ -53,7 +53,7 @@ export function StorageFreedomModal({ visible, onClose }: Props) {
           <Text style={styles.body}>
             {count} ảnh đã được lưu trên ứng dụng. Bạn có thể xóa khỏi điện thoại để giải phóng {mb}.
           </Text>
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} disabled={deleting} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.deleteBtn, deleting && styles.deleteBtnDisabled]} onPress={handleDelete} disabled={deleting} activeOpacity={0.8}>
             <Text style={styles.deleteBtnText}>{deleting ? 'Đang xóa...' : `Xóa ${count} ảnh khỏi điện thoại`}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
   title:         { ...typography.heading, fontSize: 18, marginBottom: spacing.md },
   body:          { ...typography.body, color: colors.inkMuted, marginBottom: spacing['3xl'] },
   deleteBtn:     { backgroundColor: colors.ink, borderRadius: 22, paddingVertical: spacing.md, alignItems: 'center', marginBottom: spacing.md },
+  deleteBtnDisabled: { opacity: 0.5 },
   deleteBtnText: { ...typography.body, color: colors.cream },
   cancelBtn:     { alignItems: 'center', paddingVertical: spacing.sm },
   cancelText:    { ...typography.body, color: colors.inkMuted },
