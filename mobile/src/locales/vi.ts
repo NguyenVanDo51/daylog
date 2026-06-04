@@ -96,4 +96,12 @@ export const vi = {
     done:   'Xong',
     error:  'Có lỗi xảy ra',
   },
+  storage: {
+    badge:            '{{count}} ảnh đã lưu an toàn — Giải phóng {{mb}}',
+    modalTitle:       'Ảnh đã lưu an toàn',
+    modalBody:        '{{count}} ảnh đã được lưu trên ứng dụng. Bạn có thể xóa khỏi điện thoại để giải phóng {{mb}}.',
+    deleteBtn:        'Xóa {{count}} ảnh khỏi điện thoại',
+    successMsg:       'Đã giải phóng {{mb}} trên điện thoại của bạn',
+    permissionDenied: 'Không có quyền truy cập thư viện ảnh',
+  },
 };

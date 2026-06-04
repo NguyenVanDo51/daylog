@@ -13,4 +13,12 @@ export const en = {
   join:    { invited_msg: "You're invited to join ~", members_info: '{{members}} members · {{photos}} photos', cta: 'Join album' },
   photo:   { counter: '{{i}} / {{n}}', close: 'Close' },
   common:  { cancel: 'Cancel', done: 'Done', error: 'Something went wrong' },
+  storage: {
+    badge:            '{{count}} photos backed up — Free up {{mb}}',
+    modalTitle:       'Backed up photos',
+    modalBody:        '{{count}} photos are safely stored in the app. You can delete them from your phone to free up {{mb}}.',
+    deleteBtn:        'Delete {{count}} photos from phone',
+    successMsg:       'Freed up {{mb}} on your phone',
+    permissionDenied: 'No permission to access photo library',
+  },
 };
