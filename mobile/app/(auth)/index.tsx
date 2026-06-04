@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
-import { colors, radii, shadows, spacing, typography } from '@/constants/theme';
+import { colors, shadows, spacing, typography } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
