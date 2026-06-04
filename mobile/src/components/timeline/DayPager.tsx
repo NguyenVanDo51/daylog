@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -10,6 +10,7 @@ import type { TimelinePage, TimelinePhoto } from '@/hooks/useTimeline';
 import { useDayLabelsRange, useUpsertDayLabel, useDeleteDayLabel } from '@/hooks/useDayLabels';
 import { toDateKey, addDays, isFuture } from '@/lib/dateKey';
 import { useCaptureStore, getCooldownRemaining } from '@/stores/captureStore';
+import { t } from '@/lib/i18n';
 
 interface Props {
   initialDateKey?: string;
@@ -48,9 +49,23 @@ export function DayPager({ initialDateKey }: Props) {
 
   const handleCamera = useCallback(() => {
     const { lastCaptureAt } = useCaptureStore.getState();
-    if (getCooldownRemaining(lastCaptureAt) === 0) {
-      router.push('/capture');
+    const remaining = getCooldownRemaining(lastCaptureAt);
+    if (remaining > 0) {
+      const mins = Math.ceil(remaining / 60000);
+      Alert.alert(
+        t('capture.cooldown_title'),
+        t('capture.cooldown_body', { minutes: mins }),
+        [
+          { text: t('capture.cancel'), style: 'cancel' },
+          {
+            text: t('capture.cooldown_fallback'),
+            onPress: () => {},
+          },
+        ]
+      );
+      return;
     }
+    router.push('/capture');
   }, []);
 
   const handleUpload = useCallback(() => {
@@ -84,9 +99,9 @@ export function DayPager({ initialDateKey }: Props) {
       </GestureDetector>
 
       {/* Hidden test-only buttons; visually no-op. */}
-      <View style={styles.hidden} pointerEvents="box-none">
-        <TouchableOpacity testID="day-pager-prev" onPress={goPrev} />
-        <TouchableOpacity testID="day-pager-next" onPress={goNext} />
+      <View style={styles.hidden} pointerEvents="box-none" importantForAccessibility="no">
+        <TouchableOpacity testID="day-pager-prev" onPress={goPrev} accessible={false} />
+        <TouchableOpacity testID="day-pager-next" onPress={goNext} accessible={false} />
       </View>
 
       <MilestoneLabelInput
