@@ -129,3 +129,11 @@ export const invites = pgTable('invites', {
   maxUses: integer('max_uses'),
   useCount: integer('use_count').notNull().default(0),
 });
+
+export const presignTokens = pgTable('presign_tokens', {
+  key: text('key').primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});

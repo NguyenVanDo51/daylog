@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { sql } from 'drizzle-orm';
 import { db, pool } from '../src/db';
-import { users, albums, albumMembers } from '../src/db/schema';
+import { users, albums, albumMembers, presignTokens } from '../src/db/schema';
 
 export interface TestUser {
   id: string;
@@ -49,7 +49,7 @@ function toSnakeAlbum(a: typeof albums.$inferSelect): TestAlbum {
 
 // Truncate all tables before each test. Single TRUNCATE statement is faster than 6 queries.
 beforeEach(async () => {
-  await db.execute(sql`TRUNCATE invites, milestones, photos, album_members, albums, users CASCADE`);
+  await db.execute(sql`TRUNCATE presign_tokens, invites, milestones, photos, album_members, albums, users CASCADE`);
 });
 
 afterAll(async () => {
@@ -94,4 +94,16 @@ export async function createTestAlbum(
     role: 'admin',
   });
   return toSnakeAlbum(album);
+}
+
+export async function createTestAlbumMember(
+  albumId: string,
+  userId: string,
+  role: 'admin' | 'member' = 'member'
+): Promise<void> {
+  await db.insert(albumMembers).values({ albumId, userId, role });
+}
+
+export async function createPresignToken(userId: string, key: string): Promise<void> {
+  await db.insert(presignTokens).values({ key, userId });
 }
