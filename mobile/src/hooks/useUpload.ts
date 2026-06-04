@@ -46,7 +46,7 @@ export function useUpload() {
     }));
   }
 
-  async function uploadImages(assets: UploadAsset[], caption?: string): Promise<void> {
+  async function uploadImages(assets: UploadAsset[], caption?: string): Promise<number> {
     setUploading(true);
     setProgress(0);
     setFailedCount(0);
@@ -100,6 +100,7 @@ export function useUpload() {
     setFailedCount(failed);
     setUploading(false);
     setTimeout(() => clearAll(), 400);
+    return failed;
   }
 
   return { pickImages, uploadImages, uploading, progress, failedCount };

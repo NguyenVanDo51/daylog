@@ -17,7 +17,7 @@ interface UploadSheetProps {
 
 export function UploadSheet({ visible, onClose }: UploadSheetProps) {
   const ref = useRef<TrueSheet>(null);
-  const { pickImages, uploadImages, uploading, progress, failedCount } = useUpload();
+  const { pickImages, uploadImages, uploading, progress } = useUpload();
   const [assets, setAssets] = useState<UploadAsset[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [caption, setCaption] = useState('');
@@ -50,15 +50,15 @@ export function UploadSheet({ visible, onClose }: UploadSheetProps) {
 
   async function handleUpload() {
     const toUpload = assets.filter((a) => selected.has(a.uri));
-    await uploadImages(toUpload, caption);
+    const failed = await uploadImages(toUpload, caption);
     success();
-    if (failedCount > 0) {
+    if (failed > 0) {
       Alert.alert(
         t('upload.error_title'),
-        t('upload.error_body', { success: toUpload.length - failedCount, failed: failedCount }),
+        t('upload.error_body', { success: toUpload.length - failed, failed }),
       );
     }
-    setCelebrate(failedCount === 0);
+    setCelebrate(failed === 0);
     setTimeout(() => { setCelebrate(false); onClose(); }, 1300);
   }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Image, TouchableOpacity } from 'react-native';
+import { Image, TouchableOpacity, Alert } from 'react-native';
 
 // @expo/vector-icons pulls in expo-font/expo-asset transitively which is not
 // installed for jest. Replace icon sets with lightweight host components.
@@ -67,18 +67,18 @@ let uploadState: { uploading: boolean; progress: number } = {
   progress: 0,
 };
 
-function applyUseUploadMock() {
+function applyUseUploadMock(overrides: { uploadImages?: jest.Mock; failedCount?: number } = {}) {
   pickImagesMock = jest.fn();
-  uploadImagesMock = jest.fn();
+  uploadImagesMock = overrides.uploadImages ?? jest.fn();
   mockedUseUpload.mockImplementation(() => ({
     pickImages: pickImagesMock as unknown as () => Promise<UploadAsset[]>,
     uploadImages: uploadImagesMock as unknown as (
       a: UploadAsset[],
       c?: string,
-    ) => Promise<void>,
+    ) => Promise<number>,
     uploading: uploadState.uploading,
     progress: uploadState.progress,
-    failedCount: 0,
+    failedCount: overrides.failedCount ?? 0,
   }));
 }
 
@@ -171,6 +171,30 @@ describe('UploadSheet', () => {
     expect(uploadImagesMock).toHaveBeenCalledTimes(1);
     expect(uploadImagesMock).toHaveBeenCalledWith(assets, 'family fun');
     await waitFor(() => expect(onClose).toHaveBeenCalled(), { timeout: 2000 });
+  });
+
+  it('shows Alert when some uploads fail', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+    applyUseUploadMock({ uploadImages: jest.fn().mockResolvedValue(2) });
+    const assets = makeAssets(3);
+    pickImagesMock.mockResolvedValue(assets);
+
+    const utils = render(<UploadSheet visible={true} onClose={jest.fn()} />);
+    await fireSheetPresent();
+
+    const uploadBtn = await waitFor(() => utils.getByText('Tải lên 3 ảnh'));
+    await act(async () => {
+      fireEvent.press(uploadBtn);
+    });
+
+    await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Tải lên không hoàn tất',
+      expect.any(String),
+    );
+
+    alertSpy.mockRestore();
   });
 
   it('tapping a thumbnail toggles its selection (button label updates)', async () => {
