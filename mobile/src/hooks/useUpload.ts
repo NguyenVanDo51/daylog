@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { compressToWebP } from '@/lib/compression';
 import { extractTakenAt } from '@/lib/exif';
 import { useAlbumStore } from '@/stores/albumStore';
+import { useUploadStore } from '@/stores/uploadStore';
 
 export interface UploadAsset {
   uri: string;
@@ -15,6 +16,7 @@ export interface UploadAsset {
 export function useUpload() {
   const qc = useQueryClient();
   const albumId = useAlbumStore((s) => s.albumId);
+  const addSynced = useUploadStore((s) => s.addSynced);
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
 
@@ -58,6 +60,10 @@ export function useUpload() {
           caption: caption || null,
           local_asset_id: asset.localAssetId ?? null,
         });
+        // 5. Track synced photo for Storage Freedom
+        if (asset.localAssetId) {
+          addSynced({ localAssetId: asset.localAssetId, compressedBytes: blob.size });
+        }
         setProgress((i + 1) / assets.length);
       }
       qc.invalidateQueries({ queryKey: ['timeline', albumId] });
