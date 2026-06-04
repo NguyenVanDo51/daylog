@@ -1,6 +1,7 @@
 import request from 'supertest';
 const app = require('../app');
 import { pool } from '../db';
+import jwt from 'jsonwebtoken';
 
 jest.mock('../services/appleAuth');
 jest.mock('../services/googleAuth');
@@ -156,5 +157,45 @@ describe('POST /auth/google', () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('Internal server error');  // was: 'invalid audience'
+  });
+});
+
+describe('JWT token lifetime', () => {
+  it('issues a token that expires in 7 days (not 30)', async () => {
+    mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-expiry', name: 'Expiry Test', email: null });
+
+    const res = await request(app).post('/auth/apple').send({ idToken: 'token' });
+    expect(res.status).toBe(200);
+
+    const decoded = jwt.decode(res.body.token) as { exp: number; iat: number };
+    const lifetimeSeconds = decoded.exp - decoded.iat;
+    // 7 days = 604800s. Allow ±5s for test execution time.
+    expect(lifetimeSeconds).toBeGreaterThanOrEqual(604795);
+    expect(lifetimeSeconds).toBeLessThanOrEqual(604805);
+  });
+});
+
+describe('POST /auth/logout', () => {
+  it('clears the apns_token of the authenticated user and returns 204', async () => {
+    mockVerifyApple.mockResolvedValueOnce({ sub: 'apple-sub-logout', name: 'Logout User', email: null });
+    const loginRes = await request(app)
+      .post('/auth/apple')
+      .send({ idToken: 'token', apnsToken: 'device-logout-token' });
+    expect(loginRes.status).toBe(200);
+
+    const logoutRes = await request(app)
+      .post('/auth/logout')
+      .set({ Authorization: `Bearer ${loginRes.body.token}` });
+    expect(logoutRes.status).toBe(204);
+
+    const { rows } = await pool.query(
+      `SELECT apns_token FROM users WHERE apple_sub = 'apple-sub-logout'`
+    );
+    expect(rows[0].apns_token).toBeNull();
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request(app).post('/auth/logout');
+    expect(res.status).toBe(401);
   });
 });

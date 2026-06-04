@@ -1,17 +1,18 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { verifyAppleToken } from '../services/appleAuth';
 import { verifyGoogleToken } from '../services/googleAuth';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
 function signJwt(userId: string): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error('JWT_SECRET env var is required');
-  return jwt.sign({ userId }, secret, { expiresIn: '30d' });
+  return jwt.sign({ userId }, secret, { expiresIn: '7d' });
 }
 
 function toSnakeUser(u: typeof users.$inferSelect) {
@@ -85,6 +86,15 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
       .returning();
 
     res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/logout', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await db.update(users).set({ apnsToken: null }).where(eq(users.id, req.user!.id));
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
