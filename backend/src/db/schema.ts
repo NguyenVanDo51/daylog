@@ -72,12 +72,20 @@ export const photos = pgTable(
     caption: text('caption'),
     localAssetId: varchar('local_asset_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    // NEW COLUMNS:
+    mediaType: varchar('media_type', { length: 8 }).notNull().default('photo'),
+    source: varchar('source', { length: 8 }).notNull().default('upload'),
+    durationMs: integer('duration_ms'),
   },
   (t) => ({
     byAlbumTakenAt: index('idx_photos_album_taken_at').on(t.albumId, t.takenAt.desc()),
     byAlbumLocalAsset: index('idx_photos_local_asset')
       .on(t.albumId, t.localAssetId)
       .where(sql`${t.localAssetId} IS NOT NULL`),
+    // NEW INDEX for rate limit query:
+    captureRateLimit: index('idx_photos_capture_rate_limit')
+      .on(t.uploadedBy, t.createdAt.desc())
+      .where(sql`${t.source} = 'capture'`),
   })
 );
 
