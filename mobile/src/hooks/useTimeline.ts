@@ -9,6 +9,9 @@ export interface TimelinePhoto {
   thumbnail_key: string | null;
   taken_at: string;
   caption: string | null;
+  media_type: 'photo' | 'video';
+  source: 'capture' | 'upload';
+  duration_ms: number | null;
 }
 
 export interface TimelineMilestone {
