@@ -7,6 +7,7 @@ import { getPresignedPutUrl } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/apns';
 import { isValidUUID } from '../lib/validation';
+import { presignLimiter } from '../lib/rateLimit';
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ function toSnakePhoto(p: typeof photos.$inferSelect) {
   };
 }
 
-router.post('/presign', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/presign', presignLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { album_id } = req.body ?? {};
     if (!album_id) return res.status(400).json({ error: 'album_id required' });

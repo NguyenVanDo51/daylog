@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import { authLimiter, globalLimiter } from './lib/rateLimit';
 import authRoutes from './routes/auth';
 import albumsRoutes from './routes/albums';
 import photosRoutes from './routes/photos';
@@ -18,6 +19,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
 }));
 app.use(express.json({ limit: '100kb' }));
+app.use(globalLimiter);
+app.use('/auth', authLimiter);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 

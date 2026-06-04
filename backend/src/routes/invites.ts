@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { randomBytes } from 'crypto';
 import { eq, and, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
+import { inviteLookupLimiter } from '../lib/rateLimit';
 import { db } from '../db';
 import { invites, albums, albumMembers } from '../db/schema';
 import { generateQRCode } from '../services/qrcode';
@@ -60,7 +61,7 @@ router.post(
   }
 );
 
-router.get('/invites/:token', async (req: Request<{ token: string }>, res: Response, next: NextFunction) => {
+router.get('/invites/:token', inviteLookupLimiter, async (req: Request<{ token: string }>, res: Response, next: NextFunction) => {
   try {
     const rows = await db
       .select({
