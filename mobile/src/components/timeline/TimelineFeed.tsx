@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, RefreshControl, View } from 'react-native';
 import { useTimeline, TimelineItem } from '@/hooks/useTimeline';
 import { MonthHeader } from './MonthHeader';
 import { PhotoRow } from './PhotoRow';
+import { PolaroidCard } from './PolaroidCard';
 import { MilestoneCard } from '@/components/ui/MilestoneCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRow } from '@/components/ui/SkeletonRow';
@@ -19,10 +20,11 @@ function getMonthLabel(isoDate: string, birthdate: string | null): string {
 }
 
 interface FlatListItem {
-  type: 'month' | 'photoRow' | 'milestone';
+  type: 'month' | 'photoRow' | 'polaroid' | 'milestone';
   key: string;
   label?: string;
   photos?: any[];
+  photo?: any;
   milestone?: any;
   index?: number;
 }
@@ -56,8 +58,13 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
         result.push({ type: 'month', key: `month-${monthKey}`, label: getMonthLabel(dateStr, childBirthdate) });
       }
       if (item.type === 'photo') {
-        photoBuffer.push(item);
-        if (photoBuffer.length >= 2) flushPhotos();
+        if ((item as any).source === 'capture') {
+          flushPhotos();
+          result.push({ type: 'polaroid', key: `polaroid-${item.id}`, photo: item });
+        } else {
+          photoBuffer.push(item);
+          if (photoBuffer.length >= 2) flushPhotos();
+        }
       } else {
         flushPhotos();
         result.push({ type: 'milestone', key: `ms-${item.id}`, milestone: item, index: mIdx++ });
@@ -93,6 +100,7 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       renderItem={({ item }) => {
         if (item.type === 'month') return <MonthHeader label={item.label!} />;
         if (item.type === 'photoRow') return <PhotoRow photos={item.photos!} rowIndex={item.index} />;
+        if (item.type === 'polaroid') return <PolaroidCard photo={item.photo!} />;
         return (
           <MilestoneCard
             title={item.milestone.title}
