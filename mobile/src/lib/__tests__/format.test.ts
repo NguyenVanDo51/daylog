@@ -1,4 +1,4 @@
-import { formatVnMonth, formatVnDate, formatVnAge, greetingForHour } from '../format';
+import { formatVnMonth, formatVnDate, formatVnAge, greetingForHour, formatVnDayLabel } from '../format';
 
 describe('formatVnMonth', () => {
   it('returns "Tháng N" with no leading zero', () => {
@@ -27,6 +27,19 @@ describe('formatVnAge', () => {
   });
   it('returns empty string when birthdate is null', () => {
     expect(formatVnAge(null, new Date())).toBe('');
+  });
+});
+
+describe('formatVnDayLabel', () => {
+  it('formats Thursday Vietnamese label', () => {
+    // 2026-06-04 is a Thursday
+    expect(formatVnDayLabel('2026-06-04T12:00:00Z')).toMatch(/Thứ Năm/);
+    expect(formatVnDayLabel('2026-06-04T12:00:00Z')).toContain('4 tháng 6');
+  });
+
+  it('uses Sunday label correctly', () => {
+    // 2026-06-07 is a Sunday
+    expect(formatVnDayLabel('2026-06-07T12:00:00Z')).toMatch(/Chủ Nhật/);
   });
 });
 

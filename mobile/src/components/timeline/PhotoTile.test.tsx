@@ -23,6 +23,10 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { PhotoTile } from '@/components/timeline/PhotoTile';
 import { router } from 'expo-router';
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 const basePhoto = {
   type: 'photo' as const,
   id: 'p1',
