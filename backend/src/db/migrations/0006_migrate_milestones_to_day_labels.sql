@@ -7,7 +7,7 @@ SELECT
   DATE(occurred_at AT TIME ZONE 'UTC') AS date,
   title,
   created_by,
-  created_at
+  COALESCE(created_at, now())
 FROM milestones m1
 WHERE created_at = (
   SELECT MAX(created_at)
