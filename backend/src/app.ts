@@ -6,6 +6,7 @@ import milestonesRoutes from './routes/milestones';
 import invitesRoutes from './routes/invites';
 import timelineRoutes from './routes/timeline';
 import membersRoutes from './routes/members';
+import reactionsRoutes from './routes/reactions';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/', milestonesRoutes);
 app.use('/', invitesRoutes);
 app.use('/albums/:id/timeline', timelineRoutes);
 app.use('/albums/:id/members', membersRoutes);
+app.use('/photos/:photoId/reactions', reactionsRoutes);
 
 interface HttpError extends Error {
   status?: number;
