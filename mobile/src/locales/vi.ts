@@ -41,6 +41,8 @@ export const vi = {
   },
   signin: {
     tagline:    'lưu giữ từng khoảnh khắc bé yêu',
+    headline:   'Mỗi ngày bé lớn thêm một chút',
+    sub_copy:   'Đừng để những khoảnh khắc đó chỉ nằm trong ký ức',
     apple:      'Đăng nhập với Apple',
     google:     'Đăng nhập với Google',
     privacy:    'Bằng việc đăng nhập, bạn đồng ý với Chính sách bảo mật.',
