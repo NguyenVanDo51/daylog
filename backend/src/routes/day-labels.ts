@@ -66,6 +66,7 @@ router.put('/:date', async (req: Request, res: Response, next: NextFunction) => 
 
     const label = typeof req.body?.label === 'string' ? req.body.label.trim() : '';
     if (!label) return res.status(400).json({ error: 'label required' });
+    if (label.length > 60) return res.status(400).json({ error: 'label too long (max 60 chars)' });
 
     if (!(await isAlbumMember(albumId, req.user!.id))) {
       return res.status(403).json({ error: 'Forbidden' });

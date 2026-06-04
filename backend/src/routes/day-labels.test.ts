@@ -93,6 +93,15 @@ describe('Day labels — PUT', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects label longer than 60 chars with 400', async () => {
+    const longLabel = 'x'.repeat(61);
+    const res = await request(app)
+      .put(`/albums/${album.id}/day-labels/2026-06-04`)
+      .set(headers)
+      .send({ label: longLabel });
+    expect(res.status).toBe(400);
+  });
+
   it('returns 403 for non-members', async () => {
     const other = await createTestUser();
     const res = await request(app)
