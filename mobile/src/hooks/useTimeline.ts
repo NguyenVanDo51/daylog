@@ -16,16 +16,7 @@ export interface TimelinePhoto {
   height: number | null;
 }
 
-export interface TimelineMilestone {
-  type: 'milestone';
-  id: string;
-  title: string;
-  note: string | null;
-  occurred_at: string;
-  icon: string | null;
-}
-
-export type TimelineItem = TimelinePhoto | TimelineMilestone;
+export type TimelineItem = TimelinePhoto;
 
 export interface TimelinePage {
   items: TimelineItem[];

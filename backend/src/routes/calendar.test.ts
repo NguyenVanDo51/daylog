@@ -14,14 +14,6 @@ async function insertPhoto(albumId: string, userId: string, takenAt: string, sou
   return rows[0];
 }
 
-async function insertMilestone(albumId: string, userId: string, occurredAt: string) {
-  const { rows } = await pool.query(
-    `INSERT INTO milestones (album_id, created_by, title, occurred_at) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [albumId, userId, 'Test milestone', occurredAt]
-  );
-  return rows[0];
-}
-
 describe('GET /albums/:id/calendar', () => {
   let user: Awaited<ReturnType<typeof createTestUser>>;
   let album: Awaited<ReturnType<typeof createTestAlbum>>;
@@ -36,15 +28,14 @@ describe('GET /albums/:id/calendar', () => {
   it('returns dates with correct flags for the given month', async () => {
     await insertPhoto(album.id, user.id, '2025-06-03T10:00:00Z', 'upload');
     await insertPhoto(album.id, user.id, '2025-06-04T10:00:00Z', 'capture');
-    await insertMilestone(album.id, user.id, '2025-06-04T10:00:00Z');
 
     const res = await request(app)
       .get(`/albums/${album.id}/calendar?year=2025&month=6`)
       .set(headers);
 
     expect(res.status).toBe(200);
-    expect(res.body['2025-06-03']).toEqual({ photo: true, capture: false, milestone: false });
-    expect(res.body['2025-06-04']).toEqual({ photo: false, capture: true, milestone: true });
+    expect(res.body['2025-06-03']).toEqual({ photo: true, capture: false });
+    expect(res.body['2025-06-04']).toEqual({ photo: false, capture: true });
   });
 
   it('does not include dates from other months', async () => {

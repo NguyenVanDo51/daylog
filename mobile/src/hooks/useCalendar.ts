@@ -5,7 +5,6 @@ import { useAlbumStore } from '@/stores/albumStore';
 export interface CalendarDay {
   photo: boolean;
   capture: boolean;
-  milestone: boolean;
 }
 
 export type CalendarData = Record<string, CalendarDay>;

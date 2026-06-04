@@ -100,30 +100,6 @@ export const reactions = pgTable('reactions', {
   byPhoto: index('idx_reactions_photo').on(t.photoId),
 }));
 
-export const milestones = pgTable(
-  'milestones',
-  {
-    id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
-    albumId: uuid('album_id')
-      .notNull()
-      .references(() => albums.id, { onDelete: 'cascade' }),
-    createdBy: uuid('created_by')
-      .notNull()
-      .references(() => users.id),
-    title: varchar('title').notNull(),
-    note: text('note'),
-    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
-    coverPhotoId: uuid('cover_photo_id').references(() => photos.id, { onDelete: 'set null' }),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  },
-  (t) => ({
-    byAlbumOccurredAt: index('idx_milestones_album_occurred_at').on(
-      t.albumId,
-      t.occurredAt.desc()
-    ),
-  })
-);
-
 export const dayLabels = pgTable(
   'day_labels',
   {

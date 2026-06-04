@@ -11,14 +11,6 @@ async function insertPhoto(albumId: string, userId: string, takenAt: string) {
   return rows[0];
 }
 
-async function insertMilestone(albumId: string, userId: string, occurredAt: string) {
-  const { rows } = await pool.query(
-    `INSERT INTO milestones (album_id, created_by, title, occurred_at) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [albumId, userId, 'First smile', occurredAt]
-  );
-  return rows[0];
-}
-
 async function insertPhotoWithDimensions(
   albumId: string, userId: string, takenAt: string,
   width: number, height: number
@@ -42,9 +34,9 @@ describe('GET /albums/:id/timeline', () => {
     headers = authHeader(user);
   });
 
-  it('returns photos and milestones merged in descending order', async () => {
+  it('returns photos in descending order', async () => {
     await insertPhoto(album.id, user.id, '2024-04-01T10:00:00Z');
-    await insertMilestone(album.id, user.id, '2024-03-15T00:00:00Z');
+    await insertPhoto(album.id, user.id, '2024-03-15T00:00:00Z');
     await insertPhoto(album.id, user.id, '2024-02-01T10:00:00Z');
 
     const res = await request(app).get(`/albums/${album.id}/timeline`).set(headers);
@@ -52,7 +44,7 @@ describe('GET /albums/:id/timeline', () => {
     expect(res.status).toBe(200);
     expect(res.body.items).toHaveLength(3);
     expect(res.body.items[0].type).toBe('photo');
-    expect(res.body.items[1].type).toBe('milestone');
+    expect(res.body.items[1].type).toBe('photo');
     expect(res.body.items[2].type).toBe('photo');
   });
 
@@ -86,11 +78,11 @@ describe('GET /albums/:id/timeline', () => {
   });
 
   it('paginates correctly with a valid cursor across multiple pages', async () => {
-    // Insert 4 items so with limit=2 we get two pages of 2 with next_cursor null on last
+    // Insert 4 photos so with limit=2 we get two pages of 2 with nextCursor null on last
     await insertPhoto(album.id, user.id, '2024-04-01T10:00:00Z');
-    await insertMilestone(album.id, user.id, '2024-03-15T00:00:00Z');
+    await insertPhoto(album.id, user.id, '2024-03-15T00:00:00Z');
     await insertPhoto(album.id, user.id, '2024-02-01T10:00:00Z');
-    await insertMilestone(album.id, user.id, '2024-01-15T00:00:00Z');
+    await insertPhoto(album.id, user.id, '2024-01-15T00:00:00Z');
 
     const first = await request(app)
       .get(`/albums/${album.id}/timeline?limit=2`)
@@ -99,7 +91,7 @@ describe('GET /albums/:id/timeline', () => {
     expect(first.body.items).toHaveLength(2);
     expect(first.body.nextCursor).toBeTruthy();
     expect(first.body.items[0].type).toBe('photo');
-    expect(first.body.items[1].type).toBe('milestone');
+    expect(first.body.items[1].type).toBe('photo');
 
     const second = await request(app)
       .get(`/albums/${album.id}/timeline?limit=2&cursor=${encodeURIComponent(first.body.nextCursor)}`)
@@ -108,7 +100,7 @@ describe('GET /albums/:id/timeline', () => {
     expect(second.body.items).toHaveLength(2);
     expect(second.body.nextCursor).toBeNull();
     expect(second.body.items[0].type).toBe('photo');
-    expect(second.body.items[1].type).toBe('milestone');
+    expect(second.body.items[1].type).toBe('photo');
   });
 
   it('defaults to limit=20 when limit=0 is given', async () => {
@@ -186,15 +178,4 @@ describe('GET /albums/:id/timeline', () => {
     expect(photo.height).toBe(1920);
   });
 
-  it('returns null width and height for milestone items', async () => {
-    await insertMilestone(album.id, user.id, '2025-06-04T10:00:00Z');
-
-    const res = await request(app).get(`/albums/${album.id}/timeline`).set(headers);
-
-    expect(res.status).toBe(200);
-    const ms = res.body.items[0];
-    expect(ms.type).toBe('milestone');
-    expect(ms.width).toBeNull();
-    expect(ms.height).toBeNull();
-  });
 });

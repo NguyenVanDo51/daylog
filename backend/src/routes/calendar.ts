@@ -26,55 +26,24 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       .limit(1);
     if (!membership[0]) return res.status(403).json({ error: 'Forbidden' });
 
-    type DayRow = { day: string; has_upload: boolean; has_capture: boolean; has_milestone: boolean };
+    type DayRow = { day: string; has_upload: boolean; has_capture: boolean };
 
     const rows = await db.execute<DayRow>(sql`
-      WITH photo_days AS (
-        SELECT
-          TO_CHAR(taken_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
-          BOOL_OR(source = 'upload')  AS has_upload,
-          BOOL_OR(source = 'capture') AS has_capture,
-          FALSE                        AS has_milestone
-        FROM photos
-        WHERE album_id = ${albumId}
-          AND EXTRACT(YEAR  FROM taken_at AT TIME ZONE 'UTC') = ${year}
-          AND EXTRACT(MONTH FROM taken_at AT TIME ZONE 'UTC') = ${month}
-        GROUP BY day
-      ),
-      milestone_days AS (
-        SELECT
-          TO_CHAR(occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
-          FALSE AS has_upload,
-          FALSE AS has_capture,
-          TRUE  AS has_milestone
-        FROM milestones
-        WHERE album_id = ${albumId}
-          AND EXTRACT(YEAR  FROM occurred_at AT TIME ZONE 'UTC') = ${year}
-          AND EXTRACT(MONTH FROM occurred_at AT TIME ZONE 'UTC') = ${month}
-        GROUP BY day
-      ),
-      combined AS (
-        SELECT day, has_upload, has_capture, has_milestone FROM photo_days
-        UNION ALL
-        SELECT day, has_upload, has_capture, has_milestone FROM milestone_days
-      )
       SELECT
-        day,
-        BOOL_OR(has_upload)    AS has_upload,
-        BOOL_OR(has_capture)   AS has_capture,
-        BOOL_OR(has_milestone) AS has_milestone
-      FROM combined
+        TO_CHAR(taken_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+        BOOL_OR(source = 'upload')  AS has_upload,
+        BOOL_OR(source = 'capture') AS has_capture
+      FROM photos
+      WHERE album_id = ${albumId}
+        AND EXTRACT(YEAR  FROM taken_at AT TIME ZONE 'UTC') = ${year}
+        AND EXTRACT(MONTH FROM taken_at AT TIME ZONE 'UTC') = ${month}
       GROUP BY day
       ORDER BY day
     `);
 
-    const result: Record<string, { photo: boolean; capture: boolean; milestone: boolean; label?: string }> = {};
+    const result: Record<string, { photo: boolean; capture: boolean; label?: string }> = {};
     for (const row of rows.rows) {
-      result[row.day] = {
-        photo: row.has_upload,
-        capture: row.has_capture,
-        milestone: row.has_milestone,
-      };
+      result[row.day] = { photo: row.has_upload, capture: row.has_capture };
     }
 
     const fromDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -88,7 +57,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
     for (const r of labelRows) {
       if (!result[r.date]) {
-        result[r.date] = { photo: false, capture: false, milestone: false };
+        result[r.date] = { photo: false, capture: false };
       }
       result[r.date].label = r.label;
     }
