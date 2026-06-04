@@ -21,4 +21,18 @@ export const en = {
     successMsg:       'Freed up {{mb}} on your phone',
     permissionDenied: 'No permission to access photo library',
   },
+  capture: {
+    hint_video:        'Hold to record 2s video',
+    review_caption_ph: 'Add a note...',
+    send:              'Send',
+    retake:            'Retake',
+    cancel:            'Cancel',
+    uploading:         'uploading...',
+    cooldown_title:    'Each moment deserves its own space',
+    cooldown_body:     'You can capture again in {{minutes}} minutes.',
+    cooldown_fallback: 'Or upload from camera roll',
+    perm_title:        'Camera permission required',
+    perm_body:         'App needs camera access to capture moments.',
+    perm_open:         'Open Settings',
+  },
 };

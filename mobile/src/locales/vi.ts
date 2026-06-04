@@ -104,4 +104,18 @@ export const vi = {
     successMsg:       'Đã giải phóng {{mb}} trên điện thoại của bạn',
     permissionDenied: 'Không có quyền truy cập thư viện ảnh',
   },
+  capture: {
+    hint_video:        'Giữ để quay video 2s',
+    review_caption_ph: 'Note một dòng...',
+    send:              'Gửi',
+    retake:            'Chụp lại',
+    cancel:            'Huỷ',
+    uploading:         'đang tải lên...',
+    cooldown_title:    'Mỗi khoảnh khắc đáng được giữ riêng',
+    cooldown_body:     'Bạn có thể chụp tiếp sau {{minutes}} phút.',
+    cooldown_fallback: 'Hoặc upload từ máy',
+    perm_title:        'Cần quyền camera',
+    perm_body:         'App cần quyền camera để chụp khoảnh khắc.',
+    perm_open:         'Mở Settings',
+  },
 };
