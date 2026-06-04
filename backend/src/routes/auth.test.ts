@@ -11,6 +11,13 @@ import { verifyGoogleToken } from '../services/googleAuth';
 const mockVerifyApple = verifyAppleToken as jest.Mock;
 const mockVerifyGoogle = verifyGoogleToken as jest.Mock;
 
+describe('Security middleware', () => {
+  it('sets X-Content-Type-Options: nosniff header on all responses', async () => {
+    const res = await request(app).get('/health');
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+  });
+});
+
 describe('POST /auth/apple', () => {
   it('creates a new user and returns a JWT', async () => {
     mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-123', name: 'Jane Doe', email: 'jane@example.com' });
@@ -66,7 +73,7 @@ describe('POST /auth/apple', () => {
       .send({ idToken: 'bad-token' });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe('token expired');
+    expect(res.body.error).toBe('Internal server error');  // was: 'token expired'
   });
 });
 
@@ -148,6 +155,6 @@ describe('POST /auth/google', () => {
       .send({ idToken: 'bad-token' });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe('invalid audience');
+    expect(res.body.error).toBe('Internal server error');  // was: 'invalid audience'
   });
 });
