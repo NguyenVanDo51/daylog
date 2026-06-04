@@ -44,7 +44,16 @@ export default function PhotoViewer() {
     <View style={styles.container}>
       <StatusBar hidden />
       {isVideo
-        ? <VideoView player={player} style={[style]} contentFit="contain" nativeControls={false} />
+        ? (
+          <Animated.View style={[style]}>
+            <VideoView
+              player={player}
+              style={{ flex: 1 }}
+              contentFit="contain"
+              nativeControls={false}
+            />
+          </Animated.View>
+        )
         : <Animated.Image source={{ uri: `${API_URL}/photos/${photo.id}/full` }} style={[style]} resizeMode="contain" />
       }
 

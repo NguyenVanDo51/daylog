@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, shadows } from '@/constants/theme';
@@ -25,6 +26,13 @@ export function PolaroidCard({ photo }: PolaroidCardProps) {
   const { data: reactionData = [] } = useReactions(photo.id);
   const { add } = useReact(photo.id);
 
+  // Hook must be called unconditionally; empty string disables loading for non-video
+  const videoUri = photo.media_type === 'video' ? `${API_URL}/photos/${photo.id}/full` : '';
+  const videoPlayer = useVideoPlayer(videoUri, (p) => {
+    p.loop = true;
+    p.muted = true;
+  });
+
   function handlePress() {
     tap();
     router.push(`/photo/${photo.id}`);
@@ -38,11 +46,20 @@ export function PolaroidCard({ photo }: PolaroidCardProps) {
         delayLongPress={350}
         activeOpacity={0.95}
       >
-        <Image
-          source={{ uri: `${API_URL}/photos/${photo.id}/thumb` }}
-          style={[styles.image, { width: imageWidth, height: imageWidth * 0.75 }]}
-          contentFit="cover"
-        />
+        {photo.media_type === 'video' ? (
+          <VideoView
+            player={videoPlayer}
+            style={[styles.image, { width: imageWidth, height: imageWidth * 0.75 }]}
+            contentFit="cover"
+            nativeControls={false}
+          />
+        ) : (
+          <Image
+            source={{ uri: `${API_URL}/photos/${photo.id}/thumb` }}
+            style={[styles.image, { width: imageWidth, height: imageWidth * 0.75 }]}
+            contentFit="cover"
+          />
+        )}
 
         {photo.media_type === 'video' && (
           <View style={styles.videoBadge} testID="polaroid-video-badge">

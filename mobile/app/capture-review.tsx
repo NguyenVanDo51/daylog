@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, Image, StyleSheet, StatusBar,
   useWindowDimensions, ActivityIndicator, Alert,
 } from 'react-native';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +26,19 @@ export default function CaptureReviewScreen() {
   const dateStr = new Date().toLocaleDateString('vi-VN', {
     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
   });
+
+  // Must be called unconditionally (hook rules)
+  const videoUri = pendingAsset?.type === 'video' ? pendingAsset.uri : '';
+  const previewPlayer = useVideoPlayer(videoUri, (p) => {
+    p.loop = true;
+    p.muted = true;
+    if (pendingAsset?.type === 'video') p.play();
+  });
+
+  // Navigate back safely if there is no pending asset (cannot call router.back during render)
+  React.useEffect(() => {
+    if (!pendingAsset) router.back();
+  }, [pendingAsset]);
 
   function handleRetake() {
     clearPendingAsset();
@@ -59,10 +73,7 @@ export default function CaptureReviewScreen() {
     }
   }
 
-  if (!pendingAsset) {
-    router.back();
-    return null;
-  }
+  if (!pendingAsset) return null;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
@@ -70,11 +81,20 @@ export default function CaptureReviewScreen() {
 
       {/* Polaroid card */}
       <View style={[styles.card, { width: cardWidth }]}>
-        <Image
-          source={{ uri: pendingAsset.uri }}
-          style={[styles.image, { width: imageWidth, height: imageWidth * 0.75 }]}
-          resizeMode="cover"
-        />
+        {pendingAsset.type === 'video' ? (
+          <VideoView
+            player={previewPlayer}
+            style={[styles.image, { width: imageWidth, height: imageWidth * 0.75 }]}
+            contentFit="cover"
+            nativeControls={false}
+          />
+        ) : (
+          <Image
+            source={{ uri: pendingAsset.uri }}
+            style={[styles.image, { width: imageWidth, height: imageWidth * 0.75 }]}
+            resizeMode="cover"
+          />
+        )}
         <View style={styles.footer}>
           <TextInput
             style={styles.captionInput}

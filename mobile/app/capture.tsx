@@ -71,7 +71,7 @@ export default function CaptureScreen() {
     recordingRef.current = true;
     const start = Date.now();
     progress.value = withTiming(1, { duration: 2000, easing: Easing.linear });
-    const video = await cameraRef.current?.recordAsync({ maxDuration: 2, mute: true });
+    const video = await cameraRef.current?.recordAsync({ maxDuration: 2 });
     const durationMs = Math.min(Date.now() - start, 2000);
     recordingRef.current = false;
     cancelAnimation(progress);
@@ -127,7 +127,7 @@ export default function CaptureScreen() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} />
+      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} mode="video" mute={true} />
 
       {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}>

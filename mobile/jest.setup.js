@@ -275,6 +275,33 @@ jest.mock('expo-video', () => {
   };
 });
 
+// @react-native-async-storage/async-storage — used by captureStore persist middleware.
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn().mockResolvedValue(null),
+  setItem: jest.fn().mockResolvedValue(undefined),
+  removeItem: jest.fn().mockResolvedValue(undefined),
+  clear: jest.fn().mockResolvedValue(undefined),
+  getAllKeys: jest.fn().mockResolvedValue([]),
+  multiGet: jest.fn().mockResolvedValue([]),
+  multiSet: jest.fn().mockResolvedValue(undefined),
+  multiRemove: jest.fn().mockResolvedValue(undefined),
+  mergeItem: jest.fn().mockResolvedValue(undefined),
+  multiMerge: jest.fn().mockResolvedValue(undefined),
+  default: {
+    getItem: jest.fn().mockResolvedValue(null),
+    setItem: jest.fn().mockResolvedValue(undefined),
+    removeItem: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+// expo-video-thumbnails — used by useCapture for video thumbnail extraction.
+jest.mock('expo-video-thumbnails', () => ({
+  VideoThumbnails: {
+    getThumbnailAsync: jest.fn().mockResolvedValue({ uri: 'file://mock-thumb.jpg', width: 320, height: 240 }),
+  },
+  getThumbnailAsync: jest.fn().mockResolvedValue({ uri: 'file://mock-thumb.jpg', width: 320, height: 240 }),
+}));
+
 // expo-media-library — used by StorageFreedomModal.
 jest.mock('expo-media-library', () => ({
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted', granted: true }),
