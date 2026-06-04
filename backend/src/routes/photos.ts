@@ -186,8 +186,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       if (typedMediaType === 'video') {
         await tx.delete(presignTokens).where(eq(presignTokens.key, thumbnail_r2_key));
         thumbnailKey = thumbnail_r2_key;
-        photoWidth = typeof clientWidth === 'number' ? clientWidth : null;
-        photoHeight = typeof clientHeight === 'number' ? clientHeight : null;
+        photoWidth = Number.isInteger(clientWidth) && clientWidth > 0 ? clientWidth : null;
+        photoHeight = Number.isInteger(clientHeight) && clientHeight > 0 ? clientHeight : null;
       } else {
         const result = await generateThumbnail(r2_key);
         thumbnailKey = result.key;

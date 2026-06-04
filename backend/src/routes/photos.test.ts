@@ -111,8 +111,8 @@ describe('POST /photos', () => {
     expect(res.status).toBe(201);
     expect(res.body.r2_key).toBe('photos/abc.webp');
     expect(res.body.thumbnail_key).toBe('thumbnails/abc-thumb.webp');
-    expect(res.body.width).toBeDefined();
-    expect(res.body.height).toBeDefined();
+    expect(res.body.width).toBe(800);
+    expect(res.body.height).toBe(600);
     expect(mockGenThumb).toHaveBeenCalledWith('photos/abc.webp');
   });
 
