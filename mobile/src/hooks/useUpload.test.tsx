@@ -97,7 +97,7 @@ describe('useUpload', () => {
     });
 
     // Presign call
-    expect(mockApi.post).toHaveBeenNthCalledWith(1, '/photos/presign');
+    expect(mockApi.post).toHaveBeenNthCalledWith(1, '/photos/presign', { album_id: 'album-42' });
     // Compression call uses the asset uri
     expect(mockCompress).toHaveBeenCalledWith('file://input.jpg');
     // Two fetch calls: one to read the compressed file as blob, one PUT to signed URL.
@@ -170,7 +170,7 @@ describe('useUpload', () => {
 
     // Only the presign call was made.
     expect(mockApi.post).toHaveBeenCalledTimes(1);
-    expect(mockApi.post).toHaveBeenCalledWith('/photos/presign');
+    expect(mockApi.post).toHaveBeenCalledWith('/photos/presign', { album_id: 'album-42' });
     // No PUT happened (fetch may have been called 0 or 1 time for blob — but never as PUT).
     const putCalls = fetchMock.mock.calls.filter((c) => c[1]?.method === 'PUT');
     expect(putCalls).toHaveLength(0);
@@ -197,7 +197,7 @@ describe('useUpload', () => {
 
     // Only the presign was called; /photos registration was NOT.
     expect(mockApi.post).toHaveBeenCalledTimes(1);
-    expect(mockApi.post).toHaveBeenCalledWith('/photos/presign');
+    expect(mockApi.post).toHaveBeenCalledWith('/photos/presign', { album_id: 'album-42' });
     await waitFor(() => expect(result.current.uploading).toBe(false));
   });
 
@@ -276,6 +276,9 @@ describe('useUpload', () => {
     expect(
       mockApi.post.mock.calls.filter((c) => c[0] === '/photos/presign'),
     ).toHaveLength(3);
+    mockApi.post.mock.calls
+      .filter((c) => c[0] === '/photos/presign')
+      .forEach((c) => expect(c[1]).toEqual({ album_id: 'album-42' }));
     const registerCalls = mockApi.post.mock.calls.filter((c) => c[0] === '/photos');
     expect(registerCalls).toHaveLength(3);
     expect(registerCalls.map((c) => (c[1] as { r2_key: string }).r2_key)).toEqual([

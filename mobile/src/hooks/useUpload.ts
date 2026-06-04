@@ -42,7 +42,7 @@ export function useUpload() {
       for (let i = 0; i < assets.length; i++) {
         const asset = assets[i];
         // 1. Presign
-        const { data: presign } = await api.post('/photos/presign');
+        const { data: presign } = await api.post('/photos/presign', { album_id: albumId });
         // 2. Compress
         const compressedUri = await compressToWebP(asset.uri);
         // 3. Upload to R2
