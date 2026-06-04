@@ -1,89 +1,67 @@
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, RefreshControl, View } from 'react-native';
-import { useTimeline, TimelineItem } from '@/hooks/useTimeline';
-import { MonthHeader } from './MonthHeader';
-import { PhotoRow } from './PhotoRow';
-import { PolaroidCard } from './PolaroidCard';
-import { PendingPhotoRow } from './PendingPhotoRow';
-import { MilestoneCard } from '@/components/ui/MilestoneCard';
+import { FlatList, StyleSheet, RefreshControl, View, Text, useWindowDimensions } from 'react-native';
+import { useTimeline, TimelineItem, TimelineMilestone } from '@/hooks/useTimeline';
+import { MasonryBlock, MasonryBlockData, distributeMasonry } from './MasonryBlock';
+import { MilestoneRow } from './MilestoneRow';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRow } from '@/components/ui/SkeletonRow';
-import { usePendingUploadStore } from '@/stores/pendingUploadStore';
-import { colors, spacing } from '@/constants/theme';
-import { router } from 'expo-router';
-import { formatVnMonth, formatVnAge } from '@/lib/format';
+import { colors, spacing, typography } from '@/constants/theme';
+import { formatVnDayLabel } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import type { TimelinePhoto } from '@/hooks/useTimeline';
 
-function getMonthLabel(isoDate: string, birthdate: string | null): string {
-  const d = new Date(isoDate);
-  const month = formatVnMonth(d);
-  if (!birthdate) return `${month} · ${d.getFullYear()}`;
-  return `${month} · ${formatVnAge(birthdate, d)}`;
-}
+const H_PADDING = 6;
+const COL_GAP = 4;
 
 interface FlatListItem {
-  type: 'month' | 'photoRow' | 'polaroid' | 'milestone';
+  type: 'dayHeader' | 'masonryBlock' | 'milestone';
   key: string;
   label?: string;
-  photos?: any[];
-  photo?: any;
-  milestone?: any;
-  index?: number;
+  block?: MasonryBlockData;
+  milestone?: TimelineMilestone;
 }
 
 export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null }) {
-  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage, refetch, isRefetching } = useTimeline();
-  const pendingPhotos = usePendingUploadStore((s) => s.pendingPhotos);
-
-  const pendingRows = React.useMemo(() => {
-    const rows = [];
-    for (let i = 0; i < pendingPhotos.length; i += 2) {
-      rows.push(pendingPhotos.slice(i, i + 2));
-    }
-    return rows;
-  }, [pendingPhotos]);
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage, refetch, isRefetching } =
+    useTimeline();
+  const { width: screenWidth } = useWindowDimensions();
+  const columnWidth = (screenWidth - H_PADDING * 2 - COL_GAP) / 2;
 
   const items = React.useMemo<FlatListItem[]>(() => {
     if (!data) return [];
     const allItems: TimelineItem[] = data.pages.flatMap((p) => p.items);
     const result: FlatListItem[] = [];
-    let currentMonth = '';
-    let photoBuffer: any[] = [];
-    let rowIndex = 0;
+    let currentDay = '';
+    let photoBuffer: TimelinePhoto[] = [];
 
-    const flushPhotos = () => {
-      while (photoBuffer.length > 0) {
-        const batch = photoBuffer.splice(0, 2);
-        result.push({ type: 'photoRow', key: `row-${batch[0].id}`, photos: batch, index: rowIndex });
-        rowIndex++;
-      }
+    const flushPhotos = (dayKey: string, anchorId: string) => {
+      if (photoBuffer.length === 0) return;
+      const block = distributeMasonry(photoBuffer, columnWidth);
+      result.push({ type: 'masonryBlock', key: `masonry-${dayKey}-${anchorId}`, block });
+      photoBuffer = [];
     };
 
-    let mIdx = 0;
     for (const item of allItems) {
       const dateStr = item.type === 'photo' ? item.taken_at : item.occurred_at;
-      const monthKey = dateStr.slice(0, 7);
-      if (monthKey !== currentMonth) {
-        flushPhotos();
-        currentMonth = monthKey;
-        result.push({ type: 'month', key: `month-${monthKey}`, label: getMonthLabel(dateStr, childBirthdate) });
+      const dayKey = dateStr.slice(0, 10);
+
+      if (dayKey !== currentDay) {
+        if (currentDay) flushPhotos(currentDay, photoBuffer[0]?.id ?? 'end');
+        currentDay = dayKey;
+        result.push({ type: 'dayHeader', key: `day-${dayKey}`, label: formatVnDayLabel(dateStr) });
       }
+
       if (item.type === 'photo') {
-        if ((item as any).source === 'capture') {
-          flushPhotos();
-          result.push({ type: 'polaroid', key: `polaroid-${item.id}`, photo: item });
-        } else {
-          photoBuffer.push(item);
-          if (photoBuffer.length >= 2) flushPhotos();
-        }
+        photoBuffer.push(item as TimelinePhoto);
       } else {
-        flushPhotos();
-        result.push({ type: 'milestone', key: `ms-${item.id}`, milestone: item, index: mIdx++ });
+        flushPhotos(dayKey, item.id);
+        result.push({ type: 'milestone', key: `ms-${item.id}`, milestone: item as TimelineMilestone });
       }
     }
-    flushPhotos();
+    if (photoBuffer.length > 0) flushPhotos(currentDay, photoBuffer[0].id);
+
     return result;
-  }, [data, childBirthdate]);
+  }, [data, columnWidth]);
 
   const onEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
@@ -94,19 +72,10 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       <View style={styles.skel}>
         <SkeletonRow rowIndex={0} />
         <SkeletonRow rowIndex={1} />
-        <SkeletonRow rowIndex={2} />
       </View>
     );
   }
-  if (!items.length && !pendingRows.length) return <EmptyState emoji="🌸" message={t('home.empty_message')} />;
-
-  const listHeader = pendingRows.length > 0 ? (
-    <View testID="pending-rows">
-      {pendingRows.map((row, i) => (
-        <PendingPhotoRow key={`pending-${i}`} photos={row} rowIndex={i} />
-      ))}
-    </View>
-  ) : undefined;
+  if (!items.length) return <EmptyState emoji="🌸" message={t('home.empty_message')} />;
 
   return (
     <FlatList
@@ -115,27 +84,37 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       contentContainerStyle={styles.content}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.3}
-      ListHeaderComponent={listHeader}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.pink} />}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.pink} />
+      }
       renderItem={({ item }) => {
-        if (item.type === 'month') return <MonthHeader label={item.label!} />;
-        if (item.type === 'photoRow') return <PhotoRow photos={item.photos!} rowIndex={item.index} />;
-        if (item.type === 'polaroid') return <PolaroidCard photo={item.photo!} />;
-        return (
-          <MilestoneCard
-            title={item.milestone.title}
-            note={item.milestone.note}
-            occurredAt={item.milestone.occurred_at}
-            index={item.index}
-            onPress={() => router.push(`/milestone/${item.milestone.id}`)}
-          />
-        );
+        if (item.type === 'dayHeader') {
+          return (
+            <Text style={styles.dayHeader} testID={`day-header-${item.key}`}>
+              {item.label}
+            </Text>
+          );
+        }
+        if (item.type === 'masonryBlock') {
+          return <MasonryBlock block={item.block!} columnWidth={columnWidth} />;
+        }
+        return <MilestoneRow milestone={item.milestone!} />;
       }}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: spacing['2xl'], paddingBottom: spacing['4xl'] },
-  skel:    { paddingHorizontal: spacing['2xl'], paddingTop: spacing.lg },
+  content: { paddingHorizontal: H_PADDING, paddingBottom: spacing['4xl'] },
+  skel: { paddingHorizontal: spacing['2xl'], paddingTop: spacing.lg },
+  dayHeader: {
+    ...typography.bodySmall,
+    color: colors.pink,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: 2,
+    paddingTop: spacing.sm,
+    paddingBottom: 4,
+  },
 });
