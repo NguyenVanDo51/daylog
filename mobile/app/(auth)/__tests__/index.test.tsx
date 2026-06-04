@@ -57,11 +57,13 @@ describe('SignInScreen', () => {
   it('renders Apple and Google sign-in buttons', () => {
     const { getByText, UNSAFE_getAllByType } = render(<SignIn />);
     // Google button rendered by our own <Button> component, identified by label.
-    expect(getByText('Sign in with Google')).toBeTruthy();
+    expect(getByText('Đăng nhập với Google')).toBeTruthy();
     // Apple button mocked as host component name 'AppleAuthenticationButton'.
     expect(
       UNSAFE_getAllByType('AppleAuthenticationButton' as never).length,
     ).toBeGreaterThan(0);
+    // Headline rendered (en locale)
+    expect(getByText('Mỗi ngày bé lớn thêm một chút')).toBeTruthy();
   });
 
   describe('handleApple', () => {
@@ -142,7 +144,7 @@ describe('SignInScreen', () => {
       fireEvent.press(appleBtn);
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Sign in failed', 'apple-blew-up');
+        expect(Alert.alert).toHaveBeenCalledWith('Đăng nhập thất bại', 'apple-blew-up');
       });
       expect(mockRouter.replace).not.toHaveBeenCalled();
     });
@@ -162,7 +164,7 @@ describe('SignInScreen', () => {
       } as never);
 
       const { getByText } = render(<SignIn />);
-      fireEvent.press(getByText('Sign in with Google'));
+      fireEvent.press(getByText('Đăng nhập với Google'));
 
       await waitFor(() => {
         expect(mockApi.post).toHaveBeenCalledWith('/auth/google', {
@@ -194,7 +196,7 @@ describe('SignInScreen', () => {
       mockGoogleSignIn.mockRejectedValueOnce(err);
 
       const { getByText } = render(<SignIn />);
-      fireEvent.press(getByText('Sign in with Google'));
+      fireEvent.press(getByText('Đăng nhập với Google'));
 
       await waitFor(() => {
         expect(mockGoogleSignIn).toHaveBeenCalled();
@@ -212,11 +214,11 @@ describe('SignInScreen', () => {
       });
 
       const { getByText } = render(<SignIn />);
-      fireEvent.press(getByText('Sign in with Google'));
+      fireEvent.press(getByText('Đăng nhập với Google'));
 
       await waitFor(() => {
         expect(Alert.alert).toHaveBeenCalledWith(
-          'Sign in failed',
+          'Đăng nhập thất bại',
           'No idToken returned from Google',
         );
       });
@@ -228,11 +230,11 @@ describe('SignInScreen', () => {
       mockGoogleSignIn.mockRejectedValueOnce(new Error('google-network-fail'));
 
       const { getByText } = render(<SignIn />);
-      fireEvent.press(getByText('Sign in with Google'));
+      fireEvent.press(getByText('Đăng nhập với Google'));
 
       await waitFor(() => {
         expect(Alert.alert).toHaveBeenCalledWith(
-          'Sign in failed',
+          'Đăng nhập thất bại',
           'google-network-fail',
         );
       });
@@ -243,7 +245,7 @@ describe('SignInScreen', () => {
       mockGoogleSignIn.mockResolvedValueOnce({ type: 'cancelled' });
 
       const { getByText } = render(<SignIn />);
-      fireEvent.press(getByText('Sign in with Google'));
+      fireEvent.press(getByText('Đăng nhập với Google'));
 
       await waitFor(() => expect(mockGoogleSignIn).toHaveBeenCalled());
       expect(Alert.alert).not.toHaveBeenCalled();
@@ -255,10 +257,10 @@ describe('SignInScreen', () => {
       mockGoogleSignIn.mockRejectedValueOnce({});
 
       const { getByText } = render(<SignIn />);
-      fireEvent.press(getByText('Sign in with Google'));
+      fireEvent.press(getByText('Đăng nhập với Google'));
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Sign in failed', 'Unknown error');
+        expect(Alert.alert).toHaveBeenCalledWith('Đăng nhập thất bại', 'Có lỗi xảy ra');
       });
     });
   });

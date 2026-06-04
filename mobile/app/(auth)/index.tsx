@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -87,11 +88,18 @@ export default function SignInScreen() {
       <FloatingDot x="50%" y={70}  size={10} color={colors.sky}    delay={1200} />
       <FloatingDot x="35%" y={520} size={14} color={colors.yellow} delay={1500} />
 
-      <View style={styles.content}>
+      <LinearGradient
+        colors={['#FF9A9E', '#FECFEF', '#FFE8C8']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
         <Text style={styles.logo}>👶</Text>
-        <Text style={styles.appName}>Family Guy</Text>
-        <Text style={styles.tagline}>{t('signin.tagline')}</Text>
+        <Text style={styles.headline}>{t('signin.headline')}</Text>
+        <Text style={styles.subCopy}>{t('signin.sub_copy')}</Text>
+      </LinearGradient>
 
+      <View style={styles.bottom}>
         <View style={styles.buttons}>
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
@@ -102,7 +110,6 @@ export default function SignInScreen() {
           />
           <Button label={t('signin.google')} onPress={handleGoogle} variant="ghost" fullWidth loading={loading === 'google'} />
         </View>
-
         <Text style={styles.privacy}>{t('signin.privacy')}</Text>
       </View>
     </View>
@@ -110,13 +117,14 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1 },
   dot:       { position: 'absolute', borderRadius: 9999, opacity: 0.7, borderWidth: 2, borderColor: colors.ink, ...shadows.sticker },
-  content:   { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] },
+  hero:      { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] },
   logo:      { fontSize: 72, marginBottom: spacing.lg },
-  appName:   { ...typography.display, fontSize: 32, color: colors.ink, marginBottom: spacing.xs },
-  tagline:   { ...typography.handAccent, color: colors.pink, fontSize: 20, marginBottom: spacing['4xl'] },
-  buttons:   { width: '100%', gap: spacing.md },
+  headline:  { ...typography.heading, fontSize: 24, textAlign: 'center', marginBottom: spacing.sm },
+  subCopy:   { ...typography.body, color: colors.inkMuted, textAlign: 'center', fontSize: 13 },
+  bottom:    { backgroundColor: colors.cream, paddingHorizontal: spacing['3xl'], paddingTop: spacing['3xl'], paddingBottom: spacing['4xl'] },
+  buttons:   { gap: spacing.md },
   appleBtn:  { height: 52, width: '100%', marginBottom: spacing.xs },
   privacy:   { ...typography.caption, color: colors.inkMuted, marginTop: spacing['3xl'], textAlign: 'center' },
 });
