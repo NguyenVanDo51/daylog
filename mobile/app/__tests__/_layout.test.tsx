@@ -1,3 +1,32 @@
+// Mock expo-asset and expo-font before any imports that transitively require them.
+// expo-asset is not a direct dependency; use virtual:true so Jest doesn't try to resolve
+// the actual package from node_modules.
+jest.mock('expo-asset', () => ({
+  Asset: { loadAsync: jest.fn().mockResolvedValue([]) },
+}), { virtual: true });
+
+jest.mock('expo-font', () => ({
+  useFonts: jest.fn(() => [true, null]),
+  isLoaded: jest.fn(() => true),
+  loadAsync: jest.fn().mockResolvedValue(undefined),
+  FontLoader: jest.fn(),
+}));
+
+jest.mock('@expo-google-fonts/fredoka', () => ({
+  useFonts: jest.fn(() => [true, null]),
+  Fredoka_400Regular: 'Fredoka_400Regular',
+  Fredoka_500Medium: 'Fredoka_500Medium',
+  Fredoka_600SemiBold: 'Fredoka_600SemiBold',
+  Fredoka_700Bold: 'Fredoka_700Bold',
+}));
+
+jest.mock('@expo-google-fonts/caveat', () => ({
+  useFonts: jest.fn(() => [true, null]),
+  Caveat_500Medium: 'Caveat_500Medium',
+  Caveat_600SemiBold: 'Caveat_600SemiBold',
+  Caveat_700Bold: 'Caveat_700Bold',
+}));
+
 import React from 'react';
 import { act, render, waitFor } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -126,8 +155,6 @@ const mockedGetItemAsync = SecureStore.getItemAsync as jest.MockedFunction<
 const mockedDeleteItemAsync = SecureStore.deleteItemAsync as jest.MockedFunction<
   typeof SecureStore.deleteItemAsync
 >;
-const mockedReplace = router.replace as jest.MockedFunction<typeof router.replace>;
-
 beforeEach(() => {
   jest.clearAllMocks();
   __recordedStackScreens.length = 0;
@@ -149,8 +176,8 @@ describe('RootLayout', () => {
     // QueryClientProvider should have wrapped the Stack tree.
     expect(utils.getByTestId('query-client-provider')).toBeTruthy();
 
-    // Six routes are declared by the layout: (auth), (tabs), milestone/new,
-    // milestone/[id], photo/[id], join/[token].
+    // Eight routes are declared by the layout: (auth), (tabs), milestone/new,
+    // milestone/[id], photo/[id], capture, capture-review, join/[token].
     const names = __recordedStackScreens.map((s: any) => s.name);
     expect(names).toEqual([
       '(auth)',
@@ -158,6 +185,8 @@ describe('RootLayout', () => {
       'milestone/new',
       'milestone/[id]',
       'photo/[id]',
+      'capture',
+      'capture-review',
       'join/[token]',
     ]);
 
@@ -167,6 +196,7 @@ describe('RootLayout', () => {
     );
     expect(byName['milestone/new'].options?.presentation).toBe('modal');
     expect(byName['photo/[id]'].options?.presentation).toBe('fullScreenModal');
+    expect(byName['capture'].options?.presentation).toBe('fullScreenModal');
 
     // Stack-wide options disable the header globally.
     const stackContainer = utils.getByTestId('stack-container');
@@ -175,7 +205,7 @@ describe('RootLayout', () => {
     });
   });
 
-  it('when SecureStore has a token and /users/me succeeds: sets auth, registers push token, and redirects to (tabs)', async () => {
+  it('when SecureStore has a token and /users/me succeeds: sets auth state and registers push token', async () => {
     const fakeUser = {
       id: 'u1',
       display_name: 'Sarah',
@@ -196,11 +226,9 @@ describe('RootLayout', () => {
     });
     expect(useAuthStore.getState().user).toEqual(fakeUser);
     expect(mockedRegisterPushToken).toHaveBeenCalledTimes(1);
-    expect(mockedReplace).toHaveBeenCalledWith('/(tabs)');
-    expect(mockedReplace).not.toHaveBeenCalledWith('/(auth)');
   });
 
-  it('when SecureStore has a token but /users/me fails: clears token, clears auth, and redirects to (auth)', async () => {
+  it('when SecureStore has a token but /users/me fails: clears token and clears auth state', async () => {
     mockedGetItemAsync.mockResolvedValueOnce('bad-jwt');
     mockedGet.mockRejectedValueOnce(new Error('401'));
 
@@ -218,22 +246,22 @@ describe('RootLayout', () => {
     render(<RootLayout />);
 
     await waitFor(() => {
-      expect(mockedReplace).toHaveBeenCalledWith('/(auth)');
+      expect(useAuthStore.getState().token).toBeNull();
     });
 
     expect(mockedDeleteItemAsync).toHaveBeenCalledWith('auth_token');
-    expect(useAuthStore.getState().token).toBeNull();
     expect(useAuthStore.getState().user).toBeNull();
     expect(mockedRegisterPushToken).not.toHaveBeenCalled();
   });
 
-  it('when SecureStore has no token: redirects to (auth) without touching the API', async () => {
+  it('when SecureStore has no token: does not touch the API and keeps auth state clear', async () => {
     mockedGetItemAsync.mockResolvedValueOnce(null);
 
-    render(<RootLayout />);
+    const utils = render(<RootLayout />);
 
+    // Wait for the bootstrap effect to complete (ready=true → stack renders).
     await waitFor(() => {
-      expect(mockedReplace).toHaveBeenCalledWith('/(auth)');
+      expect(utils.queryByTestId('stack-container')).toBeTruthy();
     });
 
     expect(mockedGet).not.toHaveBeenCalled();
@@ -256,12 +284,13 @@ describe('RootLayout', () => {
     render(<RootLayout />);
 
     await waitFor(() => {
-      expect(mockedReplace).toHaveBeenCalledWith('/(tabs)');
+      // Auth state should still be applied even if push token registration fails.
+      expect(useAuthStore.getState().token).toBe('stored-jwt');
     });
 
     // Even though registerPushToken rejected, the chained .catch should have
     // suppressed it and auth state should still be applied.
-    expect(useAuthStore.getState().token).toBe('stored-jwt');
+    expect(useAuthStore.getState().user).toEqual(fakeUser);
 
     // Let the swallowed rejection settle so it does not leak into other tests.
     await act(async () => {

@@ -38,6 +38,16 @@ jest.mock('@/stores/authStore', () => ({
 
 jest.mock('@/hooks/useAlbum', () => ({ useAlbum: jest.fn() }));
 jest.mock('@/hooks/useMembers', () => ({ useMembers: jest.fn() }));
+jest.mock('@/hooks/useTimeline', () => ({
+  useTimeline: jest.fn(() => ({ data: undefined })),
+}));
+
+jest.mock('@/components/ui/StorageBadge', () => ({
+  StorageBadge: () => null,
+}));
+jest.mock('@/components/ui/StorageFreedomModal', () => ({
+  StorageFreedomModal: () => null,
+}));
 
 jest.mock('@/components/timeline/TimelineFeed', () => {
   const React = require('react');
@@ -81,7 +91,7 @@ describe('HomeScreen (timeline tab)', () => {
   it('renders the default album name when albumName is not set', () => {
     albumState.albumName = null;
     const { getByText } = render(<Screen />);
-    expect(getByText(/Our Album/)).toBeTruthy();
+    expect(getByText(/Album của bé/)).toBeTruthy();
   });
 
   it('renders the greeting with the first name of the user', () => {
@@ -94,7 +104,8 @@ describe('HomeScreen (timeline tab)', () => {
     const fiveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
     albumState.childBirthdate = fiveMonthsAgo;
     const { getByText } = render(<Screen />);
-    expect(getByText(/5 months old/)).toBeTruthy();
+    // Vietnamese age: "5 tháng tuổi"
+    expect(getByText(/5 tháng tuổi/)).toBeTruthy();
   });
 
   it('renders an age badge in years for older children', () => {
@@ -103,7 +114,8 @@ describe('HomeScreen (timeline tab)', () => {
     const threeYearsAgo = new Date(now.getFullYear() - 3, now.getMonth(), 1).toISOString();
     albumState.childBirthdate = threeYearsAgo;
     const { getByText } = render(<Screen />);
-    expect(getByText(/3 years old/)).toBeTruthy();
+    // Vietnamese age: "3 tuổi"
+    expect(getByText(/3 tuổi/)).toBeTruthy();
   });
 
   it('falls back to album.child_birthdate when no store value', () => {
@@ -111,7 +123,8 @@ describe('HomeScreen (timeline tab)', () => {
     const eightMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 8, 1).toISOString();
     mockUseAlbum.mockReturnValue({ data: { child_birthdate: eightMonthsAgo } });
     const { getByText } = render(<Screen />);
-    expect(getByText(/8 months old/)).toBeTruthy();
+    // Vietnamese age: "8 tháng tuổi"
+    expect(getByText(/8 tháng tuổi/)).toBeTruthy();
   });
 
   it('renders avatar row when members exist and navigates to family tab when pressed', () => {
@@ -137,43 +150,51 @@ describe('HomeScreen (timeline tab)', () => {
     mockUseMembers.mockReturnValue({ data: [] });
     const { UNSAFE_queryAllByType } = render(<Screen />);
     const { TouchableOpacity } = require('react-native');
-    expect(UNSAFE_queryAllByType(TouchableOpacity)).toHaveLength(0);
+    // Camera button is always rendered; avatar row TouchableOpacity is not.
+    const touchables = UNSAFE_queryAllByType(TouchableOpacity);
+    expect(touchables).toHaveLength(1);
+    expect(touchables[0].props.style).toMatchObject({ position: 'absolute' });
   });
 
   it('does not render the avatar row when members is undefined', () => {
     mockUseMembers.mockReturnValue({ data: undefined });
     const { UNSAFE_queryAllByType } = render(<Screen />);
     const { TouchableOpacity } = require('react-native');
-    expect(UNSAFE_queryAllByType(TouchableOpacity)).toHaveLength(0);
+    // Camera button is always rendered; avatar row TouchableOpacity is not.
+    const touchables = UNSAFE_queryAllByType(TouchableOpacity);
+    expect(touchables).toHaveLength(1);
+    expect(touchables[0].props.style).toMatchObject({ position: 'absolute' });
   });
 
-  it('renders "Good morning" in the morning hours', () => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-06-03T09:00:00Z').getTime() + new Date().getTimezoneOffset() * 60 * 1000);
+  it('renders a morning greeting in the morning hours', () => {
+    const spy = jest.spyOn(Date.prototype, 'getHours').mockReturnValue(9);
     const { getByText } = render(<Screen />);
-    expect(getByText(/Good morning/)).toBeTruthy();
-    jest.useRealTimers();
+    // Vietnamese: "Chào buổi sáng"
+    expect(getByText(/Chào buổi sáng/)).toBeTruthy();
+    spy.mockRestore();
   });
 
-  it('renders "Good afternoon" in the afternoon hours', () => {
-    // Use a Date.prototype.getHours stub instead of fake-timers so we don't
-    // have to fight timezone math.
+  it('renders an afternoon greeting in the afternoon hours', () => {
     const spy = jest.spyOn(Date.prototype, 'getHours').mockReturnValue(14);
     const { getByText } = render(<Screen />);
-    expect(getByText(/Good afternoon/)).toBeTruthy();
+    // Vietnamese: "Chào buổi chiều"
+    expect(getByText(/Chào buổi chiều/)).toBeTruthy();
     spy.mockRestore();
   });
 
-  it('renders "Good evening" in the evening hours', () => {
+  it('renders an evening greeting in the evening hours', () => {
     const spy = jest.spyOn(Date.prototype, 'getHours').mockReturnValue(20);
     const { getByText } = render(<Screen />);
-    expect(getByText(/Good evening/)).toBeTruthy();
+    // Vietnamese: "Chào buổi tối"
+    expect(getByText(/Chào buổi tối/)).toBeTruthy();
     spy.mockRestore();
   });
 
-  it('renders "Good morning" when getHours < 12 (stubbed)', () => {
+  it('renders morning greeting when getHours < 11 (stubbed)', () => {
     const spy = jest.spyOn(Date.prototype, 'getHours').mockReturnValue(8);
     const { getByText } = render(<Screen />);
-    expect(getByText(/Good morning/)).toBeTruthy();
+    // Vietnamese: "Chào buổi sáng"
+    expect(getByText(/Chào buổi sáng/)).toBeTruthy();
     spy.mockRestore();
   });
 

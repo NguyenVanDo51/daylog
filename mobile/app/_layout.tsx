@@ -55,6 +55,8 @@ export default function RootLayout() {
           <Stack.Screen name="milestone/new" options={{ presentation: 'modal' }} />
           <Stack.Screen name="milestone/[id]" />
           <Stack.Screen name="photo/[id]" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="capture" options={{ presentation: 'fullScreenModal', headerShown: false }} />
+          <Stack.Screen name="capture-review" options={{ headerShown: false }} />
           <Stack.Screen name="join/[token]" />
         </Stack>
       </QueryClientProvider>

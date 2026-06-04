@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
@@ -12,9 +12,11 @@ import { StorageFreedomModal } from '@/components/ui/StorageFreedomModal';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { TimelineFeed } from '@/components/timeline/TimelineFeed';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { formatVnAge, greetingForHour } from '@/lib/format';
+import { useCaptureStore, getCooldownRemaining } from '@/stores/captureStore';
 
 export default function HomeScreen() {
   const [storageModalVisible, setStorageModalVisible] = useState(false);
@@ -25,10 +27,33 @@ export default function HomeScreen() {
   const { data: members } = useMembers();
   const { data: timeline } = useTimeline();
 
+  const { lastCaptureAt } = useCaptureStore();
+  const cooldownRemaining = getCooldownRemaining(lastCaptureAt);
+  const canCapture = cooldownRemaining === 0;
+
   const firstName = user?.display_name?.split(' ')[0] ?? '';
   const birthdate = childBirthdate ?? album?.child_birthdate ?? null;
   const ageLabel = formatVnAge(birthdate);
   const photoCount = timeline?.pages.reduce((s, p) => s + p.items.filter((i: any) => i.type === 'photo').length, 0) ?? 0;
+
+  function handleCameraPress() {
+    if (!canCapture) {
+      const mins = Math.ceil(cooldownRemaining / 60000);
+      Alert.alert(
+        t('capture.cooldown_title'),
+        t('capture.cooldown_body', { minutes: mins }),
+        [
+          { text: t('capture.cancel'), style: 'cancel' },
+          {
+            text: t('capture.cooldown_fallback'),
+            onPress: () => {},
+          },
+        ]
+      );
+      return;
+    }
+    router.push('/capture');
+  }
 
   return (
     <View style={styles.container}>
@@ -49,6 +74,9 @@ export default function HomeScreen() {
             ))}
           </TouchableOpacity>
         )}
+        <TouchableOpacity style={styles.cameraBtn} onPress={handleCameraPress}>
+          <Ionicons name="camera-outline" size={22} color={canCapture ? colors.ink : colors.inkMuted} />
+        </TouchableOpacity>
       </JoyfulHeader>
 
       <StorageBadge onPress={() => setStorageModalVisible(true)} />
@@ -69,4 +97,5 @@ const styles = StyleSheet.create({
   albumName: { ...typography.heading, color: colors.ink, marginBottom: spacing.sm },
   badges:    { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap', marginBottom: spacing.sm },
   avatarRow: { flexDirection: 'row', gap: -8, marginTop: spacing.sm },
+  cameraBtn: { position: 'absolute', right: 0, top: 0, padding: spacing.xs },
 });
