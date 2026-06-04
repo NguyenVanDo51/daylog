@@ -4,9 +4,11 @@ import { useTimeline, TimelineItem } from '@/hooks/useTimeline';
 import { MonthHeader } from './MonthHeader';
 import { PhotoRow } from './PhotoRow';
 import { PolaroidCard } from './PolaroidCard';
+import { PendingPhotoRow } from './PendingPhotoRow';
 import { MilestoneCard } from '@/components/ui/MilestoneCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRow } from '@/components/ui/SkeletonRow';
+import { usePendingUploadStore } from '@/stores/pendingUploadStore';
 import { colors, spacing } from '@/constants/theme';
 import { router } from 'expo-router';
 import { formatVnMonth, formatVnAge } from '@/lib/format';
@@ -31,6 +33,15 @@ interface FlatListItem {
 
 export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null }) {
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage, refetch, isRefetching } = useTimeline();
+  const pendingPhotos = usePendingUploadStore((s) => s.pendingPhotos);
+
+  const pendingRows = React.useMemo(() => {
+    const rows = [];
+    for (let i = 0; i < pendingPhotos.length; i += 2) {
+      rows.push(pendingPhotos.slice(i, i + 2));
+    }
+    return rows;
+  }, [pendingPhotos]);
 
   const items = React.useMemo<FlatListItem[]>(() => {
     if (!data) return [];
@@ -87,7 +98,15 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       </View>
     );
   }
-  if (!items.length) return <EmptyState emoji="🌸" message={t('home.empty_message')} />;
+  if (!items.length && !pendingRows.length) return <EmptyState emoji="🌸" message={t('home.empty_message')} />;
+
+  const listHeader = pendingRows.length > 0 ? (
+    <View testID="pending-rows">
+      {pendingRows.map((row, i) => (
+        <PendingPhotoRow key={`pending-${i}`} photos={row} rowIndex={i} />
+      ))}
+    </View>
+  ) : undefined;
 
   return (
     <FlatList
@@ -96,6 +115,7 @@ export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null
       contentContainerStyle={styles.content}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.3}
+      ListHeaderComponent={listHeader}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.pink} />}
       renderItem={({ item }) => {
         if (item.type === 'month') return <MonthHeader label={item.label!} />;
