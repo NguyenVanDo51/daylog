@@ -16,7 +16,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.familyguy.app",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "We need access to your photos to upload memories.",
+        "NSPhotoLibraryUsageDescription": "Cho phép xóa ảnh đã được lưu an toàn trên ứng dụng",
+        "NSPhotoLibraryAddUsageDescription": "Cho phép lưu ảnh vào thư viện",
         "NSCameraUsageDescription": "We need camera access for QR scanning."
       }
     },
