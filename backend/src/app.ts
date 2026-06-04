@@ -8,6 +8,7 @@ import photosRoutes from './routes/photos';
 import milestonesRoutes from './routes/milestones';
 import invitesRoutes from './routes/invites';
 import timelineRoutes from './routes/timeline';
+import calendarRoutes from './routes/calendar';
 import membersRoutes from './routes/members';
 import reactionsRoutes from './routes/reactions';
 
@@ -30,6 +31,7 @@ app.use('/photos', photosRoutes);
 app.use('/', milestonesRoutes);
 app.use('/', invitesRoutes);
 app.use('/albums/:id/timeline', timelineRoutes);
+app.use('/albums/:id/calendar', calendarRoutes);
 app.use('/albums/:id/members', membersRoutes);
 app.use('/photos/:photoId/reactions', reactionsRoutes);
 
