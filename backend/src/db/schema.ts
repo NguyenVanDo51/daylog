@@ -81,6 +81,17 @@ export const photos = pgTable(
   })
 );
 
+export const reactions = pgTable('reactions', {
+  id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+  photoId: uuid('photo_id').notNull().references(() => photos.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  emoji: varchar('emoji', { length: 8 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  uniqPhotoUser: uniqueIndex('reactions_photo_user_uniq').on(t.photoId, t.userId),
+  byPhoto: index('idx_reactions_photo').on(t.photoId),
+}));
+
 export const milestones = pgTable(
   'milestones',
   {
