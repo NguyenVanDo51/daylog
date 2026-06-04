@@ -106,7 +106,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ).toString('base64')
       : null;
 
-    res.json({ items, next_cursor: nextCursor });
+    res.json({ items, nextCursor });
   } catch (err) {
     next(err);
   }

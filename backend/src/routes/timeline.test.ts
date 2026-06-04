@@ -63,11 +63,11 @@ describe('GET /albums/:id/timeline', () => {
 
     const first = await request(app).get(`/albums/${album.id}/timeline?limit=3`).set(headers);
     expect(first.body.items).toHaveLength(3);
-    expect(first.body.next_cursor).toBeDefined();
+    expect(first.body.nextCursor).toBeDefined();
 
-    const second = await request(app).get(`/albums/${album.id}/timeline?limit=3&cursor=${first.body.next_cursor}`).set(headers);
+    const second = await request(app).get(`/albums/${album.id}/timeline?limit=3&cursor=${first.body.nextCursor}`).set(headers);
     expect(second.body.items).toHaveLength(2);
-    expect(second.body.next_cursor).toBeNull();
+    expect(second.body.nextCursor).toBeNull();
   });
 
   it('returns 403 for non-members', async () => {
@@ -97,16 +97,16 @@ describe('GET /albums/:id/timeline', () => {
       .set(headers);
     expect(first.status).toBe(200);
     expect(first.body.items).toHaveLength(2);
-    expect(first.body.next_cursor).toBeTruthy();
+    expect(first.body.nextCursor).toBeTruthy();
     expect(first.body.items[0].type).toBe('photo');
     expect(first.body.items[1].type).toBe('milestone');
 
     const second = await request(app)
-      .get(`/albums/${album.id}/timeline?limit=2&cursor=${encodeURIComponent(first.body.next_cursor)}`)
+      .get(`/albums/${album.id}/timeline?limit=2&cursor=${encodeURIComponent(first.body.nextCursor)}`)
       .set(headers);
     expect(second.status).toBe(200);
     expect(second.body.items).toHaveLength(2);
-    expect(second.body.next_cursor).toBeNull();
+    expect(second.body.nextCursor).toBeNull();
     expect(second.body.items[0].type).toBe('photo');
     expect(second.body.items[1].type).toBe('milestone');
   });
@@ -123,7 +123,7 @@ describe('GET /albums/:id/timeline', () => {
       .set(headers);
     expect(res.status).toBe(200);
     expect(res.body.items).toHaveLength(20);
-    expect(res.body.next_cursor).toBeTruthy();
+    expect(res.body.nextCursor).toBeTruthy();
   });
 
   it('defaults to limit=20 when limit is a non-numeric string', async () => {
@@ -154,7 +154,7 @@ describe('GET /albums/:id/timeline', () => {
       .set(headers);
     expect(res.status).toBe(200);
     expect(res.body.items).toHaveLength(100);
-    expect(res.body.next_cursor).toBeTruthy();
+    expect(res.body.nextCursor).toBeTruthy();
   });
 
   it('returns 400 when albumId is not a valid UUID', async () => {
@@ -171,7 +171,7 @@ describe('GET /albums/:id/timeline', () => {
       .set(headers);
     expect(res.status).toBe(200);
     expect(res.body.items).toEqual([]);
-    expect(res.body.next_cursor).toBeNull();
+    expect(res.body.nextCursor).toBeNull();
   });
 
   it('includes width and height for photo items', async () => {
