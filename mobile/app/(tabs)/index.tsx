@@ -81,7 +81,7 @@ export default function HomeScreen() {
 
       <StorageBadge onPress={() => setStorageModalVisible(true)} />
 
-      <TimelineFeed childBirthdate={birthdate} />
+      <TimelineFeed />
 
       <StorageFreedomModal
         visible={storageModalVisible}

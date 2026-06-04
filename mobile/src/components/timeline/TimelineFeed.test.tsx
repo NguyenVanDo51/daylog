@@ -89,7 +89,7 @@ beforeEach(() => {
 describe('TimelineFeed', () => {
   it('renders skeleton rows while loading (no FlatList)', () => {
     mockUseTimeline.mockReturnValue(makeReturn({ isLoading: true }));
-    const { UNSAFE_queryByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_queryByType } = render(<TimelineFeed />);
     expect(UNSAFE_queryByType(FlatList)).toBeNull();
   });
 
@@ -97,13 +97,13 @@ describe('TimelineFeed', () => {
     mockUseTimeline.mockReturnValue(
       makeReturn({ data: { pages: [{ items: [], nextCursor: null }] } }),
     );
-    const { getByText } = render(<TimelineFeed childBirthdate={null} />);
+    const { getByText } = render(<TimelineFeed />);
     expect(getByText(/chưa có ảnh/i)).toBeTruthy();
   });
 
   it('renders the empty state when data is undefined (no pages)', () => {
     mockUseTimeline.mockReturnValue(makeReturn({ data: undefined }));
-    const { getByText } = render(<TimelineFeed childBirthdate={null} />);
+    const { getByText } = render(<TimelineFeed />);
     expect(getByText(/chưa có ảnh/i)).toBeTruthy();
   });
 
@@ -123,7 +123,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { getAllByTestId } = render(<TimelineFeed childBirthdate={null} />);
+    const { getAllByTestId } = render(<TimelineFeed />);
     const headers = getAllByTestId(/^day-header-day-/);
     expect(headers).toHaveLength(2);
   });
@@ -144,7 +144,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { getAllByTestId } = render(<TimelineFeed childBirthdate={null} />);
+    const { getAllByTestId } = render(<TimelineFeed />);
     const headers = getAllByTestId(/^day-header-day-/);
     expect(headers).toHaveLength(1);
   });
@@ -166,7 +166,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { getAllByTestId } = render(<TimelineFeed childBirthdate={null} />);
+    const { getAllByTestId } = render(<TimelineFeed />);
     // day 15 photos flush when day 16 starts, day 16 photo flushes at end → 2 blocks
     expect(getAllByTestId('masonry-block')).toHaveLength(2);
   });
@@ -186,7 +186,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { getAllByTestId } = render(<TimelineFeed childBirthdate={null} />);
+    const { getAllByTestId } = render(<TimelineFeed />);
     expect(getAllByTestId('milestone-row')).toHaveLength(1);
   });
 
@@ -207,7 +207,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { getAllByTestId } = render(<TimelineFeed childBirthdate={null} />);
+    const { getAllByTestId } = render(<TimelineFeed />);
     expect(getAllByTestId(/^day-header-day-/)).toHaveLength(3);
     expect(getAllByTestId('masonry-block')).toHaveLength(2);
     expect(getAllByTestId('milestone-row')).toHaveLength(1);
@@ -231,7 +231,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { getAllByTestId } = render(<TimelineFeed childBirthdate={null} />);
+    const { getAllByTestId } = render(<TimelineFeed />);
     // 1 day header; 2 masonry blocks (photos before + photos after milestone); 1 milestone
     expect(getAllByTestId(/^day-header-day-/)).toHaveLength(1);
     expect(getAllByTestId('masonry-block')).toHaveLength(2);
@@ -249,7 +249,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { getAllByTestId } = render(<TimelineFeed childBirthdate={null} />);
+    const { getAllByTestId } = render(<TimelineFeed />);
     // both photos same day → 1 day header, 1 masonry block
     expect(getAllByTestId(/^day-header-day-/)).toHaveLength(1);
     expect(getAllByTestId('masonry-block')).toHaveLength(1);
@@ -266,7 +266,7 @@ describe('TimelineFeed', () => {
         fetchNextPage,
       }),
     );
-    const { UNSAFE_getByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_getByType } = render(<TimelineFeed />);
     const list = UNSAFE_getByType(FlatList);
     list.props.onEndReached();
     expect(fetchNextPage).toHaveBeenCalledTimes(1);
@@ -283,7 +283,7 @@ describe('TimelineFeed', () => {
         fetchNextPage,
       }),
     );
-    const { UNSAFE_getByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_getByType } = render(<TimelineFeed />);
     const list = UNSAFE_getByType(FlatList);
     list.props.onEndReached();
     expect(fetchNextPage).not.toHaveBeenCalled();
@@ -301,7 +301,7 @@ describe('TimelineFeed', () => {
         fetchNextPage,
       }),
     );
-    const { UNSAFE_getByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_getByType } = render(<TimelineFeed />);
     const list = UNSAFE_getByType(FlatList);
     list.props.onEndReached();
     expect(fetchNextPage).not.toHaveBeenCalled();
@@ -318,7 +318,7 @@ describe('TimelineFeed', () => {
         isRefetching: false,
       }),
     );
-    const { UNSAFE_getByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_getByType } = render(<TimelineFeed />);
     const list = UNSAFE_getByType(FlatList);
     const refreshControl = list.props.refreshControl;
     expect(refreshControl).toBeTruthy();
@@ -336,7 +336,7 @@ describe('TimelineFeed', () => {
         isRefetching: true,
       }),
     );
-    const { UNSAFE_getByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_getByType } = render(<TimelineFeed />);
     const list = UNSAFE_getByType(FlatList);
     expect(list.props.refreshControl.props.refreshing).toBe(true);
   });
@@ -349,7 +349,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { UNSAFE_getByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_getByType } = render(<TimelineFeed />);
     const list = UNSAFE_getByType(FlatList);
     const items = list.props.data as Array<{ key: string }>;
     for (const item of items) {
@@ -373,7 +373,7 @@ describe('TimelineFeed', () => {
         },
       }),
     );
-    const { UNSAFE_getByType } = render(<TimelineFeed childBirthdate={null} />);
+    const { UNSAFE_getByType } = render(<TimelineFeed />);
     const list = UNSAFE_getByType(FlatList);
     const listItems = list.props.data as Array<any>;
 

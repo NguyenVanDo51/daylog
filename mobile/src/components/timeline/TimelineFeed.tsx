@@ -21,7 +21,7 @@ interface FlatListItem {
   milestone?: TimelineMilestone;
 }
 
-export function TimelineFeed({ childBirthdate }: { childBirthdate: string | null }) {
+export function TimelineFeed() {
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage, refetch, isRefetching } =
     useTimeline();
   const { width: screenWidth } = useWindowDimensions();
