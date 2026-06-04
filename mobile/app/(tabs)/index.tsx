@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -7,6 +7,8 @@ import { useAlbum } from '@/hooks/useAlbum';
 import { useMembers } from '@/hooks/useMembers';
 import { useTimeline } from '@/hooks/useTimeline';
 import { JoyfulHeader } from '@/components/ui/JoyfulHeader';
+import { StorageBadge } from '@/components/ui/StorageBadge';
+import { StorageFreedomModal } from '@/components/ui/StorageFreedomModal';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { TimelineFeed } from '@/components/timeline/TimelineFeed';
@@ -15,6 +17,7 @@ import { t } from '@/lib/i18n';
 import { formatVnAge, greetingForHour } from '@/lib/format';
 
 export default function HomeScreen() {
+  const [storageModalVisible, setStorageModalVisible] = useState(false);
   const user = useAuthStore((s) => s.user);
   const albumName = useAlbumStore((s) => s.albumName);
   const childBirthdate = useAlbumStore((s) => s.childBirthdate);
@@ -48,7 +51,14 @@ export default function HomeScreen() {
         )}
       </JoyfulHeader>
 
+      <StorageBadge onPress={() => setStorageModalVisible(true)} />
+
       <TimelineFeed childBirthdate={birthdate} />
+
+      <StorageFreedomModal
+        visible={storageModalVisible}
+        onClose={() => setStorageModalVisible(false)}
+      />
     </View>
   );
 }
