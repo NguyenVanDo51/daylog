@@ -133,4 +133,12 @@ describe('Day labels — DELETE', () => {
       .set(headers);
     expect(res.status).toBe(204);
   });
+
+  it('returns 403 for non-members', async () => {
+    const other = await createTestUser();
+    const res = await request(app)
+      .delete(`/albums/${album.id}/day-labels/2026-06-04`)
+      .set(authHeader(other));
+    expect(res.status).toBe(403);
+  });
 });
