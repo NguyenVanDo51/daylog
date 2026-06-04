@@ -29,6 +29,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (!from || !to || !dateRegex.test(from) || !dateRegex.test(to)) {
       return res.status(400).json({ error: 'from and to (YYYY-MM-DD) required' });
     }
+    if (from > to) return res.status(400).json({ error: 'from must be ≤ to' });
 
     if (!(await isAlbumMember(albumId, req.user!.id))) {
       return res.status(403).json({ error: 'Forbidden' });

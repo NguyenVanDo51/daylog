@@ -33,6 +33,13 @@ describe('Day labels — GET range', () => {
     expect(res.body[0].label).toBe('1 tháng tuổi');
   });
 
+  it('returns 400 when from > to', async () => {
+    const res = await request(app)
+      .get(`/albums/${album.id}/day-labels?from=2026-12-01&to=2026-01-01`)
+      .set(headers);
+    expect(res.status).toBe(400);
+  });
+
   it('returns 403 for non-members', async () => {
     const other = await createTestUser();
     const res = await request(app)
