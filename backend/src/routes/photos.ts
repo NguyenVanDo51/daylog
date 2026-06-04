@@ -88,12 +88,15 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return res.status(400).json({ error: 'source must be capture or upload' });
     }
 
+    const typedMediaType = media_type as 'photo' | 'video';
+    const typedSource = source as 'capture' | 'upload';
+
     // Video-specific validation
-    if (media_type === 'video') {
+    if (typedMediaType === 'video') {
       if (duration_ms == null) {
         return res.status(400).json({ error: 'duration_ms required for video' });
       }
-      if (typeof duration_ms !== 'number' || duration_ms > 2000 || duration_ms < 1) {
+      if (typeof duration_ms !== 'number' || !Number.isInteger(duration_ms) || duration_ms > 2000 || duration_ms < 1) {
         return res.status(400).json({ error: 'duration_ms must be between 1 and 2000' });
       }
       if (!thumbnail_r2_key) {
@@ -106,7 +109,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Rate limit: 30 min between captures per user
-    if (source === 'capture') {
+    if (typedSource === 'capture') {
       const [lastCapture] = await db
         .select({ createdAt: photos.createdAt })
         .from(photos)
@@ -142,7 +145,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       if (existing[0]) return res.status(200).json(toSnakePhoto(existing[0]));
     }
 
-    // Verify main r2_key ownership
+    // Verify main r2_key ownership (outside tx — bail early before opening a transaction)
     const [token] = await db
       .select()
       .from(presignTokens)
@@ -151,40 +154,52 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     if (!token) {
       return res.status(400).json({ error: 'Invalid or unrecognized r2_key' });
     }
-    await db.delete(presignTokens).where(eq(presignTokens.key, r2_key));
 
-    // Thumbnail: server-generated for photos, client-provided for videos
-    let thumbnailKey: string | null;
-    if (media_type === 'video') {
+    // Verify thumbnail token for videos before opening the transaction
+    let thumbTokenValid = true;
+    if (typedMediaType === 'video') {
       const [thumbToken] = await db
         .select()
         .from(presignTokens)
         .where(and(eq(presignTokens.key, thumbnail_r2_key), eq(presignTokens.userId, req.user!.id)))
         .limit(1);
       if (!thumbToken) {
-        return res.status(400).json({ error: 'Invalid or unrecognized thumbnail_r2_key' });
+        thumbTokenValid = false;
       }
-      await db.delete(presignTokens).where(eq(presignTokens.key, thumbnail_r2_key));
-      thumbnailKey = thumbnail_r2_key;
-    } else {
-      thumbnailKey = await generateThumbnail(r2_key);
+    }
+    if (!thumbTokenValid) {
+      return res.status(400).json({ error: 'Invalid or unrecognized thumbnail_r2_key' });
     }
 
-    const [photo] = await db
-      .insert(photos)
-      .values({
-        albumId: album_id,
-        uploadedBy: req.user!.id,
-        r2Key: r2_key,
-        thumbnailKey,
-        takenAt: new Date(taken_at),
-        caption: caption ?? null,
-        localAssetId: local_asset_id ?? null,
-        mediaType: media_type,
-        source,
-        durationMs: media_type === 'video' ? duration_ms : null,
-      })
-      .returning();
+    // Wrap token deletions + insert in a transaction so a failed insert doesn't consume tokens
+    const [photo] = await db.transaction(async (tx) => {
+      await tx.delete(presignTokens).where(eq(presignTokens.key, r2_key));
+
+      // Thumbnail: server-generated for photos, client-provided for videos
+      let thumbnailKey: string | null;
+      if (typedMediaType === 'video') {
+        await tx.delete(presignTokens).where(eq(presignTokens.key, thumbnail_r2_key));
+        thumbnailKey = thumbnail_r2_key;
+      } else {
+        thumbnailKey = await generateThumbnail(r2_key);
+      }
+
+      return tx
+        .insert(photos)
+        .values({
+          albumId: album_id,
+          uploadedBy: req.user!.id,
+          r2Key: r2_key,
+          thumbnailKey,
+          takenAt: new Date(taken_at),
+          caption: caption ?? null,
+          localAssetId: local_asset_id ?? null,
+          mediaType: typedMediaType,
+          source: typedSource,
+          durationMs: typedMediaType === 'video' ? duration_ms : null,
+        })
+        .returning();
+    });
 
     // Push notification
     const recipients = await db
@@ -197,8 +212,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         ne(users.id, req.user!.id)
       ));
     const tokens = recipients.map((r) => r.token!).filter(Boolean);
-    const pushTitle = source === 'capture' ? 'Khoảnh khắc mới' : 'Ảnh mới';
-    const pushBody = source === 'capture'
+    const pushTitle = typedSource === 'capture' ? 'Khoảnh khắc mới' : 'Ảnh mới';
+    const pushBody = typedSource === 'capture'
       ? `${req.user!.displayName} vừa gửi một khoảnh khắc`
       : `${req.user!.displayName} đã thêm ảnh mới`;
     sendPush(tokens, pushTitle, pushBody, { photoId: photo.id }).catch(console.error);
