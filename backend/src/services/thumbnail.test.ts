@@ -34,16 +34,16 @@ describe('services/thumbnail generateThumbnail', () => {
     const sourceBuffer = await makeTestJpeg(1200, 800);
     mockGet.mockResolvedValue(sourceBuffer);
 
-    const returnedKey = await generateThumbnail('photos/x.webp');
+    const result = await generateThumbnail('photos/x.webp');
 
-    expect(returnedKey).toMatch(/^thumbnails\/[0-9a-f-]+\.webp$/);
+    expect(result.key).toMatch(/^thumbnails\/[0-9a-f-]+\.webp$/);
 
     expect(mockGet).toHaveBeenCalledTimes(1);
     expect(mockGet).toHaveBeenCalledWith('photos/x.webp');
 
     expect(mockPut).toHaveBeenCalledTimes(1);
     const [putKey, putBuffer] = mockPut.mock.calls[0];
-    expect(putKey).toBe(returnedKey);
+    expect(putKey).toBe(result.key);
     expect(Buffer.isBuffer(putBuffer)).toBe(true);
 
     const meta = await sharp(putBuffer).metadata();
@@ -60,9 +60,9 @@ describe('services/thumbnail generateThumbnail', () => {
     const sourceBuffer = await makeTestJpeg(200, 100);
     mockGet.mockResolvedValue(sourceBuffer);
 
-    const returnedKey = await generateThumbnail('photos/small.jpg');
+    const result = await generateThumbnail('photos/small.jpg');
 
-    expect(returnedKey).toMatch(/^thumbnails\/[0-9a-f-]+\.webp$/);
+    expect(result.key).toMatch(/^thumbnails\/[0-9a-f-]+\.webp$/);
     expect(mockPut).toHaveBeenCalledTimes(1);
 
     const [, putBuffer] = mockPut.mock.calls[0];
@@ -70,6 +70,18 @@ describe('services/thumbnail generateThumbnail', () => {
     expect(meta.format).toBe('webp');
     expect(meta.width).toBe(200);
     expect(meta.height).toBe(100);
+  });
+
+  it('returns original image dimensions alongside thumb key', async () => {
+    const sourceBuffer = await makeTestJpeg(1200, 800);
+    mockGet.mockResolvedValue(sourceBuffer);
+
+    const result = await generateThumbnail('photos/test.webp');
+    expect(result).toHaveProperty('key');
+    expect(result).toHaveProperty('width');
+    expect(result).toHaveProperty('height');
+    expect(typeof result.width).toBe('number');
+    expect(typeof result.height).toBe('number');
   });
 
   it('propagates getObjectBuffer rejection and does not call putObject', async () => {
