@@ -12,6 +12,7 @@ import { StorageFreedomModal } from '@/components/ui/StorageFreedomModal';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { TimelineFeed } from '@/components/timeline/TimelineFeed';
+import { CalendarView } from '@/components/timeline/CalendarView';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
@@ -20,6 +21,7 @@ import { useCaptureStore, getCooldownRemaining } from '@/stores/captureStore';
 
 export default function HomeScreen() {
   const [storageModalVisible, setStorageModalVisible] = useState(false);
+  const [feedMode, setFeedMode] = useState<'feed' | 'calendar'>('feed');
   const user = useAuthStore((s) => s.user);
   const albumName = useAlbumStore((s) => s.albumName);
   const childBirthdate = useAlbumStore((s) => s.childBirthdate);
@@ -74,14 +76,36 @@ export default function HomeScreen() {
             ))}
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.cameraBtn} onPress={handleCameraPress}>
-          <Ionicons name="camera-outline" size={22} color={canCapture ? colors.ink : colors.inkMuted} />
-        </TouchableOpacity>
+        {/* Feed / Calendar toggle */}
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[styles.toggleBtn, feedMode === 'feed' && styles.toggleBtnActive]}
+            onPress={() => setFeedMode('feed')}
+            testID="toggle-feed"
+          >
+            <Ionicons name="grid-outline" size={16} color={feedMode === 'feed' ? colors.white : colors.ink} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleBtn, feedMode === 'calendar' && styles.toggleBtnActive]}
+            onPress={() => setFeedMode('calendar')}
+            testID="toggle-calendar"
+          >
+            <Ionicons name="calendar-outline" size={16} color={feedMode === 'calendar' ? colors.white : colors.ink} />
+          </TouchableOpacity>
+        </View>
+        {feedMode === 'feed' && (
+          <TouchableOpacity style={styles.cameraBtn} onPress={handleCameraPress}>
+            <Ionicons name="camera-outline" size={22} color={canCapture ? colors.ink : colors.inkMuted} />
+          </TouchableOpacity>
+        )}
       </JoyfulHeader>
 
       <StorageBadge onPress={() => setStorageModalVisible(true)} />
 
-      <TimelineFeed />
+      {feedMode === 'feed'
+        ? <TimelineFeed />
+        : <CalendarView />
+      }
 
       <StorageFreedomModal
         visible={storageModalVisible}
@@ -97,5 +121,13 @@ const styles = StyleSheet.create({
   albumName: { ...typography.heading, color: colors.ink, marginBottom: spacing.sm },
   badges:    { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap', marginBottom: spacing.sm },
   avatarRow: { flexDirection: 'row', gap: -8, marginTop: spacing.sm },
-  cameraBtn: { position: 'absolute', right: 0, top: 0, padding: spacing.xs },
+  cameraBtn: { position: 'absolute', right: 0, top: 36, padding: spacing.xs },
+  toggleRow: { flexDirection: 'row', gap: 4, position: 'absolute', right: 0, top: 0 },
+  toggleBtn: {
+    width: 28, height: 28, borderRadius: 8,
+    borderWidth: 1.5, borderColor: colors.ink,
+    backgroundColor: colors.white,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  toggleBtnActive: { backgroundColor: colors.pink, borderColor: colors.pink },
 });

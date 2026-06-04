@@ -58,6 +58,13 @@ jest.mock('@/components/timeline/TimelineFeed', () => {
   };
 });
 
+jest.mock('@/components/timeline/CalendarView', () => {
+  const { View } = require('react-native');
+  return {
+    CalendarView: () => <View testID="mock-calendar-view" />,
+  };
+});
+
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
@@ -140,7 +147,7 @@ describe('HomeScreen (timeline tab)', () => {
     const { UNSAFE_getAllByType } = render(<Screen />);
     const { TouchableOpacity } = require('react-native');
     const touchables = UNSAFE_getAllByType(TouchableOpacity);
-    // The avatar row is a TouchableOpacity; press it.
+    // Avatar row is [0]; toggle-feed is [1]; toggle-calendar is [2]; camera btn is [3].
     const avatarRow = touchables[0];
     fireEvent.press(avatarRow);
     expect(mockRouter.push).toHaveBeenCalledWith('/(tabs)/family');
@@ -148,22 +155,21 @@ describe('HomeScreen (timeline tab)', () => {
 
   it('does not render the avatar row when members is empty', () => {
     mockUseMembers.mockReturnValue({ data: [] });
-    const { UNSAFE_queryAllByType } = render(<Screen />);
-    const { TouchableOpacity } = require('react-native');
-    // Camera button is always rendered; avatar row TouchableOpacity is not.
-    const touchables = UNSAFE_queryAllByType(TouchableOpacity);
-    expect(touchables).toHaveLength(1);
-    expect(touchables[0].props.style).toMatchObject({ position: 'absolute' });
+    const { getByTestId, queryByTestId } = render(<Screen />);
+    // Toggle buttons and camera are rendered; avatar row is not.
+    expect(getByTestId('toggle-feed')).toBeTruthy();
+    expect(getByTestId('toggle-calendar')).toBeTruthy();
+    // Camera is visible in feed mode (default)
+    expect(queryByTestId('mock-calendar-view')).toBeNull();
   });
 
   it('does not render the avatar row when members is undefined', () => {
     mockUseMembers.mockReturnValue({ data: undefined });
-    const { UNSAFE_queryAllByType } = render(<Screen />);
-    const { TouchableOpacity } = require('react-native');
-    // Camera button is always rendered; avatar row TouchableOpacity is not.
-    const touchables = UNSAFE_queryAllByType(TouchableOpacity);
-    expect(touchables).toHaveLength(1);
-    expect(touchables[0].props.style).toMatchObject({ position: 'absolute' });
+    const { getByTestId, queryByTestId } = render(<Screen />);
+    // Toggle buttons are rendered; avatar row is not.
+    expect(getByTestId('toggle-feed')).toBeTruthy();
+    expect(getByTestId('toggle-calendar')).toBeTruthy();
+    expect(queryByTestId('mock-calendar-view')).toBeNull();
   });
 
   it('renders a morning greeting in the morning hours', () => {
@@ -201,6 +207,19 @@ describe('HomeScreen (timeline tab)', () => {
   it('renders without crashing if user is null', () => {
     authState.user = null;
     const { getByTestId } = render(<Screen />);
+    expect(getByTestId('timeline-feed')).toBeTruthy();
+  });
+
+  it('toggle switches between feed and calendar', () => {
+    mockUseAlbum.mockReturnValue({ data: { child_birthdate: null } });
+    mockUseMembers.mockReturnValue({ data: [] });
+    const { getByTestId, queryByTestId } = render(<Screen />);
+    expect(queryByTestId('mock-calendar-view')).toBeNull();
+    expect(getByTestId('timeline-feed')).toBeTruthy();
+    fireEvent.press(getByTestId('toggle-calendar'));
+    expect(getByTestId('mock-calendar-view')).toBeTruthy();
+    fireEvent.press(getByTestId('toggle-feed'));
+    expect(queryByTestId('mock-calendar-view')).toBeNull();
     expect(getByTestId('timeline-feed')).toBeTruthy();
   });
 });
