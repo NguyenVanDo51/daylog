@@ -1,17 +1,31 @@
 import { Router, Request, Response } from 'express';
-import { eq, and, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { reactions, photos, users } from '../db/schema';
+import { reactions, photos, users, albumMembers } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
 import { sendPush } from '../services/apns';
+import { isValidUUID } from '../lib/validation';
 
 const router = Router({ mergeParams: true });
 
 const VALID_EMOJIS = ['❤️', '😂', '😍', '🥹'];
 
-// GET /photos/:photoId/reactions — count by emoji
+async function requirePhotoMember(photoId: string, userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ x: sql<number>`1` })
+    .from(photos)
+    .innerJoin(albumMembers, eq(albumMembers.albumId, photos.albumId))
+    .where(and(eq(photos.id, photoId), eq(albumMembers.userId, userId)))
+    .limit(1);
+  return rows.length > 0;
+}
+
 router.get('/', requireAuth, async (req: Request, res: Response) => {
   const photoId = req.params.photoId as string;
+  if (!isValidUUID(photoId)) return res.status(400).json({ error: 'Invalid photoId' });
+  if (!(await requirePhotoMember(photoId, req.user!.id))) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   try {
     const rows = await db
       .select({ emoji: reactions.emoji, count: sql<number>`count(*)::int` })
@@ -24,14 +38,17 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// POST /photos/:photoId/reactions — upsert (one per user per photo)
 router.post('/', requireAuth, async (req: Request, res: Response) => {
   const photoId = req.params.photoId as string;
   const userId = req.user!.id;
   const { emoji } = req.body;
 
+  if (!isValidUUID(photoId)) return res.status(400).json({ error: 'Invalid photoId' });
   if (!VALID_EMOJIS.includes(emoji)) {
     return res.status(400).json({ error: 'Invalid emoji' });
+  }
+  if (!(await requirePhotoMember(photoId, userId))) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
   try {
@@ -43,7 +60,6 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
         set: { emoji },
       });
 
-    // Notify photo uploader if different from reactor (fire-and-forget)
     const [photo] = await db
       .select({ uploadedBy: photos.uploadedBy })
       .from(photos)
@@ -61,9 +77,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
           'Có reaction mới!',
           `Ai đó đã gửi ${emoji} cho ảnh của bé`,
           { photoId }
-        ).catch(() => {
-          // push is optional — ignore if it fails
-        });
+        ).catch(() => {});
       }
     }
 
@@ -73,10 +87,13 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /photos/:photoId/reactions — remove current user's reaction
 router.delete('/', requireAuth, async (req: Request, res: Response) => {
   const photoId = req.params.photoId as string;
   const userId = req.user!.id;
+  if (!isValidUUID(photoId)) return res.status(400).json({ error: 'Invalid photoId' });
+  if (!(await requirePhotoMember(photoId, userId))) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   try {
     await db.delete(reactions).where(
       and(eq(reactions.photoId, photoId), eq(reactions.userId, userId))
