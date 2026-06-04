@@ -1,5 +1,5 @@
 jest.mock('../services/r2', () => ({ getPresignedPutUrl: jest.fn() }));
-jest.mock('../services/thumbnail', () => ({ generateThumbnail: jest.fn().mockResolvedValue('thumb_key') }));
+jest.mock('../services/thumbnail', () => ({ generateThumbnail: jest.fn().mockResolvedValue({ key: 'thumb_key', width: 800, height: 600 }) }));
 jest.mock('../services/apns', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
 
 import request from 'supertest';
@@ -91,7 +91,7 @@ describe('POST /photos', () => {
     user = await createTestUser();
     album = await createTestAlbum(user.id);
     headers = authHeader(user);
-    mockGenThumb.mockResolvedValue('thumbnails/abc-thumb.webp');
+    mockGenThumb.mockResolvedValue({ key: 'thumbnails/abc-thumb.webp', width: 800, height: 600 });
     mockSendPush.mockResolvedValue(undefined);
   });
 
@@ -111,6 +111,8 @@ describe('POST /photos', () => {
     expect(res.status).toBe(201);
     expect(res.body.r2_key).toBe('photos/abc.webp');
     expect(res.body.thumbnail_key).toBe('thumbnails/abc-thumb.webp');
+    expect(res.body.width).toBeDefined();
+    expect(res.body.height).toBeDefined();
     expect(mockGenThumb).toHaveBeenCalledWith('photos/abc.webp');
   });
 
@@ -352,7 +354,7 @@ describe('POST /photos — capture fields', () => {
     user = await createTestUser();
     album = await createTestAlbum(user.id);
     headers = authHeader(user);
-    mockGenThumb.mockResolvedValue('thumb_key');
+    mockGenThumb.mockResolvedValue({ key: 'thumb_key', width: 800, height: 600 });
     mockSendPush.mockResolvedValue(undefined);
   });
 
@@ -392,6 +394,28 @@ describe('POST /photos — capture fields', () => {
     expect(res.body.media_type).toBe('video');
     expect(res.body.duration_ms).toBe(1800);
     expect(res.body.thumbnail_key).toBe('key-video-thumb');
+  });
+
+  it('stores width and height for video uploads', async () => {
+    await createPresignToken(user.id, 'key-video-dims');
+    await createPresignToken(user.id, 'key-video-dims-thumb');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_id: album.id,
+        r2_key: 'key-video-dims',
+        taken_at: new Date().toISOString(),
+        source: 'capture',
+        media_type: 'video',
+        duration_ms: 1200,
+        thumbnail_r2_key: 'key-video-dims-thumb',
+        width: 1920,
+        height: 1080,
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.width).toBe(1920);
+    expect(res.body.height).toBe(1080);
   });
 
   it('rejects video missing duration_ms', async () => {

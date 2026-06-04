@@ -39,6 +39,8 @@ function toSnakePhoto(p: typeof photos.$inferSelect) {
     media_type: p.mediaType,
     source: p.source,
     duration_ms: p.durationMs,
+    width: p.width,
+    height: p.height,
   };
 }
 
@@ -70,6 +72,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       album_id, r2_key, taken_at, caption, local_asset_id,
       media_type = 'photo', source = 'upload',
       duration_ms, thumbnail_r2_key,
+      width: clientWidth, height: clientHeight,
     } = req.body ?? {};
 
     if (!album_id || !r2_key || !taken_at) {
@@ -177,11 +180,19 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
       // Thumbnail: server-generated for photos, client-provided for videos
       let thumbnailKey: string | null;
+      let photoWidth: number | null = null;
+      let photoHeight: number | null = null;
+
       if (typedMediaType === 'video') {
         await tx.delete(presignTokens).where(eq(presignTokens.key, thumbnail_r2_key));
         thumbnailKey = thumbnail_r2_key;
+        photoWidth = typeof clientWidth === 'number' ? clientWidth : null;
+        photoHeight = typeof clientHeight === 'number' ? clientHeight : null;
       } else {
-        thumbnailKey = await generateThumbnail(r2_key);
+        const result = await generateThumbnail(r2_key);
+        thumbnailKey = result.key;
+        photoWidth = result.width;
+        photoHeight = result.height;
       }
 
       return tx
@@ -197,6 +208,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
           mediaType: typedMediaType,
           source: typedSource,
           durationMs: typedMediaType === 'video' ? duration_ms : null,
+          width: photoWidth,
+          height: photoHeight,
         })
         .returning();
     });
