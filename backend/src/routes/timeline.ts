@@ -27,6 +27,8 @@ type TimelineRow = {
   media_type: string | null;
   source: string | null;
   duration_ms: number | null;
+  width: number | null;
+  height: number | null;
 };
 
 type Cursor = {
@@ -73,7 +75,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       SELECT id, 'photo' AS type, taken_at AS event_time,
              r2_key, thumbnail_key, caption, uploaded_by AS user_id,
              local_asset_id, NULL AS title, NULL AS note,
-             media_type, source, duration_ms
+             media_type, source, duration_ms,
+             width, height
       FROM photos
       WHERE album_id = ${albumId} ${photoCursorClause}
 
@@ -82,7 +85,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       SELECT id, 'milestone' AS type, occurred_at AS event_time,
              NULL, NULL, NULL, created_by AS user_id,
              NULL, title, note,
-             NULL, NULL, NULL
+             NULL, NULL, NULL,
+             NULL, NULL
       FROM milestones
       WHERE album_id = ${albumId} ${milestoneCursorClause}
 

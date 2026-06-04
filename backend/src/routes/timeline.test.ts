@@ -19,6 +19,18 @@ async function insertMilestone(albumId: string, userId: string, occurredAt: stri
   return rows[0];
 }
 
+async function insertPhotoWithDimensions(
+  albumId: string, userId: string, takenAt: string,
+  width: number, height: number
+) {
+  const { rows } = await pool.query(
+    `INSERT INTO photos (album_id, uploaded_by, r2_key, taken_at, width, height)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    [albumId, userId, 'photos/test.webp', takenAt, width, height]
+  );
+  return rows[0];
+}
+
 describe('GET /albums/:id/timeline', () => {
   let user: Awaited<ReturnType<typeof createTestUser>>;
   let album: Awaited<ReturnType<typeof createTestAlbum>>;
@@ -160,5 +172,29 @@ describe('GET /albums/:id/timeline', () => {
     expect(res.status).toBe(200);
     expect(res.body.items).toEqual([]);
     expect(res.body.next_cursor).toBeNull();
+  });
+
+  it('includes width and height for photo items', async () => {
+    await insertPhotoWithDimensions(album.id, user.id, '2025-06-04T10:00:00Z', 1080, 1920);
+
+    const res = await request(app).get(`/albums/${album.id}/timeline`).set(headers);
+
+    expect(res.status).toBe(200);
+    const photo = res.body.items[0];
+    expect(photo.type).toBe('photo');
+    expect(photo.width).toBe(1080);
+    expect(photo.height).toBe(1920);
+  });
+
+  it('returns null width and height for milestone items', async () => {
+    await insertMilestone(album.id, user.id, '2025-06-04T10:00:00Z');
+
+    const res = await request(app).get(`/albums/${album.id}/timeline`).set(headers);
+
+    expect(res.status).toBe(200);
+    const ms = res.body.items[0];
+    expect(ms.type).toBe('milestone');
+    expect(ms.width).toBeNull();
+    expect(ms.height).toBeNull();
   });
 });
