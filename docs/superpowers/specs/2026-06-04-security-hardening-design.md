@@ -45,7 +45,7 @@ if (!membership[0]) return res.status(403).json({ error: 'Forbidden' });
 
 `POST /photos` accepts a `r2_key` from the client body without verifying the key was issued to that user via the presign endpoint. A user who discovers another user's R2 key can register it as their own photo.
 
-**Fix:** Add a `presign_tokens` table (or `pending_r2_key` column on `users`) that records issued keys. On presign, insert the key. On `POST /photos`, verify the provided `r2_key` exists in the table with `uploaded_by = req.user.id`, then delete the entry. If not found, return 400.
+**Fix:** Add a `presign_tokens` table that records keys issued to each user. On presign, insert the key. On `POST /photos`, verify the provided `r2_key` exists in `presign_tokens` with `user_id = req.user.id`, then delete the entry. If not found, return 400. Table approach (vs column on `users`) is preferred to support concurrent multi-photo uploads.
 
 Schema addition:
 ```sql
