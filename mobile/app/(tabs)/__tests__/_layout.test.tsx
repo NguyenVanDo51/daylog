@@ -1,3 +1,5 @@
+jest.mock('@/lib/haptics', () => ({ tap: jest.fn(), success: jest.fn() }));
+
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
 
@@ -166,8 +168,8 @@ describe('TabLayout', () => {
       }),
     );
     expect(recordedTabsProps.screenOptions.tabBarLabelStyle).toEqual({
-      fontSize: 10,
-      fontWeight: '600',
+      fontFamily: 'Fredoka_600SemiBold',
+      fontSize: 11,
     });
   });
 
@@ -181,10 +183,11 @@ describe('TabLayout', () => {
     const utils = render(<TabLayout />);
     const byName = Object.fromEntries(recordedScreens.map((s) => [s.name, s]));
 
-    expect(byName.index.options.title).toBe('Home');
-    expect(byName.milestones.options.title).toBe('Moments');
-    expect(byName.family.options.title).toBe('Family');
-    expect(byName.settings.options.title).toBe('Settings');
+    // Vietnamese tab titles
+    expect(byName.index.options.title).toBe('Nhà');
+    expect(byName.milestones.options.title).toBe('Khoảnh khắc');
+    expect(byName.family.options.title).toBe('Gia đình');
+    expect(byName.settings.options.title).toBe('Tôi');
 
     // The pass-through icon-host renders a <View testID="Ionicons-<name>"> for
     // each call to tabBarIcon. Verify each expected icon is present in the

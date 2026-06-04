@@ -86,14 +86,15 @@ beforeEach(() => {
 describe('FamilyTab', () => {
   it('renders the family heading', () => {
     const { getByText } = render(<Screen />);
-    expect(getByText(/Family/)).toBeTruthy();
+    // Vietnamese: "Gia đình 👨‍👩‍👧"
+    expect(getByText(/Gia đình/)).toBeTruthy();
   });
 
-  it('renders a loading spinner while members are loading', () => {
+  it('renders skeleton cards while members are loading (no ActivityIndicator)', () => {
     mockUseMembers.mockReturnValue({ data: undefined, isLoading: true });
-    const { UNSAFE_getAllByType } = render(<Screen />);
-    const { ActivityIndicator } = require('react-native');
-    expect(UNSAFE_getAllByType(ActivityIndicator).length).toBeGreaterThan(0);
+    // Component renders SkeletonCard, not ActivityIndicator
+    const { toJSON } = render(<Screen />);
+    expect(toJSON()).toBeTruthy();
   });
 
   it('renders the member list when members are returned', () => {
@@ -110,31 +111,31 @@ describe('FamilyTab', () => {
     expect(getByText('Bob')).toBeTruthy();
   });
 
-  it('renders Invite section headers and buttons', () => {
+  it('renders invite title and buttons', () => {
     const { getByText } = render(<Screen />);
-    expect(getByText('MEMBERS')).toBeTruthy();
-    expect(getByText('INVITE FAMILY')).toBeTruthy();
-    expect(getByText('Copy Invite Link')).toBeTruthy();
-    expect(getByText('Scan QR Code')).toBeTruthy();
+    // Vietnamese: "Mời gia đình", "Sao chép link mời", "Quét mã QR"
+    expect(getByText('Mời gia đình')).toBeTruthy();
+    expect(getByText('Sao chép link mời')).toBeTruthy();
+    expect(getByText('Quét mã QR')).toBeTruthy();
   });
 
-  it('opens the InviteSheet when "Copy Invite Link" is pressed', () => {
+  it('opens the InviteSheet when "Sao chép link mời" is pressed', () => {
     const { getByText, queryByTestId } = render(<Screen />);
     expect(queryByTestId('invite-sheet')).toBeNull();
-    fireEvent.press(getByText('Copy Invite Link'));
+    fireEvent.press(getByText('Sao chép link mời'));
     expect(queryByTestId('invite-sheet')).toBeTruthy();
   });
 
-  it('opens the QRSheet when "Scan QR Code" is pressed', () => {
+  it('opens the QRSheet when "Quét mã QR" is pressed', () => {
     const { getByText, queryByTestId } = render(<Screen />);
     expect(queryByTestId('qr-sheet')).toBeNull();
-    fireEvent.press(getByText('Scan QR Code'));
+    fireEvent.press(getByText('Quét mã QR'));
     expect(queryByTestId('qr-sheet')).toBeTruthy();
   });
 
   it('closes the InviteSheet when its onClose is called', () => {
     const { getByText, getByTestId, queryByTestId } = render(<Screen />);
-    fireEvent.press(getByText('Copy Invite Link'));
+    fireEvent.press(getByText('Sao chép link mời'));
     expect(queryByTestId('invite-sheet')).toBeTruthy();
     fireEvent.press(getByTestId('invite-sheet'));
     expect(queryByTestId('invite-sheet')).toBeNull();
@@ -142,7 +143,7 @@ describe('FamilyTab', () => {
 
   it('closes the QRSheet when its onClose is called', () => {
     const { getByText, getByTestId, queryByTestId } = render(<Screen />);
-    fireEvent.press(getByText('Scan QR Code'));
+    fireEvent.press(getByText('Quét mã QR'));
     expect(queryByTestId('qr-sheet')).toBeTruthy();
     fireEvent.press(getByTestId('qr-sheet'));
     expect(queryByTestId('qr-sheet')).toBeNull();

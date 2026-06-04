@@ -3,6 +3,9 @@ module.exports = {
   testEnvironment: 'node',
   setupFilesAfterEnv: ['./tests/setup.ts'],
   testTimeout: 15000,
+  // Run tests serially — the test suite shares a real Postgres database and
+  // the beforeEach TRUNCATE is not safe to run concurrently across workers.
+  maxWorkers: 1,
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },

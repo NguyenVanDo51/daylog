@@ -8,6 +8,7 @@ const db_1 = require("../db");
 const schema_1 = require("../db/schema");
 const auth_1 = require("../middleware/auth");
 const apns_1 = require("../services/apns");
+const validation_1 = require("../lib/validation");
 const router = express_1.default.Router();
 // Selecting these columns aliased to snake_case keeps the response shape that
 // the existing tests assert on (id, album_id, created_by, title, note,
@@ -33,6 +34,10 @@ async function isAlbumMember(albumId, userId) {
 router.post('/albums/:albumId/milestones', auth_1.requireAuth, async (req, res, next) => {
     try {
         const albumId = req.params.albumId;
+        if (!(0, validation_1.isValidUUID)(albumId)) {
+            res.status(400).json({ error: 'Invalid albumId' });
+            return;
+        }
         const { title, note, occurred_at, cover_photo_id } = req.body ?? {};
         if (!title || !occurred_at) {
             res.status(400).json({ error: 'title and occurred_at required' });
@@ -71,6 +76,10 @@ router.post('/albums/:albumId/milestones', auth_1.requireAuth, async (req, res, 
 router.get('/albums/:albumId/milestones', auth_1.requireAuth, async (req, res, next) => {
     try {
         const albumId = req.params.albumId;
+        if (!(0, validation_1.isValidUUID)(albumId)) {
+            res.status(400).json({ error: 'Invalid albumId' });
+            return;
+        }
         if (!(await isAlbumMember(albumId, req.user.id))) {
             res.status(403).json({ error: 'Forbidden' });
             return;
@@ -89,9 +98,13 @@ router.get('/albums/:albumId/milestones', auth_1.requireAuth, async (req, res, n
 router.patch('/milestones/:id', auth_1.requireAuth, async (req, res, next) => {
     try {
         const milestoneId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(milestoneId)) {
+            res.status(400).json({ error: 'Invalid milestoneId' });
+            return;
+        }
         // Access check: caller must be a member of the milestone's owning album.
         const existing = await db_1.db
-            .select({ id: schema_1.milestones.id })
+            .select({ id: schema_1.milestones.id, albumId: schema_1.milestones.albumId })
             .from(schema_1.milestones)
             .innerJoin(schema_1.albumMembers, (0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, schema_1.milestones.albumId))
             .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.milestones.id, milestoneId), (0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id)))
@@ -101,6 +114,21 @@ router.patch('/milestones/:id', auth_1.requireAuth, async (req, res, next) => {
             return;
         }
         const { title, note, occurred_at, cover_photo_id } = req.body ?? {};
+        if (cover_photo_id !== undefined && cover_photo_id !== null) {
+            if (!(0, validation_1.isValidUUID)(cover_photo_id)) {
+                res.status(400).json({ error: 'Invalid cover_photo_id' });
+                return;
+            }
+            const matchingPhoto = await db_1.db
+                .select({ id: schema_1.photos.id })
+                .from(schema_1.photos)
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.photos.id, cover_photo_id), (0, drizzle_orm_1.eq)(schema_1.photos.albumId, existing[0].albumId)))
+                .limit(1);
+            if (!matchingPhoto[0]) {
+                res.status(400).json({ error: 'cover_photo_id does not belong to this album' });
+                return;
+            }
+        }
         // Mirror the original SQL's COALESCE($n, col) behavior: only overwrite
         // columns when the caller actually supplied a non-null value. If none
         // were supplied, the UPDATE would have been a no-op in the old route,
@@ -146,13 +174,17 @@ router.patch('/milestones/:id', auth_1.requireAuth, async (req, res, next) => {
 router.delete('/milestones/:id', auth_1.requireAuth, async (req, res, next) => {
     try {
         const milestoneId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(milestoneId)) {
+            res.status(400).json({ error: 'Invalid milestoneId' });
+            return;
+        }
         const existing = await db_1.db
-            .select({ id: schema_1.milestones.id })
+            .select({ id: schema_1.milestones.id, role: schema_1.albumMembers.role })
             .from(schema_1.milestones)
             .innerJoin(schema_1.albumMembers, (0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, schema_1.milestones.albumId))
             .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.milestones.id, milestoneId), (0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id)))
             .limit(1);
-        if (!existing[0]) {
+        if (!existing[0] || existing[0].role !== 'admin') {
             res.status(403).json({ error: 'Forbidden' });
             return;
         }

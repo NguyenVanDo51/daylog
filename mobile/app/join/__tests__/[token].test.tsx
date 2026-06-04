@@ -46,7 +46,7 @@ afterEach(() => {
 
 describe('JoinScreen', () => {
   describe('unauthenticated', () => {
-    it('shows sign-in prompt and navigates to (auth) when Sign In pressed', async () => {
+    it('shows invited message and sign-in button, navigates to (auth) when pressed', async () => {
       mockUseAuthStore.mockImplementation(
         (selector: (s: { token: string | null }) => unknown) =>
           selector({ token: null }),
@@ -54,10 +54,12 @@ describe('JoinScreen', () => {
 
       const { getByText } = render(<JoinScreen />);
 
-      expect(getByText(/Join Album/)).toBeTruthy();
-      expect(getByText('You need to sign in before joining.')).toBeTruthy();
+      // Vietnamese: t('join.invited_msg') = 'Bạn được mời tham gia ~'
+      expect(getByText('Bạn được mời tham gia ~')).toBeTruthy();
+      // t('signin.apple') = 'Đăng nhập với Apple'
+      expect(getByText('Đăng nhập với Apple')).toBeTruthy();
 
-      fireEvent.press(getByText('Sign In'));
+      fireEvent.press(getByText('Đăng nhập với Apple'));
       expect(mockRouter.replace).toHaveBeenCalledWith('/(auth)');
 
       // The mount effect still runs api.get; flush its resolution so the
@@ -84,7 +86,7 @@ describe('JoinScreen', () => {
   });
 
   describe('authenticated', () => {
-    it('shows a loading spinner until the invite GET resolves', async () => {
+    it('renders null while the invite GET is pending', async () => {
       let resolveGet: ((v: { data: { album_name: string } }) => void) | undefined;
       mockApi.get.mockImplementationOnce(
         () =>
@@ -93,18 +95,18 @@ describe('JoinScreen', () => {
           }),
       );
 
-      const { UNSAFE_queryAllByType, queryByText } = render(<JoinScreen />);
+      const { toJSON, queryByText } = render(<JoinScreen />);
 
-      const { ActivityIndicator } = require('react-native');
-      expect(UNSAFE_queryAllByType(ActivityIndicator).length).toBeGreaterThan(0);
-      expect(queryByText("You're invited!")).toBeNull();
+      // Component returns null while invite is not yet set.
+      expect(toJSON()).toBeNull();
+      expect(queryByText('Bạn được mời tham gia ~')).toBeNull();
 
       await act(async () => {
         resolveGet!({ data: { album_name: 'Emma Album' } });
       });
 
       await waitFor(() => {
-        expect(queryByText("You're invited!")).toBeTruthy();
+        expect(queryByText('Bạn được mời tham gia ~')).toBeTruthy();
       });
     });
 
@@ -119,12 +121,15 @@ describe('JoinScreen', () => {
       await waitFor(() => {
         expect(getByText('Emma Album')).toBeTruthy();
       });
-      expect(getByText("You're invited!")).toBeTruthy();
-      expect(getByText('Join Album')).toBeTruthy();
-      expect(getByText('Cancel')).toBeTruthy();
+      // Vietnamese: t('join.invited_msg') = 'Bạn được mời tham gia ~'
+      expect(getByText('Bạn được mời tham gia ~')).toBeTruthy();
+      // Vietnamese: t('join.cta') = 'Tham gia album'
+      expect(getByText('Tham gia album')).toBeTruthy();
+      // Vietnamese: t('common.cancel') = 'Huỷ'
+      expect(getByText('Huỷ')).toBeTruthy();
     });
 
-    it('alerts "Invalid invite" when the invite fetch fails (404/410)', async () => {
+    it('alerts with Vietnamese error when the invite fetch fails (404/410)', async () => {
       const err: any = new Error('not found');
       err.response = { status: 404 };
       mockApi.get.mockRejectedValueOnce(err);
@@ -132,9 +137,10 @@ describe('JoinScreen', () => {
       render(<JoinScreen />);
 
       await waitFor(() => {
+        // t('common.error') = 'Có lỗi xảy ra', Vietnamese body message
         expect(Alert.alert).toHaveBeenCalledWith(
-          'Invalid invite',
-          'This invite link is invalid or expired.',
+          'Có lỗi xảy ra',
+          'Link mời không hợp lệ hoặc đã hết hạn.',
         );
       });
     });
@@ -146,11 +152,11 @@ describe('JoinScreen', () => {
       const { getByText } = render(<JoinScreen />);
 
       await waitFor(() => {
-        expect(getByText('Join Album')).toBeTruthy();
+        expect(getByText('Tham gia album')).toBeTruthy();
       });
 
       await act(async () => {
-        fireEvent.press(getByText('Join Album'));
+        fireEvent.press(getByText('Tham gia album'));
       });
 
       await waitFor(() => {
@@ -169,15 +175,16 @@ describe('JoinScreen', () => {
 
       const { getByText } = render(<JoinScreen />);
       await waitFor(() => {
-        expect(getByText('Join Album')).toBeTruthy();
+        expect(getByText('Tham gia album')).toBeTruthy();
       });
 
       await act(async () => {
-        fireEvent.press(getByText('Join Album'));
+        fireEvent.press(getByText('Tham gia album'));
       });
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Error', 'Already a member');
+        // t('common.error') = 'Có lỗi xảy ra'
+        expect(Alert.alert).toHaveBeenCalledWith('Có lỗi xảy ra', 'Already a member');
       });
       expect(mockRouter.replace).not.toHaveBeenCalled();
     });
@@ -188,15 +195,15 @@ describe('JoinScreen', () => {
 
       const { getByText } = render(<JoinScreen />);
       await waitFor(() => {
-        expect(getByText('Join Album')).toBeTruthy();
+        expect(getByText('Tham gia album')).toBeTruthy();
       });
 
       await act(async () => {
-        fireEvent.press(getByText('Join Album'));
+        fireEvent.press(getByText('Tham gia album'));
       });
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Error', 'boom');
+        expect(Alert.alert).toHaveBeenCalledWith('Có lỗi xảy ra', 'boom');
       });
     });
 
@@ -205,10 +212,10 @@ describe('JoinScreen', () => {
 
       const { getByText } = render(<JoinScreen />);
       await waitFor(() => {
-        expect(getByText('Cancel')).toBeTruthy();
+        expect(getByText('Huỷ')).toBeTruthy();
       });
 
-      fireEvent.press(getByText('Cancel'));
+      fireEvent.press(getByText('Huỷ'));
       expect(mockRouter.back).toHaveBeenCalled();
     });
   });

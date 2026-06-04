@@ -3,9 +3,11 @@ const express_1 = require("express");
 const crypto_1 = require("crypto");
 const drizzle_orm_1 = require("drizzle-orm");
 const auth_1 = require("../middleware/auth");
+const rateLimit_1 = require("../lib/rateLimit");
 const db_1 = require("../db");
 const schema_1 = require("../db/schema");
 const qrcode_1 = require("../services/qrcode");
+const validation_1 = require("../lib/validation");
 const router = (0, express_1.Router)();
 function generateToken() {
     return (0, crypto_1.randomBytes)(16).toString('base64url');
@@ -13,6 +15,8 @@ function generateToken() {
 router.post('/albums/:albumId/invites', auth_1.requireAuth, async (req, res, next) => {
     try {
         const { albumId } = req.params;
+        if (!(0, validation_1.isValidUUID)(albumId))
+            return res.status(400).json({ error: 'Invalid albumId' });
         const { expires_in_days, max_uses } = req.body;
         const membership = await db_1.db
             .select({ x: (0, drizzle_orm_1.sql) `1` })
@@ -21,6 +25,18 @@ router.post('/albums/:albumId/invites', auth_1.requireAuth, async (req, res, nex
             .limit(1);
         if (!membership[0])
             return res.status(403).json({ error: 'Forbidden' });
+        if (expires_in_days !== undefined) {
+            const days = Number(expires_in_days);
+            if (!Number.isInteger(days) || days < 1) {
+                return res.status(400).json({ error: 'expires_in_days must be a positive integer' });
+            }
+        }
+        if (max_uses !== undefined) {
+            const uses = Number(max_uses);
+            if (!Number.isInteger(uses) || uses < 1) {
+                return res.status(400).json({ error: 'max_uses must be a positive integer' });
+            }
+        }
         const token = generateToken();
         const expiresAt = expires_in_days
             ? new Date(Date.now() + expires_in_days * 86400000)
@@ -45,7 +61,7 @@ router.post('/albums/:albumId/invites', auth_1.requireAuth, async (req, res, nex
         next(err);
     }
 });
-router.get('/invites/:token', async (req, res, next) => {
+router.get('/invites/:token', rateLimit_1.inviteLookupLimiter, async (req, res, next) => {
     try {
         const rows = await db_1.db
             .select({

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.invites = exports.milestones = exports.photos = exports.albumMembers = exports.albums = exports.users = exports.memberRole = void 0;
+exports.presignTokens = exports.invites = exports.milestones = exports.reactions = exports.photos = exports.albumMembers = exports.albums = exports.users = exports.memberRole = void 0;
 const drizzle_orm_1 = require("drizzle-orm");
 const pg_core_1 = require("drizzle-orm/pg-core");
 exports.memberRole = (0, pg_core_1.pgEnum)('member_role', ['admin', 'member']);
@@ -53,11 +53,27 @@ exports.photos = (0, pg_core_1.pgTable)('photos', {
     caption: (0, pg_core_1.text)('caption'),
     localAssetId: (0, pg_core_1.varchar)('local_asset_id'),
     createdAt: (0, pg_core_1.timestamp)('created_at', { withTimezone: true }).defaultNow(),
+    mediaType: (0, pg_core_1.varchar)('media_type', { length: 8 }).notNull().default('photo'),
+    source: (0, pg_core_1.varchar)('source', { length: 8 }).notNull().default('upload'),
+    durationMs: (0, pg_core_1.integer)('duration_ms'),
 }, (t) => ({
     byAlbumTakenAt: (0, pg_core_1.index)('idx_photos_album_taken_at').on(t.albumId, t.takenAt.desc()),
     byAlbumLocalAsset: (0, pg_core_1.index)('idx_photos_local_asset')
         .on(t.albumId, t.localAssetId)
         .where((0, drizzle_orm_1.sql) `${t.localAssetId} IS NOT NULL`),
+    captureRateLimit: (0, pg_core_1.index)('idx_photos_capture_rate_limit')
+        .on(t.uploadedBy, t.createdAt.desc())
+        .where((0, drizzle_orm_1.sql) `${t.source} = 'capture'`),
+}));
+exports.reactions = (0, pg_core_1.pgTable)('reactions', {
+    id: (0, pg_core_1.uuid)('id').primaryKey().default((0, drizzle_orm_1.sql) `uuid_generate_v4()`),
+    photoId: (0, pg_core_1.uuid)('photo_id').notNull().references(() => exports.photos.id, { onDelete: 'cascade' }),
+    userId: (0, pg_core_1.uuid)('user_id').notNull().references(() => exports.users.id),
+    emoji: (0, pg_core_1.varchar)('emoji', { length: 8 }).notNull(),
+    createdAt: (0, pg_core_1.timestamp)('created_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+    uniqPhotoUser: (0, pg_core_1.uniqueIndex)('reactions_photo_user_uniq').on(t.photoId, t.userId),
+    byPhoto: (0, pg_core_1.index)('idx_reactions_photo').on(t.photoId),
 }));
 exports.milestones = (0, pg_core_1.pgTable)('milestones', {
     id: (0, pg_core_1.uuid)('id').primaryKey().default((0, drizzle_orm_1.sql) `uuid_generate_v4()`),
@@ -87,5 +103,12 @@ exports.invites = (0, pg_core_1.pgTable)('invites', {
     expiresAt: (0, pg_core_1.timestamp)('expires_at', { withTimezone: true }),
     maxUses: (0, pg_core_1.integer)('max_uses'),
     useCount: (0, pg_core_1.integer)('use_count').notNull().default(0),
+});
+exports.presignTokens = (0, pg_core_1.pgTable)('presign_tokens', {
+    key: (0, pg_core_1.text)('key').primaryKey(),
+    userId: (0, pg_core_1.uuid)('user_id')
+        .notNull()
+        .references(() => exports.users.id, { onDelete: 'cascade' }),
+    createdAt: (0, pg_core_1.timestamp)('created_at', { withTimezone: true }).defaultNow(),
 });
 //# sourceMappingURL=schema.js.map

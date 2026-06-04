@@ -118,6 +118,7 @@ describe('PhotoThumbnailGrid', () => {
     const style = image.props.style;
     expect(style.width).toBe(style.height);
     expect(typeof style.width).toBe('number');
-    expect(typeof style.borderRadius).toBe('number');
+    // Component uses per-corner radii (sticker style) instead of a single borderRadius
+    expect(typeof style.borderTopLeftRadius).toBe('number');
   });
 });

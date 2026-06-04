@@ -23,7 +23,7 @@ describe('HeaderGradient', () => {
     // expo-linear-gradient is mocked to the host-component string 'LinearGradient' in jest.setup.js
     const gradient = UNSAFE_getByType('LinearGradient' as unknown as React.ComponentType);
     expect(gradient).toBeTruthy();
-    expect(gradient.props.colors).toEqual([colors.gradientStart, colors.gradientEnd]);
+    expect(gradient.props.colors).toEqual([colors.cream, colors.background]);
     expect(gradient.props.start).toEqual({ x: 0, y: 0 });
     expect(gradient.props.end).toEqual({ x: 1, y: 1 });
   });

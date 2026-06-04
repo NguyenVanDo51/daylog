@@ -9,12 +9,13 @@ const db_1 = require("../db");
 const schema_1 = require("../db/schema");
 const appleAuth_1 = require("../services/appleAuth");
 const googleAuth_1 = require("../services/googleAuth");
+const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 function signJwt(userId) {
     const secret = process.env.JWT_SECRET;
     if (!secret)
         throw new Error('JWT_SECRET env var is required');
-    return jsonwebtoken_1.default.sign({ userId }, secret, { expiresIn: '30d' });
+    return jsonwebtoken_1.default.sign({ userId }, secret, { expiresIn: '7d' });
 }
 function toSnakeUser(u) {
     return {
@@ -82,6 +83,15 @@ router.post('/google', async (req, res, next) => {
         })
             .returning();
         res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.post('/logout', auth_1.requireAuth, async (req, res, next) => {
+    try {
+        await db_1.db.update(schema_1.users).set({ apnsToken: null }).where((0, drizzle_orm_1.eq)(schema_1.users.id, req.user.id));
+        res.status(204).send();
     }
     catch (err) {
         next(err);

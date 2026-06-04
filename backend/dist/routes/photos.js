@@ -10,9 +10,10 @@ const schema_1 = require("../db/schema");
 const r2_1 = require("../services/r2");
 const thumbnail_1 = require("../services/thumbnail");
 const apns_1 = require("../services/apns");
+const validation_1 = require("../lib/validation");
+const rateLimit_1 = require("../lib/rateLimit");
 const router = express_1.default.Router();
 router.use(auth_1.requireAuth);
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function requireMember(albumId, userId) {
     const rows = await db_1.db
         .select({ x: (0, drizzle_orm_1.sql) `1` })
@@ -34,18 +35,19 @@ function toSnakePhoto(p) {
         created_at: p.createdAt,
     };
 }
-router.post('/presign', async (req, res, next) => {
+router.post('/presign', rateLimit_1.presignLimiter, async (req, res, next) => {
     try {
         const { album_id } = req.body ?? {};
         if (!album_id)
             return res.status(400).json({ error: 'album_id required' });
-        if (!UUID_RE.test(album_id)) {
+        if (!(0, validation_1.isValidUUID)(album_id)) {
             return res.status(400).json({ error: 'album_id must be a valid UUID' });
         }
         if (!(await requireMember(album_id, req.user.id))) {
             return res.status(403).json({ error: 'Forbidden' });
         }
         const { url, key } = await (0, r2_1.getPresignedPutUrl)();
+        await db_1.db.insert(schema_1.presignTokens).values({ key, userId: req.user.id });
         return res.json({ url, key });
     }
     catch (err) {
@@ -58,12 +60,16 @@ router.post('/', async (req, res, next) => {
         if (!album_id || !r2_key || !taken_at) {
             return res.status(400).json({ error: 'album_id, r2_key, taken_at required' });
         }
-        if (!UUID_RE.test(album_id)) {
+        if (!(0, validation_1.isValidUUID)(album_id)) {
             return res.status(400).json({ error: 'album_id must be a valid UUID' });
+        }
+        if (!(0, validation_1.isValidDate)(taken_at)) {
+            return res.status(400).json({ error: 'taken_at must be a valid ISO date' });
         }
         if (!(await requireMember(album_id, req.user.id))) {
             return res.status(403).json({ error: 'Forbidden' });
         }
+        // Idempotency check first — before consuming a presign token
         if (local_asset_id) {
             const existing = await db_1.db
                 .select()
@@ -73,6 +79,16 @@ router.post('/', async (req, res, next) => {
             if (existing[0])
                 return res.status(200).json(toSnakePhoto(existing[0]));
         }
+        // Verify this r2_key was issued to this user
+        const [token] = await db_1.db
+            .select()
+            .from(schema_1.presignTokens)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.presignTokens.key, r2_key), (0, drizzle_orm_1.eq)(schema_1.presignTokens.userId, req.user.id)))
+            .limit(1);
+        if (!token) {
+            return res.status(400).json({ error: 'Invalid or unrecognized r2_key' });
+        }
+        await db_1.db.delete(schema_1.presignTokens).where((0, drizzle_orm_1.eq)(schema_1.presignTokens.key, r2_key));
         const thumbnailKey = await (0, thumbnail_1.generateThumbnail)(r2_key);
         const [photo] = await db_1.db
             .insert(schema_1.photos)

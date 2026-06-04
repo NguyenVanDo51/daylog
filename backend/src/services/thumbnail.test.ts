@@ -78,10 +78,8 @@ describe('services/thumbnail generateThumbnail', () => {
 
     const result = await generateThumbnail('photos/test.webp');
     expect(result).toHaveProperty('key');
-    expect(result).toHaveProperty('width');
-    expect(result).toHaveProperty('height');
-    expect(typeof result.width).toBe('number');
-    expect(typeof result.height).toBe('number');
+    expect(result.width).toBe(1200);
+    expect(result.height).toBe(800);
   });
 
   it('propagates getObjectBuffer rejection and does not call putObject', async () => {

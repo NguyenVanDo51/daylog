@@ -7,6 +7,7 @@ const drizzle_orm_1 = require("drizzle-orm");
 const auth_1 = require("../middleware/auth");
 const db_1 = require("../db");
 const schema_1 = require("../db/schema");
+const validation_1 = require("../lib/validation");
 const router = express_1.default.Router();
 router.use(auth_1.requireAuth);
 // Shape of an album row returned by these endpoints. Keys match the snake_case
@@ -65,6 +66,10 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
     try {
         const albumId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(albumId)) {
+            res.status(400).json({ error: 'Invalid albumId' });
+            return;
+        }
         const membership = await db_1.db
             .select()
             .from(schema_1.albumMembers)
@@ -96,12 +101,16 @@ router.get('/:id', async (req, res, next) => {
 router.patch('/:id', async (req, res, next) => {
     try {
         const albumId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(albumId)) {
+            res.status(400).json({ error: 'Invalid albumId' });
+            return;
+        }
         const membership = await db_1.db
             .select()
             .from(schema_1.albumMembers)
             .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, albumId), (0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id)))
             .limit(1);
-        if (!membership[0]) {
+        if (!membership[0] || membership[0].role !== 'admin') {
             res.status(403).json({ error: 'Forbidden' });
             return;
         }

@@ -57,12 +57,12 @@ describe('Button', () => {
     expect(spinner.props.color).toBe(colors.white);
   });
 
-  it('loading spinner color is primary for ghost variant', () => {
+  it('loading spinner color is pink for ghost variant', () => {
     const { UNSAFE_getByType } = render(
       <Button label="Tap" onPress={jest.fn()} loading variant="ghost" />,
     );
     const spinner = UNSAFE_getByType(ActivityIndicator);
-    expect(spinner.props.color).toBe(colors.primary);
+    expect(spinner.props.color).toBe(colors.pink);
   });
 
   it('applies ghost variant styles', () => {
@@ -72,10 +72,11 @@ describe('Button', () => {
     const touchable = UNSAFE_getByType(TouchableOpacity);
     const style = flatten(touchable.props.style);
     expect(style.backgroundColor).toBe('transparent');
-    expect(style.borderColor).toBe(colors.primary);
+    // joyful ghost uses ink border
+    expect(style.borderColor).toBe(colors.ink);
 
     const labelStyle = flatten(getByText('Ghost').props.style);
-    expect(labelStyle.color).toBe(colors.primary);
+    expect(labelStyle.color).toBe(colors.ink);
   });
 
   it('applies danger variant styles', () => {
@@ -96,7 +97,7 @@ describe('Button', () => {
     );
     const touchable = UNSAFE_getByType(TouchableOpacity);
     const style = flatten(touchable.props.style);
-    expect(style.backgroundColor).toBe(colors.primary);
+    expect(style.backgroundColor).toBe(colors.pink);
   });
 
   it('applies fullWidth style when fullWidth is true', () => {

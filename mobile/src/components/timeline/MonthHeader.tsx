@@ -5,7 +5,7 @@ import { colors, spacing, typography } from '@/constants/theme';
 interface MonthHeaderProps { label: string }
 
 export function MonthHeader({ label }: MonthHeaderProps) {
-  return <Text style={styles.text}>~ {label} ~</Text>;
+  return <Text style={styles.text}>{label.toUpperCase()}</Text>;
 }
 
 const styles = StyleSheet.create({

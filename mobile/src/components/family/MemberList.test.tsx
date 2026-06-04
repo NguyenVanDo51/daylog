@@ -44,21 +44,21 @@ describe('MemberList', () => {
 
   it('renders the admin badge for admin role and member badge for member role', () => {
     const { getByText } = render(<MemberList members={members} />);
-    expect(getByText('admin')).toBeTruthy();
-    expect(getByText('member')).toBeTruthy();
+    // Vietnamese role labels
+    expect(getByText('Chủ album')).toBeTruthy();
+    expect(getByText('Thành viên')).toBeTruthy();
   });
 
-  it('renders a localized joined date for each row', () => {
-    const { getByText } = render(<MemberList members={members} />);
-    const aliceDate = new Date('2025-01-15T00:00:00.000Z').toLocaleDateString();
-    const bobDate = new Date('2025-02-20T00:00:00.000Z').toLocaleDateString();
-    expect(getByText(`Joined ${aliceDate}`)).toBeTruthy();
-    expect(getByText(`Joined ${bobDate}`)).toBeTruthy();
+  it('renders a Vietnamese joined date for each row', () => {
+    const { getAllByText } = render(<MemberList members={members} />);
+    // Both members have joined dates → multiple elements match /tham gia ngày/
+    const dates = getAllByText(/tham gia ngày/);
+    expect(dates.length).toBe(2);
   });
 
   it('renders nothing visible when the list is empty', () => {
     const { queryByText } = render(<MemberList members={[]} />);
-    expect(queryByText('admin')).toBeNull();
-    expect(queryByText('member')).toBeNull();
+    expect(queryByText('Chủ album')).toBeNull();
+    expect(queryByText('Thành viên')).toBeNull();
   });
 });

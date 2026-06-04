@@ -52,7 +52,8 @@
       "expo-image",
       "expo-font",
       "expo-localization",
-      "expo-media-library"
+      "expo-media-library",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

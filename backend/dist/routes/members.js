@@ -7,11 +7,14 @@ const drizzle_orm_1 = require("drizzle-orm");
 const db_1 = require("../db");
 const schema_1 = require("../db/schema");
 const auth_1 = require("../middleware/auth");
+const validation_1 = require("../lib/validation");
 const router = express_1.default.Router({ mergeParams: true });
 router.use(auth_1.requireAuth);
 router.get('/', async (req, res, next) => {
     try {
         const albumId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(albumId))
+            return res.status(400).json({ error: 'Invalid albumId' });
         const membership = await db_1.db
             .select({ x: (0, drizzle_orm_1.sql) `1` })
             .from(schema_1.albumMembers)

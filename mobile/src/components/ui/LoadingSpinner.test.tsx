@@ -10,11 +10,11 @@ describe('LoadingSpinner', () => {
     expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
   });
 
-  it('uses size="large" and the primary theme color', () => {
+  it('uses size="large" and the pink theme color', () => {
     const { UNSAFE_getByType } = render(<LoadingSpinner />);
     const indicator = UNSAFE_getByType(ActivityIndicator);
     expect(indicator.props.size).toBe('large');
-    expect(indicator.props.color).toBe(colors.primary);
+    expect(indicator.props.color).toBe(colors.pink);
   });
 
   it('wraps the indicator in a centered, flex:1 container', () => {

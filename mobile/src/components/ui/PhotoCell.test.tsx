@@ -1,3 +1,10 @@
+jest.mock('@/hooks/useReactions', () => ({
+  useReactions: () => ({ data: [] }),
+  useReact: () => ({ add: { mutate: jest.fn() } }),
+}));
+
+jest.mock('@/lib/haptics', () => ({ tap: jest.fn() }));
+
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Image, TouchableOpacity } from 'react-native';

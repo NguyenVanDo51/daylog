@@ -68,7 +68,8 @@ afterEach(() => {
 describe('SettingsTab', () => {
   it('renders heading and the user display name and email', async () => {
     const { getByText } = render(<Screen />);
-    expect(getByText(/Settings/)).toBeTruthy();
+    // Vietnamese heading: "Cài đặt"
+    expect(getByText(/Cài đặt/)).toBeTruthy();
     expect(getByText('Andy')).toBeTruthy();
     expect(getByText('andy@example.com')).toBeTruthy();
     // Allow effect-resolved promise to settle.
@@ -139,9 +140,10 @@ describe('SettingsTab', () => {
       UNSAFE_getByType(Switch).props.onValueChange(true);
     });
 
+    // Vietnamese error alert
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Permission denied',
-      'Enable notifications in your device Settings.',
+      'Có lỗi xảy ra',
+      'Vào Cài đặt thiết bị để bật thông báo.',
     );
     expect(UNSAFE_getByType(Switch).props.value).toBe(false);
   });
@@ -155,9 +157,10 @@ describe('SettingsTab', () => {
       UNSAFE_getByType(Switch).props.onValueChange(true);
     });
 
+    // Vietnamese error alert
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Notifications unavailable',
-      'Could not register for push notifications.',
+      'Có lỗi xảy ra',
+      'Không thể đăng ký thông báo.',
     );
   });
 
@@ -166,7 +169,8 @@ describe('SettingsTab', () => {
     await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
 
     await act(async () => {
-      fireEvent.press(getByText('Sign Out'));
+      // Vietnamese sign out button: "Đăng xuất"
+      fireEvent.press(getByText('Đăng xuất'));
     });
 
     await waitFor(() => {

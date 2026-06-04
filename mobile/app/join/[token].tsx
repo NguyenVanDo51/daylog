@@ -25,7 +25,7 @@ export default function JoinScreen() {
       <View style={styles.content}>
         <Text style={styles.emoji}>🎉</Text>
         <Text style={styles.welcome}>{t('join.invited_msg')}</Text>
-        <Button label={t('signin.with_apple')} onPress={() => router.replace('/(auth)')} fullWidth />
+        <Button label={t('signin.apple')} onPress={() => router.replace('/(auth)')} fullWidth />
       </View>
     );
   }

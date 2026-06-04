@@ -4,6 +4,7 @@ jest.mock('@/lib/api', () => ({
 jest.mock('@/stores/albumStore', () => ({
   useAlbumStore: jest.fn(),
 }));
+jest.mock('@/lib/haptics', () => ({ success: jest.fn(), tap: jest.fn() }));
 
 import React from 'react';
 import { Alert } from 'react-native';
@@ -19,8 +20,6 @@ const mockClipboard = Clipboard as jest.Mocked<typeof Clipboard>;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // Re-establish the global clipboard mock resolution (clearAllMocks wipes the
-  // resolved value set in jest.setup.js).
   mockClipboard.setStringAsync.mockResolvedValue(true);
   mockUseAlbumStore.mockImplementation((selector: (s: { albumId: string | null }) => unknown) =>
     selector({ albumId: 'album-42' }),
@@ -36,16 +35,16 @@ describe('InviteSheet', () => {
   it('renders heading, body and action buttons when visible', () => {
     const onClose = jest.fn();
     const { getByText } = render(<InviteSheet visible={true} onClose={onClose} />);
-    expect(getByText(/Invite Family/)).toBeTruthy();
-    expect(getByText(/Share an invite link/)).toBeTruthy();
-    expect(getByText('Copy Invite Link')).toBeTruthy();
-    expect(getByText('Done')).toBeTruthy();
+    // Vietnamese heading and buttons
+    expect(getByText('Mời gia đình')).toBeTruthy();
+    expect(getByText('Sao chép link mời')).toBeTruthy();
+    expect(getByText('Xong')).toBeTruthy();
   });
 
-  it('calls onClose when Done is pressed', () => {
+  it('calls onClose when Done (Xong) is pressed', () => {
     const onClose = jest.fn();
     const { getByText } = render(<InviteSheet visible={true} onClose={onClose} />);
-    fireEvent.press(getByText('Done'));
+    fireEvent.press(getByText('Xong'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -54,7 +53,7 @@ describe('InviteSheet', () => {
     const onClose = jest.fn();
     const { getByText } = render(<InviteSheet visible={true} onClose={onClose} />);
 
-    fireEvent.press(getByText('Copy Invite Link'));
+    fireEvent.press(getByText('Sao chép link mời'));
 
     await waitFor(() => {
       expect(mockApi.post).toHaveBeenCalledWith('/albums/album-42/invites');
@@ -63,7 +62,7 @@ describe('InviteSheet', () => {
       expect(mockClipboard.setStringAsync).toHaveBeenCalledWith('familyguy://join/tok-123');
     });
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Copied!', 'Invite link copied to clipboard.');
+      expect(Alert.alert).toHaveBeenCalledWith('Đã sao chép!', 'Đã sao chép link mời vào bộ nhớ tạm.');
     });
   });
 
@@ -80,9 +79,8 @@ describe('InviteSheet', () => {
       <InviteSheet visible={true} onClose={jest.fn()} />,
     );
 
-    fireEvent.press(getByText('Copy Invite Link'));
+    fireEvent.press(getByText('Sao chép link mời'));
 
-    // While loading, the button label is replaced with an ActivityIndicator.
     const { ActivityIndicator } = require('react-native');
     await waitFor(() => {
       expect(UNSAFE_queryAllByType(ActivityIndicator).length).toBeGreaterThan(0);
@@ -101,10 +99,10 @@ describe('InviteSheet', () => {
     mockApi.post.mockRejectedValueOnce(new Error('boom'));
     const { getByText } = render(<InviteSheet visible={true} onClose={jest.fn()} />);
 
-    fireEvent.press(getByText('Copy Invite Link'));
+    fireEvent.press(getByText('Sao chép link mời'));
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'boom');
+      expect(Alert.alert).toHaveBeenCalledWith('Có lỗi xảy ra', 'boom');
     });
     expect(mockClipboard.setStringAsync).not.toHaveBeenCalled();
   });

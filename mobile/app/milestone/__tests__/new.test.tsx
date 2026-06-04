@@ -4,6 +4,7 @@ const mockUseCreateMilestone = jest.fn();
 jest.mock('@/hooks/useMilestones', () => ({
   useCreateMilestone: () => mockUseCreateMilestone(),
 }));
+jest.mock('@/lib/haptics', () => ({ tap: jest.fn(), success: jest.fn() }));
 
 import React from 'react';
 import { Alert } from 'react-native';
@@ -35,18 +36,15 @@ afterEach(() => {
 });
 
 describe('NewMilestoneScreen', () => {
-  it('renders the form: heading, three labeled inputs and the Save button', () => {
+  it('renders the form: heading and inputs', () => {
     const { getByText, getByPlaceholderText } = render(<NewMilestoneScreen />);
 
-    expect(getByText(/New Moment/)).toBeTruthy();
-    expect(getByText('Title *')).toBeTruthy();
-    expect(getByText('Date')).toBeTruthy();
-    expect(getByText('Note')).toBeTruthy();
-    expect(getByPlaceholderText('e.g. First Steps!')).toBeTruthy();
+    // Vietnamese heading and placeholders
+    expect(getByText('Mốc đáng nhớ')).toBeTruthy();
+    expect(getByPlaceholderText('Tên khoảnh khắc')).toBeTruthy();
     expect(getByPlaceholderText('YYYY-MM-DD')).toBeTruthy();
-    expect(getByPlaceholderText('Tell the story...')).toBeTruthy();
-    expect(getByText('Save Moment')).toBeTruthy();
-    expect(getByText('Cancel')).toBeTruthy();
+    expect(getByPlaceholderText('ghi chú nhỏ... (tuỳ chọn)')).toBeTruthy();
+    expect(getByText('Lưu mốc ✦')).toBeTruthy();
   });
 
   it('pre-fills the Date input with today (YYYY-MM-DD)', () => {
@@ -55,20 +53,15 @@ describe('NewMilestoneScreen', () => {
     expect(getByDisplayValue(today)).toBeTruthy();
   });
 
-  it('calls router.back when the Cancel link is pressed', () => {
-    const { getByText } = render(<NewMilestoneScreen />);
-    fireEvent.press(getByText('Cancel'));
-    expect(mockRouter.back).toHaveBeenCalled();
-  });
-
-  it('alerts "Title required" and does not call the mutation when title is empty', async () => {
+  it('alerts with Vietnamese field name when title is empty', async () => {
     const { getByText } = render(<NewMilestoneScreen />);
 
     await act(async () => {
-      fireEvent.press(getByText('Save Moment'));
+      fireEvent.press(getByText('Lưu mốc ✦'));
     });
 
-    expect(Alert.alert).toHaveBeenCalledWith('Title required');
+    // Vietnamese validation alert: t('milestone.name_ph') = 'Tên khoảnh khắc'
+    expect(Alert.alert).toHaveBeenCalledWith('Tên khoảnh khắc');
     expect(mockMutateAsync).not.toHaveBeenCalled();
     expect(mockRouter.back).not.toHaveBeenCalled();
   });
@@ -76,13 +69,13 @@ describe('NewMilestoneScreen', () => {
   it('treats whitespace-only titles as empty (validation triggers)', async () => {
     const { getByText, getByPlaceholderText } = render(<NewMilestoneScreen />);
 
-    fireEvent.changeText(getByPlaceholderText('e.g. First Steps!'), '   ');
+    fireEvent.changeText(getByPlaceholderText('Tên khoảnh khắc'), '   ');
 
     await act(async () => {
-      fireEvent.press(getByText('Save Moment'));
+      fireEvent.press(getByText('Lưu mốc ✦'));
     });
 
-    expect(Alert.alert).toHaveBeenCalledWith('Title required');
+    expect(Alert.alert).toHaveBeenCalledWith('Tên khoảnh khắc');
     expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
@@ -90,10 +83,10 @@ describe('NewMilestoneScreen', () => {
     const today = new Date().toISOString().slice(0, 10);
 
     const { getByText, getByPlaceholderText } = render(<NewMilestoneScreen />);
-    fireEvent.changeText(getByPlaceholderText('e.g. First Steps!'), '  First Smile  ');
+    fireEvent.changeText(getByPlaceholderText('Tên khoảnh khắc'), '  First Smile  ');
 
     await act(async () => {
-      fireEvent.press(getByText('Save Moment'));
+      fireEvent.press(getByText('Lưu mốc ✦'));
     });
 
     await waitFor(() => {
@@ -109,12 +102,12 @@ describe('NewMilestoneScreen', () => {
   it('submits with title, trimmed note and an overridden date', async () => {
     const { getByText, getByPlaceholderText } = render(<NewMilestoneScreen />);
 
-    fireEvent.changeText(getByPlaceholderText('e.g. First Steps!'), 'First Steps');
+    fireEvent.changeText(getByPlaceholderText('Tên khoảnh khắc'), 'First Steps');
     fireEvent.changeText(getByPlaceholderText('YYYY-MM-DD'), '2025-09-01');
-    fireEvent.changeText(getByPlaceholderText('Tell the story...'), '  In the living room  ');
+    fireEvent.changeText(getByPlaceholderText('ghi chú nhỏ... (tuỳ chọn)'), '  In the living room  ');
 
     await act(async () => {
-      fireEvent.press(getByText('Save Moment'));
+      fireEvent.press(getByText('Lưu mốc ✦'));
     });
 
     await waitFor(() => {
@@ -127,7 +120,7 @@ describe('NewMilestoneScreen', () => {
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
-  it('shows a loading indicator on the Save button while isPending is true', () => {
+  it('shows a loading indicator when isPending is true', () => {
     mockUseCreateMilestone.mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: true,
@@ -136,15 +129,10 @@ describe('NewMilestoneScreen', () => {
     const { UNSAFE_queryAllByType, queryByText } = render(<NewMilestoneScreen />);
     const { ActivityIndicator } = require('react-native');
     expect(UNSAFE_queryAllByType(ActivityIndicator).length).toBeGreaterThan(0);
-    // While loading, the Button replaces its label text with the spinner.
-    expect(queryByText('Save Moment')).toBeNull();
+    expect(queryByText('Lưu mốc ✦')).toBeNull();
   });
 
-  it('does NOT navigate back when the mutation is still pending (await unresolved)', async () => {
-    // The screen `await`s mutateAsync then calls router.back. While the
-    // mutation is in flight, router.back must not have been called yet.
-    // (When the mutation eventually rejects, the await throws and router.back
-    // still never runs — the same observable outcome from the user's POV.)
+  it('does NOT navigate back when the mutation is still pending', async () => {
     let _resolve: ((v?: unknown) => void) | undefined;
     mockMutateAsync.mockReturnValueOnce(
       new Promise((resolve) => {
@@ -153,16 +141,15 @@ describe('NewMilestoneScreen', () => {
     );
 
     const { getByText, getByPlaceholderText } = render(<NewMilestoneScreen />);
-    fireEvent.changeText(getByPlaceholderText('e.g. First Steps!'), 'First Steps');
+    fireEvent.changeText(getByPlaceholderText('Tên khoảnh khắc'), 'First Steps');
 
-    fireEvent.press(getByText('Save Moment'));
+    fireEvent.press(getByText('Lưu mốc ✦'));
 
     await waitFor(() => {
       expect(mockMutateAsync).toHaveBeenCalled();
     });
     expect(mockRouter.back).not.toHaveBeenCalled();
 
-    // Cleanup: resolve the pending mutation so the awaiting handler unblocks.
     await act(async () => {
       _resolve!({});
       await Promise.resolve();

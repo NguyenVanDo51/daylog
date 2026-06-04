@@ -15,9 +15,12 @@ const r2 = new client_s3_1.S3Client({
     },
 });
 const BUCKET = process.env.R2_BUCKET || '';
-async function getPresignedPutUrl() {
-    const key = `photos/${(0, crypto_1.randomUUID)()}.webp`;
-    const command = new client_s3_1.PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: 'image/webp' });
+async function getPresignedPutUrl(contentType = 'image/webp') {
+    const ext = contentType === 'video/mp4' ? 'mp4'
+        : contentType === 'image/jpeg' ? 'jpg'
+            : 'webp';
+    const key = `photos/${(0, crypto_1.randomUUID)()}.${ext}`;
+    const command = new client_s3_1.PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType });
     const url = await (0, s3_request_presigner_1.getSignedUrl)(r2, command, { expiresIn: 3600 });
     return { url, key };
 }

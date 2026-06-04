@@ -7,7 +7,7 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title }: SectionHeaderProps) {
-  return <Text style={styles.text}>~ {title} ~</Text>;
+  return <Text style={styles.text}>{title.toUpperCase()}</Text>;
 }
 
 const styles = StyleSheet.create({

@@ -4,6 +4,7 @@ jest.mock('@/lib/api', () => ({
 jest.mock('@/stores/albumStore', () => ({
   useAlbumStore: jest.fn(),
 }));
+jest.mock('@/lib/haptics', () => ({ success: jest.fn(), tap: jest.fn() }));
 
 // Override the global expo-camera mock so we can control permission state and
 // capture the onBarcodeScanned prop passed to CameraView.
@@ -66,13 +67,15 @@ afterEach(() => {
 });
 
 describe('QRSheet', () => {
-  it('returns null when permission state is not yet resolved', () => {
+  it('renders the sheet without camera content when permission state is not yet resolved', () => {
     expoCamera.__setPermission(null);
-    const { toJSON } = render(
+    const { queryByText } = render(
       <QRSheet visible={true} onClose={jest.fn()} />,
       { wrapper: makeWrapper() },
     );
-    expect(toJSON()).toBeNull();
+    // No camera UI or permission UI shown while permission is resolving.
+    expect(queryByText('Cần quyền camera')).toBeNull();
+    expect(queryByText('quét mã này nhé ✦')).toBeNull();
   });
 
   it('shows the permission fallback UI when permission is denied', () => {
@@ -83,13 +86,14 @@ describe('QRSheet', () => {
       { wrapper: makeWrapper() },
     );
 
-    expect(getByText('Camera Permission')).toBeTruthy();
-    expect(getByText(/Camera access is needed/)).toBeTruthy();
+    // Vietnamese permission UI
+    expect(getByText('Cần quyền camera')).toBeTruthy();
+    expect(getByText('Camera dùng để quét mã QR mời.')).toBeTruthy();
 
-    fireEvent.press(getByText('Grant Permission'));
+    fireEvent.press(getByText('Cho phép'));
     expect(expoCamera.__mockRequestPermission).toHaveBeenCalledTimes(1);
 
-    fireEvent.press(getByText('Cancel'));
+    fireEvent.press(getByText('Huỷ'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -98,20 +102,21 @@ describe('QRSheet', () => {
       <QRSheet visible={true} onClose={jest.fn()} />,
       { wrapper: makeWrapper() },
     );
-    expect(getByText('Scan QR Code')).toBeTruthy();
+    // Vietnamese heading
+    expect(getByText('quét mã này nhé ✦')).toBeTruthy();
     const cameraProps = expoCamera.__getCameraViewProps();
     expect(cameraProps).toBeTruthy();
     expect(typeof cameraProps.onBarcodeScanned).toBe('function');
     expect(cameraProps.barcodeScannerSettings).toEqual({ barcodeTypes: ['qr'] });
   });
 
-  it('calls onClose when the Cancel button is pressed', () => {
+  it('calls onClose when the Cancel (Huỷ) button is pressed', () => {
     const onClose = jest.fn();
     const { getByText } = render(
       <QRSheet visible={true} onClose={onClose} />,
       { wrapper: makeWrapper() },
     );
-    fireEvent.press(getByText('Cancel'));
+    fireEvent.press(getByText('Huỷ'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -127,7 +132,8 @@ describe('QRSheet', () => {
 
     expect(mockApi.post).toHaveBeenCalledWith('/invites/abc-token/join');
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Joined!', 'You joined the album.');
+      // Vietnamese joined alert
+      expect(Alert.alert).toHaveBeenCalledWith('Đã tham gia!', 'Bạn đã tham gia album.');
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -153,7 +159,6 @@ describe('QRSheet', () => {
         data: 'familyguy://join/first',
       });
     });
-    // The latest CameraView props reflect the post-setScanned(true) closure.
     await act(async () => {
       await expoCamera.__getCameraViewProps().onBarcodeScanned({
         data: 'familyguy://join/second',
@@ -175,11 +180,10 @@ describe('QRSheet', () => {
     });
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'invite expired');
+      expect(Alert.alert).toHaveBeenCalledWith('Có lỗi xảy ra', 'invite expired');
     });
     expect(onClose).not.toHaveBeenCalled();
 
-    // Another scan should be allowed since the previous one failed.
     mockApi.post.mockResolvedValueOnce({ data: {} });
     await act(async () => {
       await cameraProps.onBarcodeScanned({ data: 'familyguy://join/retry-token' });
@@ -198,7 +202,7 @@ describe('QRSheet', () => {
     });
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Error', 'network down');
+      expect(Alert.alert).toHaveBeenCalledWith('Có lỗi xảy ra', 'network down');
     });
   });
 });
