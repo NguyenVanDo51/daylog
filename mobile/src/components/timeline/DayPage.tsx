@@ -33,7 +33,7 @@ export function DayPage({
       <TouchableOpacity testID="day-header" onPress={onHeaderPress} style={styles.header}>
         {label ? (
           <>
-            <Text style={styles.labelLine}>🏷️ {label}</Text>
+            <Text style={styles.labelLine}>{label}</Text>
             <Text style={styles.dateLine}>{formatVnDayLabel(dateKey + 'T12:00:00Z')}</Text>
           </>
         ) : (
