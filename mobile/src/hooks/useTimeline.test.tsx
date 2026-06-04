@@ -86,12 +86,17 @@ describe('useTimeline', () => {
     const page2 = {
       items: [
         {
-          type: 'milestone',
-          id: 'm1',
-          title: 'First steps',
-          note: null,
-          occurred_at: '2026-02-01T00:00:00Z',
-          icon: null,
+          type: 'photo',
+          id: 'p2',
+          r2_key: 'photos/p2.webp',
+          thumbnail_key: null,
+          taken_at: '2026-02-01T00:00:00Z',
+          caption: null,
+          media_type: 'photo',
+          source: 'upload',
+          duration_ms: null,
+          width: null,
+          height: null,
         },
       ],
       nextCursor: null,

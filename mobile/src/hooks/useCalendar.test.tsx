@@ -31,8 +31,8 @@ beforeEach(() => {
 describe('useCalendar', () => {
   test('fetches calendar data for given year/month', async () => {
     const calData = {
-      '2025-06-03': { photo: true, capture: false, milestone: false },
-      '2025-06-04': { photo: false, capture: true, milestone: true },
+      '2025-06-03': { photo: true, capture: false },
+      '2025-06-04': { photo: false, capture: true },
     };
     mockApi.get.mockResolvedValueOnce({ data: calData });
 

@@ -54,17 +54,6 @@ function photo(id: string, caption: string | null = null) {
   };
 }
 
-function milestone(id: string) {
-  return {
-    type: 'milestone' as const,
-    id,
-    title: 'First steps',
-    note: null,
-    occurred_at: '2026-01-01T00:00:00Z',
-    icon: null,
-  };
-}
-
 beforeEach(() => {
   mockUseTimeline.mockReset();
   mockUseLocalSearchParams.mockReset();
@@ -82,15 +71,6 @@ describe('PhotoViewerScreen', () => {
   it('renders null when there are no photos in the timeline', () => {
     mockUseTimeline.mockReturnValue({
       data: { pages: [{ items: [], nextCursor: null }] },
-      isLoading: false,
-    });
-    const { toJSON } = render(<PhotoViewerScreen />);
-    expect(toJSON()).toBeNull();
-  });
-
-  it('renders null when data has only milestones (no photos)', () => {
-    mockUseTimeline.mockReturnValue({
-      data: { pages: [{ items: [milestone('m1')], nextCursor: null }] },
       isLoading: false,
     });
     const { toJSON } = render(<PhotoViewerScreen />);
@@ -139,7 +119,7 @@ describe('PhotoViewerScreen', () => {
       data: {
         pages: [
           {
-            items: [photo('p1'), milestone('m1'), photo('p2'), photo('p3')],
+            items: [photo('p1'), photo('p2'), photo('p3')],
             nextCursor: null,
           },
         ],
@@ -188,13 +168,13 @@ describe('PhotoViewerScreen', () => {
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
-  it('flattens photos across multiple pages and skips milestones', () => {
+  it('flattens photos across multiple pages', () => {
     mockUseLocalSearchParams.mockReturnValue({ id: 'p2' });
     mockUseTimeline.mockReturnValue({
       data: {
         pages: [
-          { items: [photo('p1'), milestone('m1')], nextCursor: 'c2' },
-          { items: [milestone('m2'), photo('p2'), photo('p3')], nextCursor: null },
+          { items: [photo('p1')], nextCursor: 'c2' },
+          { items: [photo('p2'), photo('p3')], nextCursor: null },
         ],
       },
       isLoading: false,

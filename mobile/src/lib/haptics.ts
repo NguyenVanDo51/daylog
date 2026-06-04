@@ -6,7 +6,7 @@ export const tap = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).
 /** Medium tap — destructive cancel, sheet dismiss */
 export const tapMedium = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
-/** Success notification — upload complete, milestone created */
+/** Success notification — capture complete, label saved */
 export const success = () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
 /** Warning notification — error alerts */
