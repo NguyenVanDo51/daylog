@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet,
@@ -6,7 +6,7 @@ import {
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useCalendar } from '@/hooks/useCalendar';
-import { useTimeline, TimelineItem } from '@/hooks/useTimeline';
+import { useTimeline, TimelineItem, TimelinePage } from '@/hooks/useTimeline';
 import { colors, spacing, typography } from '@/constants/theme';
 import { formatVnDayLabel } from '@/lib/format';
 
@@ -28,7 +28,8 @@ function toDateKey(year: number, month: number, day: number): string {
 }
 
 export function CalendarView() {
-  const now = new Date();
+  const nowRef = useRef(new Date());
+  const now = nowRef.current;
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export function CalendarView() {
   const selectedItems = useMemo<TimelineItem[]>(() => {
     if (!selectedDay || !timelineData) return [];
     return timelineData.pages
-      .flatMap((p: any) => p.items)
+      .flatMap((p: TimelinePage) => p.items)
       .filter((item: TimelineItem) => {
         const dateStr = item.type === 'photo' ? item.taken_at : item.occurred_at;
         return dateStr.slice(0, 10) === selectedDay;
@@ -127,7 +128,7 @@ export function CalendarView() {
         </View>
         <View style={styles.legItem}>
           <View style={[styles.legDot, { backgroundColor: colors.pink }]} />
-          <Text style={styles.legText}>Capture</Text>
+          <Text style={styles.legText}>Khoảnh khắc</Text>
         </View>
         <View style={styles.legItem}>
           <View style={[styles.legDot, { backgroundColor: colors.mint }]} />

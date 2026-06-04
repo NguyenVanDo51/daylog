@@ -27,7 +27,7 @@ export interface TimelineMilestone {
 
 export type TimelineItem = TimelinePhoto | TimelineMilestone;
 
-interface TimelinePage {
+export interface TimelinePage {
   items: TimelineItem[];
   nextCursor: string | null;
 }
