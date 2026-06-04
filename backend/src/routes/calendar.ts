@@ -90,7 +90,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       if (!result[r.date]) {
         result[r.date] = { photo: false, capture: false, milestone: false };
       }
-      (result[r.date] as any).label = r.label;
+      result[r.date].label = r.label;
     }
 
     res.json(result);
