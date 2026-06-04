@@ -11,6 +11,7 @@ import timelineRoutes from './routes/timeline';
 import calendarRoutes from './routes/calendar';
 import membersRoutes from './routes/members';
 import reactionsRoutes from './routes/reactions';
+import dayLabelsRoutes from './routes/day-labels';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/albums/:id/timeline', timelineRoutes);
 app.use('/albums/:id/calendar', calendarRoutes);
 app.use('/albums/:id/members', membersRoutes);
 app.use('/photos/:photoId/reactions', reactionsRoutes);
+app.use('/albums/:id/day-labels', dayLabelsRoutes);
 
 interface HttpError extends Error {
   status?: number;
