@@ -254,6 +254,27 @@ jest.mock('@lodev09/react-native-true-sheet', () => ({
   TrueSheet: 'TrueSheet',
 }));
 
+// expo-video — used by photo detail screen for video playback.
+jest.mock('expo-video', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const playerInstance = {
+    loop: false,
+    play: jest.fn(),
+    pause: jest.fn(),
+    replace: jest.fn(),
+    seekBy: jest.fn(),
+  };
+  return {
+    VideoView: ({ style, ...props }) =>
+      React.createElement(View, { testID: 'video-view', style }),
+    useVideoPlayer: jest.fn((_uri, setup) => {
+      if (setup) setup(playerInstance);
+      return playerInstance;
+    }),
+  };
+});
+
 // expo-media-library — used by StorageFreedomModal.
 jest.mock('expo-media-library', () => ({
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted', granted: true }),

@@ -4,6 +4,7 @@ import Animated from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { useTimeline } from '@/hooks/useTimeline';
 import { colors, spacing, typography } from '@/constants/theme';
 import { useSharedTransition } from '@/lib/sharedElement';
@@ -25,6 +26,16 @@ export default function PhotoViewer() {
   } : null;
   const style = useSharedTransition(source, width, height, true);
 
+  const isVideo = (photo as any)?.media_type === 'video';
+  const videoUri = isVideo ? `${API_URL}/photos/${photo?.id}/full` : '';
+  const player = useVideoPlayer(videoUri, (p) => {
+    p.loop = true;
+  });
+
+  React.useEffect(() => {
+    if (isVideo && player) player.play();
+  }, [isVideo]);
+
   if (!photo) return null;
   const taken = (photo as any).taken_at as string;
   const counter = t('photo.counter', { i: idx + 1, n: photos.length });
@@ -32,7 +43,10 @@ export default function PhotoViewer() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <Animated.Image source={{ uri: `${API_URL}/photos/${photo.id}/full` }} style={[style]} resizeMode="contain" />
+      {isVideo
+        ? <VideoView player={player} style={[style]} contentFit="contain" nativeControls={false} />
+        : <Animated.Image source={{ uri: `${API_URL}/photos/${photo.id}/full` }} style={[style]} resizeMode="contain" />
+      }
 
       <BlurView intensity={30} tint="dark" style={styles.topBar}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
