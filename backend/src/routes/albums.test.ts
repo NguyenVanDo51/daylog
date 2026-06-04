@@ -129,6 +129,20 @@ describe('Albums error paths and edge cases', () => {
     expect(res.status).toBe(403);
   });
 
+  it('PATCH /albums/:id returns 403 when caller is a member but not admin', async () => {
+    const album = await createTestAlbum(user.id);
+    const member = await createTestUser({ apple_sub: 'member-patch' });
+    await pool.query(
+      `INSERT INTO album_members (album_id, user_id, role) VALUES ($1, $2, 'member')`,
+      [album.id, member.id]
+    );
+    const res = await request(app)
+      .patch(`/albums/${album.id}`)
+      .set(authHeader(member))
+      .send({ name: 'Hacked Name' });
+    expect(res.status).toBe(403);
+  });
+
   it('PATCH /albums/:id with cover_photo_id from a different album returns 400', async () => {
     const albumA = await createTestAlbum(user.id, { name: 'Album A' });
     const albumB = await createTestAlbum(user.id, { name: 'Album B' });

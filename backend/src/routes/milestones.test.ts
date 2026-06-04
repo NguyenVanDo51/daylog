@@ -296,23 +296,32 @@ describe('Milestones', () => {
     expect(res.status).toBe(403);
   });
 
-  it('DELETE success by member returns 204', async () => {
-    const otherUser = await createTestUser();
-    await pool.query(
-      `INSERT INTO album_members (album_id, user_id, role) VALUES ($1, $2, 'member')`,
-      [album.id, otherUser.id]
-    );
-    const otherHeaders = authHeader(otherUser);
-
+  it('DELETE success by album admin returns 204', async () => {
     const created = await request(app)
       .post(`/albums/${album.id}/milestones`)
       .set(headers)
-      .send({ title: 'Member-deletable', occurred_at: '2024-03-01T00:00:00Z' });
+      .send({ title: 'Admin-deletable', occurred_at: '2024-03-01T00:00:00Z' });
 
     const res = await request(app)
       .delete(`/milestones/${created.body.id}`)
-      .set(otherHeaders);
+      .set(headers);
     expect(res.status).toBe(204);
+  });
+
+  it('DELETE returns 403 when caller is a member but not admin', async () => {
+    const member = await createTestUser({ apple_sub: 'member-delete-ms' });
+    await pool.query(
+      `INSERT INTO album_members (album_id, user_id, role) VALUES ($1, $2, 'member')`,
+      [album.id, member.id]
+    );
+    const ms = await pool.query(
+      `INSERT INTO milestones (album_id, created_by, title, occurred_at) VALUES ($1, $2, 'Test', NOW()) RETURNING id`,
+      [album.id, user.id]
+    );
+    const res = await request(app)
+      .delete(`/milestones/${ms.rows[0].id}`)
+      .set(authHeader(member));
+    expect(res.status).toBe(403);
   });
 
   it('DELETE with non-UUID id triggers catch and returns 500', async () => {

@@ -114,7 +114,7 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       )
       .limit(1);
 
-    if (!membership[0]) {
+    if (!membership[0] || membership[0].role !== 'admin') {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }

@@ -182,14 +182,14 @@ router.delete(
     try {
       const milestoneId = req.params.id as string;
       const existing = await db
-        .select({ id: milestones.id })
+        .select({ id: milestones.id, role: albumMembers.role })
         .from(milestones)
         .innerJoin(albumMembers, eq(albumMembers.albumId, milestones.albumId))
         .where(
           and(eq(milestones.id, milestoneId), eq(albumMembers.userId, req.user!.id))
         )
         .limit(1);
-      if (!existing[0]) {
+      if (!existing[0] || existing[0].role !== 'admin') {
         res.status(403).json({ error: 'Forbidden' });
         return;
       }
