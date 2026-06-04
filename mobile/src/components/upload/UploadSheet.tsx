@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { Button } from '@/components/ui/Button';
 import { TextInput } from '@/components/ui/TextInput';
@@ -17,7 +17,7 @@ interface UploadSheetProps {
 
 export function UploadSheet({ visible, onClose }: UploadSheetProps) {
   const ref = useRef<TrueSheet>(null);
-  const { pickImages, uploadImages, uploading, progress } = useUpload();
+  const { pickImages, uploadImages, uploading, progress, failedCount } = useUpload();
   const [assets, setAssets] = useState<UploadAsset[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [caption, setCaption] = useState('');
@@ -52,7 +52,13 @@ export function UploadSheet({ visible, onClose }: UploadSheetProps) {
     const toUpload = assets.filter((a) => selected.has(a.uri));
     await uploadImages(toUpload, caption);
     success();
-    setCelebrate(true);
+    if (failedCount > 0) {
+      Alert.alert(
+        t('upload.error_title'),
+        t('upload.error_body', { success: toUpload.length - failedCount, failed: failedCount }),
+      );
+    }
+    setCelebrate(failedCount === 0);
     setTimeout(() => { setCelebrate(false); onClose(); }, 1300);
   }
 

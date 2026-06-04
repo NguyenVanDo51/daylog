@@ -57,6 +57,8 @@ export const vi = {
     cta:         'Tải lên {{n}} ảnh',
     cta_one:     'Tải lên 1 ảnh',
     cancel:      'Huỷ',
+    error_title: 'Tải lên không hoàn tất',
+    error_body:  '{{success}} ảnh thành công, {{failed}} ảnh thất bại',
   },
   milestone: {
     new_title:    'Mốc đáng nhớ',
