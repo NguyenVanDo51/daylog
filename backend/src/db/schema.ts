@@ -102,6 +102,22 @@ export const reactions = pgTable('reactions', {
   byPhoto: index('idx_reactions_photo').on(t.photoId),
 }));
 
+export const albumPhotos = pgTable(
+  'album_photos',
+  {
+    photoId: uuid('photo_id')
+      .notNull()
+      .references(() => photos.id, { onDelete: 'cascade' }),
+    albumId: uuid('album_id')
+      .notNull()
+      .references(() => albums.id, { onDelete: 'cascade' }),
+    addedAt: timestamp('added_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    byAlbum: index('idx_album_photos_album_id').on(t.albumId, t.addedAt.desc()),
+  })
+);
+
 export const dayLabels = pgTable(
   'day_labels',
   {
