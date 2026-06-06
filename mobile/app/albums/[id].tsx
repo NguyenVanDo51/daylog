@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { TimelineFeed } from '@/components/timeline/TimelineFeed';
-import { InviteSheet } from '@/components/family/InviteSheet';
-import { AddPhotoSheet } from '@/components/ui/AddPhotoSheet';
+import { DayCell } from '@/components/album/DayCell';
+import { useAlbumDays, AlbumDay } from '@/hooks/useAlbumDays';
 import { useAlbumStore } from '@/stores/albumStore';
-import { tap } from '@/lib/haptics';
-import { colors, shadows, spacing, typography } from '@/constants/theme';
+import { colors, spacing, typography } from '@/constants/theme';
 
 export default function AlbumScreen() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const albumId = useAlbumStore((s) => s.albumId);
   const albumName = useAlbumStore((s) => s.albumName);
-  const isPrivate = useAlbumStore((s) => s.isPrivate);
-  const [inviteVisible, setInviteVisible] = useState(false);
-  const [addPhotoVisible, setAddPhotoVisible] = useState(false);
+  const { data: days, isLoading } = useAlbumDays(albumId ?? null);
 
-  function handleFab() {
-    tap();
-    setAddPhotoVisible(true);
+  // Build pairs for 2-column masonry layout
+  const pairs: Array<[AlbumDay, AlbumDay | undefined]> = [];
+  if (days) {
+    for (let i = 0; i < days.length; i += 2) {
+      pairs.push([days[i], days[i + 1]]);
+    }
   }
 
   return (
@@ -30,62 +30,57 @@ export default function AlbumScreen() {
           <Ionicons name="chevron-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{albumName ?? ''}</Text>
-        {isPrivate === false ? (
-          <TouchableOpacity onPress={() => setInviteVisible(true)} hitSlop={8} style={styles.inviteBtn} testID="invite-btn">
-            <Ionicons name="person-add-outline" size={22} color={colors.ink} />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.inviteBtn} />
-        )}
+        <View style={styles.backBtn} />
       </View>
 
-      <TimelineFeed onJumpToDay={() => {}} />
-
-      <TouchableOpacity
-        testID="timeline-upload-fab"
-        onPress={handleFab}
-        activeOpacity={0.85}
-        style={[styles.fabWrap, { bottom: spacing['2xl'] + insets.bottom }]}
-      >
-        <LinearGradient
-          colors={[colors.peach, colors.pink]}
-          style={styles.fab}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Ionicons name="add" size={26} color={colors.white} />
-        </LinearGradient>
-      </TouchableOpacity>
-
-      <InviteSheet visible={inviteVisible} onClose={() => setInviteVisible(false)} />
-      <AddPhotoSheet visible={addPhotoVisible} onClose={() => setAddPhotoVisible(false)} />
+      {isLoading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.pink} />
+        </View>
+      ) : !days || days.length === 0 ? (
+        <View style={styles.center}>
+          <Text style={styles.empty}>Chưa có khoảnh khắc nào</Text>
+          <Text style={styles.emptySub}>Vuốt sang tab Camera để chụp ảnh đầu tiên</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={pairs}
+          keyExtractor={(_, i) => String(i)}
+          contentContainerStyle={styles.grid}
+          renderItem={({ item: [left, right], index }) => (
+            <View style={styles.row}>
+              <DayCell
+                date={left.date}
+                thumbnailPhotoId={left.thumbnail_photo_id}
+                hasVideo={left.has_video}
+                tall={index % 2 === 0}
+                onPress={() => router.push(`/story/${albumId}/${left.date}`)}
+              />
+              {right && (
+                <DayCell
+                  date={right.date}
+                  thumbnailPhotoId={right.thumbnail_photo_id}
+                  hasVideo={right.has_video}
+                  tall={index % 2 !== 0}
+                  onPress={() => router.push(`/story/${albumId}/${right.date}`)}
+                />
+              )}
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSoft,
-  },
+  center:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  header:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
   backBtn:   { width: 32 },
   title:     { ...typography.title, color: colors.ink, flex: 1, textAlign: 'center' },
-  inviteBtn: { width: 32, alignItems: 'flex-end' },
-  fabWrap: {
-    position: 'absolute',
-    right: spacing['2xl'],
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: colors.white,
-    alignItems: 'center', justifyContent: 'center',
-    ...shadows.fab,
-  },
-  fab: {
-    width: 50, height: 50, borderRadius: 25,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  empty:     { ...typography.body, color: colors.inkMuted },
+  emptySub:  { ...typography.caption, color: colors.inkMuted, textAlign: 'center', paddingHorizontal: spacing['2xl'] },
+  grid:      { padding: spacing['2xl'], gap: spacing.sm },
+  row:       { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
 });

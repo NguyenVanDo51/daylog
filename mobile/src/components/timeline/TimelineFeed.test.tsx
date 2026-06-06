@@ -6,9 +6,6 @@ jest.mock('@/hooks/useTimeline', () => ({
   useTimeline: jest.fn(),
 }));
 
-jest.mock('@/hooks/useDayLabels', () => ({
-  useDayLabelsRange: jest.fn(() => ({ data: [] })),
-}));
 
 jest.mock('@/hooks/useReactions', () => ({
   useReactions: () => ({ data: [] }),
@@ -324,26 +321,4 @@ describe('TimelineFeed', () => {
     expect(onJump).toHaveBeenCalledWith('2026-06-04');
   });
 
-  it('day heading shows day label when present', () => {
-    const { useDayLabelsRange } = require('@/hooks/useDayLabels');
-    useDayLabelsRange.mockReturnValue({
-      data: [{ date: '2026-06-04', label: 'Sinh nhật', updated_at: '', updated_by: '' }],
-    });
-
-    mockUseTimeline.mockReturnValue(
-      makeReturn({
-        data: {
-          pages: [
-            {
-              items: [photo('a', '2026-06-04T10:00:00Z')],
-              nextCursor: null,
-            },
-          ],
-        },
-      }),
-    );
-
-    const { getByText } = render(<TimelineFeed />);
-    expect(getByText(/Sinh nhật/)).toBeTruthy();
-  });
 });

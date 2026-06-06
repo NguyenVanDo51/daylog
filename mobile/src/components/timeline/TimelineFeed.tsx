@@ -1,14 +1,12 @@
 import React, { useCallback } from 'react';
 import { FlatList, StyleSheet, RefreshControl, View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTimeline } from '@/hooks/useTimeline';
-import { useDayLabelsRange } from '@/hooks/useDayLabels';
 import { MasonryBlock, MasonryBlockData, distributeMasonry } from './MasonryBlock';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRow } from '@/components/ui/SkeletonRow';
 import { colors, spacing, typography } from '@/constants/theme';
 import { formatVnDayLabel } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import { toDateKey, addDays } from '@/lib/dateKey';
 import type { TimelinePhoto } from '@/hooks/useTimeline';
 
 const H_PADDING = 6;
@@ -31,15 +29,6 @@ export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
     useTimeline();
   const { width: screenWidth } = useWindowDimensions();
   const columnWidth = (screenWidth - H_PADDING * 2 - COL_GAP) / 2;
-
-  const today = toDateKey(new Date());
-  const from = addDays(today, -365);
-  const { data: labelsData = [] } = useDayLabelsRange(from, today);
-  const labelByDate = React.useMemo(() => {
-    const m = new Map<string, string>();
-    for (const l of labelsData) m.set(l.date, l.label);
-    return m;
-  }, [labelsData]);
 
   const items = React.useMemo<FlatListItem[]>(() => {
     if (!data) return [];
@@ -98,19 +87,6 @@ export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
       }
       renderItem={({ item }) => {
         if (item.type === 'dayHeader') {
-          const customLabel = item.dateKey ? labelByDate.get(item.dateKey) : undefined;
-          const inner = (
-            <>
-              {customLabel ? (
-                <>
-                  <Text style={styles.dayHeaderLabel}>{customLabel}</Text>
-                  <Text style={styles.dayHeaderDate}>{item.label}</Text>
-                </>
-              ) : (
-                <Text style={styles.dayHeader}>{item.label}</Text>
-              )}
-            </>
-          );
           return (
             <TouchableOpacity
               style={styles.dayHeaderContainer}
@@ -119,7 +95,7 @@ export function TimelineFeed({ onJumpToDay }: TimelineFeedProps = {}) {
               disabled={!onJumpToDay}
               activeOpacity={onJumpToDay ? 0.6 : 1}
             >
-              {inner}
+              <Text style={styles.dayHeader}>{item.label}</Text>
             </TouchableOpacity>
           );
         }

@@ -12,22 +12,22 @@ jest.mock('@expo/vector-icons', () => {
   return { Ionicons: makeIcon('Ionicons') };
 });
 
+const mockCapture = jest.fn().mockResolvedValue({});
+
 jest.mock('@/hooks/useCapture', () => ({
   useCapture: jest.fn(() => ({
-    capture: jest.fn().mockResolvedValue({}),
+    capture: mockCapture,
     canCapture: true,
-    nextAvailableAt: null,
     capturing: false,
   })),
 }));
 
-jest.mock('@/hooks/useUpload', () => ({
-  useUpload: jest.fn(() => ({
-    pickImages: jest.fn(),
-    uploadImages: jest.fn().mockResolvedValue(0),
-    uploading: false,
-    progress: 0,
-    failedCount: 0,
+jest.mock('@/hooks/useAlbums', () => ({
+  useAlbums: jest.fn(() => ({
+    data: [
+      { id: 'album-1', name: 'Gia đình', is_private: false, cover_photo_id: null },
+      { id: 'album-2', name: 'Bạn bè', is_private: false, cover_photo_id: null },
+    ],
   })),
 }));
 
@@ -38,159 +38,73 @@ jest.mock('@/components/ui/Confetti', () => {
   return { Confetti: () => React.createElement('View', { testID: 'confetti' }) };
 });
 
+jest.mock('@/components/ui/Button', () => {
+  const React = require('react');
+  const { TouchableOpacity, Text } = require('react-native');
+  return {
+    Button: ({ label, onPress, disabled, testID }: any) =>
+      React.createElement(TouchableOpacity, { testID: testID ?? 'button', onPress, disabled },
+        React.createElement(Text, null, label)),
+  };
+});
+
 jest.mock('expo-video', () => ({
   VideoView: () => null,
   useVideoPlayer: jest.fn(() => ({ loop: false, muted: false, play: jest.fn() })),
 }));
 
 import { useCapture } from '@/hooks/useCapture';
-import { useUpload } from '@/hooks/useUpload';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { router } from 'expo-router';
 import PhotoReviewScreen from '../photo-review';
 
-function setStoreAssets(assets: any[]) {
-  usePhotoReviewStore.setState({ assets });
-}
+const photoAsset = {
+  uri: 'file:///photo.jpg',
+  type: 'photo' as const,
+  source: 'camera' as const,
+  takenAt: '2026-05-21T10:00:00Z',
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
-  usePhotoReviewStore.setState({ assets: [] });
+  usePhotoReviewStore.setState({ assets: [photoAsset] });
 });
 
-describe('PhotoReview — single camera asset', () => {
-  beforeEach(() => {
-    setStoreAssets([{ uri: 'file://shot.jpg', type: 'photo', source: 'camera', takenAt: new Date().toISOString() }]);
+describe('PhotoReview', () => {
+  it('shows album checkboxes', () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    expect(getByTestId('album-checkbox-album-1')).toBeTruthy();
+    expect(getByTestId('album-checkbox-album-2')).toBeTruthy();
   });
 
-  it('renders polaroid card with note input', () => {
-    const utils = render(<PhotoReviewScreen />);
-    expect(utils.getByPlaceholderText('ghi chú nhỏ cho ảnh...')).toBeTruthy();
+  it('save button disabled until album selected', () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    const saveBtn = getByTestId('review-save');
+    // disabled prop may surface as accessibilityState.disabled in RNTL
+    const isDisabled = saveBtn.props.disabled ?? saveBtn.props.accessibilityState?.disabled;
+    expect(isDisabled).toBeTruthy();
   });
 
-  it('shows Chụp lại button for camera source', () => {
-    const utils = render(<PhotoReviewScreen />);
-    expect(utils.getByText('Chụp lại')).toBeTruthy();
+  it('pressing save without album selected does not call capture', async () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(mockCapture).not.toHaveBeenCalled();
   });
 
-  it('shows Gửi button', () => {
-    const utils = render(<PhotoReviewScreen />);
-    expect(utils.getByText('Gửi')).toBeTruthy();
+  it('pressing save calls capture with selected album ids', async () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.press(getByTestId('album-checkbox-album-1'));
+    fireEvent.press(getByTestId('album-checkbox-album-2'));
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(mockCapture).toHaveBeenCalledWith(photoAsset, expect.arrayContaining(['album-1', 'album-2']));
   });
 
-  it('pressing Gửi calls useCapture.capture with the asset and caption', async () => {
-    const captureMock = jest.fn().mockResolvedValue({});
-    (useCapture as jest.Mock).mockReturnValue({ capture: captureMock, canCapture: true, nextAvailableAt: null, capturing: false });
-    const utils = render(<PhotoReviewScreen />);
-    fireEvent.changeText(utils.getByPlaceholderText('ghi chú nhỏ cho ảnh...'), 'hello');
-    await act(async () => { fireEvent.press(utils.getByText('Gửi')); });
-    await waitFor(() => expect(captureMock).toHaveBeenCalledWith(
-      expect.objectContaining({ uri: 'file://shot.jpg', source: 'camera' }),
-      'hello',
-    ));
-    expect(router.dismissAll).toHaveBeenCalled();
-  });
-
-  it('pressing Chụp lại calls router.back', () => {
-    const utils = render(<PhotoReviewScreen />);
-    fireEvent.press(utils.getByText('Chụp lại'));
+  it('close button discards and navigates back', () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.press(getByTestId('review-close'));
     expect(router.back).toHaveBeenCalled();
   });
 
-  it('shows cooldown Alert when canCapture is false and user presses Gửi', async () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    (useCapture as jest.Mock).mockReturnValue({
-      capture: jest.fn(),
-      canCapture: false,
-      nextAvailableAt: new Date(Date.now() + 20 * 60 * 1000),
-      capturing: false,
-    });
-    const utils = render(<PhotoReviewScreen />);
-    await act(async () => { fireEvent.press(utils.getByText('Gửi')); });
-    expect(alertSpy).toHaveBeenCalledWith(
-      expect.stringContaining('khoảnh khắc'),
-      expect.any(String),
-      expect.any(Array),
-    );
-    alertSpy.mockRestore();
-  });
-});
-
-describe('PhotoReview — single gallery asset', () => {
-  beforeEach(() => {
-    setStoreAssets([{ uri: 'file://gallery.jpg', type: 'photo', source: 'gallery', takenAt: null, localAssetId: 'lid1' }]);
-  });
-
-  it('renders note field', () => {
-    const utils = render(<PhotoReviewScreen />);
-    expect(utils.getByPlaceholderText('ghi chú nhỏ cho ảnh...')).toBeTruthy();
-  });
-
-  it('does NOT show Chụp lại for gallery source', () => {
-    const utils = render(<PhotoReviewScreen />);
-    expect(utils.queryByText('Chụp lại')).toBeNull();
-  });
-
-  it('pressing Gửi calls useUpload.uploadImages with caption', async () => {
-    const uploadImages = jest.fn().mockResolvedValue(0);
-    (useUpload as jest.Mock).mockReturnValue({ pickImages: jest.fn(), uploadImages, uploading: false, progress: 0, failedCount: 0 });
-    const utils = render(<PhotoReviewScreen />);
-    fireEvent.changeText(utils.getByPlaceholderText('ghi chú nhỏ cho ảnh...'), 'sundays');
-    await act(async () => { fireEvent.press(utils.getByText('Gửi')); });
-    await waitFor(() => expect(uploadImages).toHaveBeenCalledWith(
-      [expect.objectContaining({ uri: 'file://gallery.jpg' })],
-      'sundays',
-    ));
-    expect(router.dismissAll).toHaveBeenCalled();
-  });
-});
-
-describe('PhotoReview — multiple gallery assets', () => {
-  beforeEach(() => {
-    setStoreAssets([
-      { uri: 'file://a.jpg', type: 'photo', source: 'gallery', takenAt: null },
-      { uri: 'file://b.jpg', type: 'photo', source: 'gallery', takenAt: null },
-      { uri: 'file://c.jpg', type: 'photo', source: 'gallery', takenAt: null },
-    ]);
-  });
-
-  it('does NOT show note field', () => {
-    const utils = render(<PhotoReviewScreen />);
-    expect(utils.queryByPlaceholderText('ghi chú nhỏ cho ảnh...')).toBeNull();
-  });
-
-  it('shows upload CTA with count', () => {
-    const utils = render(<PhotoReviewScreen />);
-    expect(utils.getByText('Tải lên 3 ảnh')).toBeTruthy();
-  });
-
-  it('pressing upload CTA calls uploadImages with selected assets', async () => {
-    jest.useFakeTimers();
-    const uploadImages = jest.fn().mockResolvedValue(0);
-    (useUpload as jest.Mock).mockReturnValue({ pickImages: jest.fn(), uploadImages, uploading: false, progress: 0, failedCount: 0 });
-    const utils = render(<PhotoReviewScreen />);
-    await act(async () => { fireEvent.press(utils.getByText('Tải lên 3 ảnh')); });
-    await waitFor(() => expect(uploadImages).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ uri: 'file://a.jpg' })]),
-      undefined,
-    ));
-    act(() => { jest.advanceTimersByTime(1300); });
-    expect(router.dismissAll).toHaveBeenCalled();
-    jest.useRealTimers();
-  });
-
-  it('shows Alert on partial failure', async () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    const uploadImages = jest.fn().mockResolvedValue(1);
-    (useUpload as jest.Mock).mockReturnValue({ pickImages: jest.fn(), uploadImages, uploading: false, progress: 0, failedCount: 0 });
-    const utils = render(<PhotoReviewScreen />);
-    await act(async () => { fireEvent.press(utils.getByText('Tải lên 3 ảnh')); });
-    await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Tải lên không hoàn tất', expect.any(String)));
-    alertSpy.mockRestore();
-  });
-});
-
-describe('PhotoReview — empty assets', () => {
   it('navigates back when assets is empty on mount', () => {
     usePhotoReviewStore.setState({ assets: [] });
     render(<PhotoReviewScreen />);

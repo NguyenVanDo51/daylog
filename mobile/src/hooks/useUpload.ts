@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { compressToWebP } from '@/lib/compression';
+import { putLocalFile } from '@/lib/uploadFile';
 import { extractTakenAt } from '@/lib/exif';
 import { useAlbumStore } from '@/stores/albumStore';
 import { useUploadStore } from '@/stores/uploadStore';
@@ -65,12 +66,7 @@ export function useUpload() {
       try {
         const { data: presign } = await api.post('/photos/presign', { album_id: albumId });
         const compressedUri = await compressToWebP(asset.uri);
-        const blob = await fetch(compressedUri).then((r) => r.blob());
-        await fetch(presign.url, {
-          method: 'PUT',
-          body: blob,
-          headers: { 'Content-Type': 'image/webp' },
-        });
+        const compressedBytes = await putLocalFile(presign.url, compressedUri, 'image/webp');
         await api.post('/photos', {
           album_id: albumId,
           r2_key: presign.key,
@@ -79,7 +75,7 @@ export function useUpload() {
           local_asset_id: asset.localAssetId ?? null,
         });
         if (asset.localAssetId) {
-          addSynced({ localAssetId: asset.localAssetId, compressedBytes: blob.size });
+          addSynced({ localAssetId: asset.localAssetId, compressedBytes });
         }
         markDone(asset.pendingId);
       } catch {

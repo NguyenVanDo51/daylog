@@ -19,6 +19,7 @@ export function SheetModal({ visible, onClose, children, size = 'auto' }: SheetM
       presented.current = true;
       ref.current?.present().catch(() => {});
     } else if (presented.current) {
+      presented.current = false;
       ref.current?.dismiss().catch(() => {});
     }
   }, [visible]);
@@ -26,10 +27,13 @@ export function SheetModal({ visible, onClose, children, size = 'auto' }: SheetM
   return (
     <TrueSheet
       ref={ref}
-      sizes={[size === 'large' ? '92%' : 'auto']}
+      detents={[size === 'large' ? 0.92 : 'auto']}
       cornerRadius={24}
       backgroundColor={colors.background}
-      onDismiss={onClose}
+      onDidDismiss={() => {
+        presented.current = false;
+        onClose();
+      }}
     >
       <View style={styles.content}>
         {children}

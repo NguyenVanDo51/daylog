@@ -10,6 +10,9 @@ jest.mock('@/lib/compression', () => ({
 jest.mock('@/lib/exif', () => ({
   extractTakenAt: jest.fn(),
 }));
+jest.mock('@/lib/uploadFile', () => ({
+  putLocalFile: jest.fn(),
+}));
 
 import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
@@ -21,11 +24,13 @@ import { api } from '@/lib/api';
 import { useAlbumStore } from '@/stores/albumStore';
 import { compressToWebP } from '@/lib/compression';
 import { extractTakenAt } from '@/lib/exif';
+import { putLocalFile } from '@/lib/uploadFile';
 
 const mockApi = api as jest.Mocked<typeof api>;
 const mockUseAlbumStore = useAlbumStore as unknown as jest.Mock;
 const mockCompress = compressToWebP as jest.MockedFunction<typeof compressToWebP>;
 const mockExtractTakenAt = extractTakenAt as jest.MockedFunction<typeof extractTakenAt>;
+const mockPutLocalFile = putLocalFile as jest.MockedFunction<typeof putLocalFile>;
 const mockLaunchImageLibrary =
   ImagePicker.launchImageLibraryAsync as jest.MockedFunction<
     typeof ImagePicker.launchImageLibraryAsync
@@ -39,20 +44,15 @@ function makeWrapper() {
     React.createElement(QueryClientProvider, { client: qc }, children);
 }
 
-const fakeBlob = { size: 1234, type: 'image/webp' } as unknown as Blob;
-
-function installFetchMock(opts: { putOk?: boolean; putReject?: boolean } = {}) {
-  const { putOk = true, putReject = false } = opts;
-  const fetchMock = jest.fn().mockImplementation((_url: string, init?: RequestInit) => {
-    if (!init) {
-      return Promise.resolve({ blob: () => Promise.resolve(fakeBlob), ok: true, status: 200 });
-    }
-    if (putReject) return Promise.reject(new Error('network failure'));
-    return Promise.resolve({ ok: putOk, status: putOk ? 200 : 500 });
-  });
-  // @ts-expect-error: assigning to global.fetch for tests.
-  global.fetch = fetchMock;
-  return fetchMock;
+function installUploadMock(opts: { putOk?: boolean; putReject?: boolean; size?: number } = {}) {
+  const { putOk = true, putReject = false, size = 1234 } = opts;
+  if (putReject) {
+    mockPutLocalFile.mockRejectedValue(new Error('network failure'));
+  } else if (!putOk) {
+    mockPutLocalFile.mockRejectedValue(new Error('Upload failed: 500'));
+  } else {
+    mockPutLocalFile.mockResolvedValue(size);
+  }
 }
 
 beforeEach(() => {
@@ -64,11 +64,12 @@ beforeEach(() => {
   );
   mockCompress.mockResolvedValue('file://compressed.webp');
   mockExtractTakenAt.mockReturnValue('2025-01-01T00:00:00.000Z');
+  mockPutLocalFile.mockReset();
 });
 
 describe('useUpload', () => {
   test('successful single upload calls presign, PUT, and registers photo', async () => {
-    const fetchMock = installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
     mockApi.post
       .mockResolvedValueOnce({ data: { url: 'https://signed/x', key: 'photos/abc.webp' } })
       .mockResolvedValueOnce({ data: { id: 'photo-1' } });
@@ -85,10 +86,10 @@ describe('useUpload', () => {
 
     expect(mockApi.post).toHaveBeenCalledWith('/photos/presign', { album_id: 'album-42' });
     expect(mockCompress).toHaveBeenCalledWith('file://input.jpg');
-    expect(fetchMock).toHaveBeenCalledWith('file://compressed.webp');
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(mockPutLocalFile).toHaveBeenCalledWith(
       'https://signed/x',
-      expect.objectContaining({ method: 'PUT', body: fakeBlob, headers: { 'Content-Type': 'image/webp' } }),
+      'file://compressed.webp',
+      'image/webp',
     );
     expect(mockApi.post).toHaveBeenCalledWith('/photos', {
       album_id: 'album-42',
@@ -102,7 +103,7 @@ describe('useUpload', () => {
   });
 
   test('caption defaults to null and takenAt falls back to now when asset.takenAt is null', async () => {
-    installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
     const fixedNow = '2030-06-01T12:00:00.000Z';
     const dateSpy = jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(fixedNow);
     mockApi.post
@@ -125,8 +126,8 @@ describe('useUpload', () => {
     dateSpy.mockRestore();
   });
 
-  test('compressed uri is fed to fetch (not the raw asset uri)', async () => {
-    const fetchMock = installFetchMock({ putOk: true });
+  test('compressed uri is fed to upload (not the raw asset uri)', async () => {
+    installUploadMock({ putOk: true });
     mockCompress.mockResolvedValueOnce('file://compressed-special.webp');
     mockApi.post
       .mockResolvedValueOnce({ data: { url: 'https://signed/c', key: 'photos/c.webp' } })
@@ -139,12 +140,20 @@ describe('useUpload', () => {
     });
 
     expect(mockCompress).toHaveBeenCalledWith('file://original.heic');
-    expect(fetchMock).toHaveBeenCalledWith('file://compressed-special.webp');
-    expect(fetchMock).not.toHaveBeenCalledWith('file://original.heic');
+    expect(mockPutLocalFile).toHaveBeenCalledWith(
+      'https://signed/c',
+      'file://compressed-special.webp',
+      'image/webp',
+    );
+    expect(mockPutLocalFile).not.toHaveBeenCalledWith(
+      expect.any(String),
+      'file://original.heic',
+      expect.any(String),
+    );
   });
 
   test('presign failure increments failedCount — upload resolves, does not throw', async () => {
-    installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
     mockApi.post.mockRejectedValue(new Error('presign failed'));
 
     const { result } = renderHook(() => useUpload(), { wrapper: makeWrapper() });
@@ -159,7 +168,7 @@ describe('useUpload', () => {
   });
 
   test('PUT failure increments failedCount — upload resolves, does not throw', async () => {
-    installFetchMock({ putReject: true });
+    installUploadMock({ putReject: true });
     mockApi.post.mockResolvedValue({ data: { url: 'https://s/z', key: 'photos/z.webp' } });
 
     const { result } = renderHook(() => useUpload(), { wrapper: makeWrapper() });
@@ -173,7 +182,7 @@ describe('useUpload', () => {
   });
 
   test('register failure increments failedCount — upload resolves, does not throw', async () => {
-    installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
     mockApi.post
       .mockResolvedValueOnce({ data: { url: 'https://s/q', key: 'photos/q.webp' } })
       .mockRejectedValueOnce(new Error('register failed'));
@@ -189,7 +198,7 @@ describe('useUpload', () => {
   });
 
   test('failed assets do not stop successful assets from uploading', async () => {
-    installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
     let presignCount = 0;
     mockApi.post.mockImplementation(async (path: string) => {
       if (path === '/photos/presign') {
@@ -215,7 +224,7 @@ describe('useUpload', () => {
   });
 
   test('all assets are processed and progress reaches 1 regardless of failures', async () => {
-    installFetchMock({ putReject: true });
+    installUploadMock({ putReject: true });
     mockApi.post.mockResolvedValue({ data: { url: 'https://s/x', key: 'photos/x.webp' } });
 
     const { result } = renderHook(() => useUpload(), { wrapper: makeWrapper() });
@@ -234,7 +243,7 @@ describe('useUpload', () => {
   });
 
   test('multiple successful assets: each presigned, uploaded, and registered', async () => {
-    const fetchMock = installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
     mockApi.post.mockImplementation(async (path: string) => {
       if (path === '/photos/presign') return { data: { url: 'https://s/upload', key: 'photos/out.webp' } };
       return { data: { id: 'new-photo' } };
@@ -252,8 +261,7 @@ describe('useUpload', () => {
 
     expect(mockApi.post.mock.calls.filter((c) => c[0] === '/photos/presign')).toHaveLength(3);
     expect(mockApi.post.mock.calls.filter((c) => c[0] === '/photos')).toHaveLength(3);
-    const putCalls = fetchMock.mock.calls.filter((c) => c[1]?.method === 'PUT');
-    expect(putCalls).toHaveLength(3);
+    expect(mockPutLocalFile).toHaveBeenCalledTimes(3);
 
     await waitFor(() => expect(result.current.progress).toBe(1));
     expect(result.current.uploading).toBe(false);
@@ -261,7 +269,7 @@ describe('useUpload', () => {
   });
 
   test('addPending is called with all assets before any upload starts', async () => {
-    installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
 
     const originalAddPending = usePendingUploadStore.getState().addPending;
     const addPendingSpy = jest.fn((...args: Parameters<typeof originalAddPending>) => {
@@ -289,7 +297,7 @@ describe('useUpload', () => {
   });
 
   test('markDone is called for each successful asset, markError for each failed asset', async () => {
-    installFetchMock({ putOk: true });
+    installUploadMock({ putOk: true });
     let presignCount = 0;
     mockApi.post.mockImplementation(async (path: string) => {
       if (path === '/photos/presign') {

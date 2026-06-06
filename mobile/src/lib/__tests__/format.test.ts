@@ -31,15 +31,28 @@ describe('formatVnAge', () => {
 });
 
 describe('formatVnDayLabel', () => {
+  // Use a fixed "now" far from the test dates so they aren't picked up as today/yesterday.
+  const fixedNow = new Date('2026-12-01T00:00:00Z');
+
   it('formats Thursday Vietnamese label', () => {
     // 2026-06-04 is a Thursday
-    expect(formatVnDayLabel('2026-06-04T12:00:00Z')).toMatch(/Thứ Năm/);
-    expect(formatVnDayLabel('2026-06-04T12:00:00Z')).toContain('4 tháng 6');
+    expect(formatVnDayLabel('2026-06-04T12:00:00Z', fixedNow)).toMatch(/Thứ Năm/);
+    expect(formatVnDayLabel('2026-06-04T12:00:00Z', fixedNow)).toContain('4 tháng 6');
   });
 
   it('uses Sunday label correctly', () => {
     // 2026-06-07 is a Sunday
-    expect(formatVnDayLabel('2026-06-07T12:00:00Z')).toMatch(/Chủ Nhật/);
+    expect(formatVnDayLabel('2026-06-07T12:00:00Z', fixedNow)).toMatch(/Chủ Nhật/);
+  });
+
+  it('returns "Hôm nay" for today', () => {
+    const now = new Date('2026-06-04T12:00:00Z');
+    expect(formatVnDayLabel('2026-06-04T12:00:00Z', now)).toBe('Hôm nay');
+  });
+
+  it('returns "Hôm qua" for yesterday', () => {
+    const now = new Date('2026-06-04T12:00:00Z');
+    expect(formatVnDayLabel('2026-06-03T12:00:00Z', now)).toBe('Hôm qua');
   });
 });
 

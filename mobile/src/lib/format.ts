@@ -24,8 +24,14 @@ export function greetingForHour(hour: number): string {
 
 const DOW_VI = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
 
-export function formatVnDayLabel(isoDate: string): string {
+export function formatVnDayLabel(isoDate: string, now: Date = new Date()): string {
   const d = new Date(isoDate);
+  const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+  const todayKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+  const y = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
+  const yesterdayKey = `${y.getUTCFullYear()}-${String(y.getUTCMonth() + 1).padStart(2, '0')}-${String(y.getUTCDate()).padStart(2, '0')}`;
+  if (key === todayKey) return 'Hôm nay';
+  if (key === yesterdayKey) return 'Hôm qua';
   const dow = DOW_VI[d.getDay()];
   return `${dow}, ${d.getDate()} tháng ${d.getMonth() + 1}`;
 }

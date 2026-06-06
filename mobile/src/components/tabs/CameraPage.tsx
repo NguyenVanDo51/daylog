@@ -1,14 +1,9 @@
 import React, { useRef, useState } from 'react';
-import {
-  View, Text, TouchableOpacity, StyleSheet, StatusBar, AppState, Linking, Modal,
-} from 'react-native';
-import {
-  CameraView, useCameraPermissions, CameraType,
-} from 'expo-camera';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, AppState, Linking, Modal } from 'react-native';
+import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,10 +14,11 @@ import * as SecureStore from 'expo-secure-store';
 
 const HINT_KEY = 'capture.hint_seen';
 
-export default function CaptureScreen() {
+export function CameraPage() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permissionResponse, requestPermission] = useCameraPermissions();
   const [showHint, setShowHint] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const recordingRef = useRef(false);
   const insets = useSafeAreaInsets();
@@ -32,7 +28,6 @@ export default function CaptureScreen() {
     transform: [{ rotate: `${progress.value * 360}deg` }],
   }));
 
-  // Show hint once for long-press video
   React.useEffect(() => {
     SecureStore.getItemAsync(HINT_KEY).then((seen) => {
       if (!seen) {
@@ -43,7 +38,6 @@ export default function CaptureScreen() {
     });
   }, []);
 
-  // Cancel recording if app backgrounds
   React.useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state !== 'active' && recordingRef.current) {
@@ -54,6 +48,22 @@ export default function CaptureScreen() {
     });
     return () => sub.remove();
   }, []);
+
+  React.useEffect(() => {
+    return () => {
+      ScreenOrientation.unlockAsync().catch(() => {});
+    };
+  }, []);
+
+  async function toggleOrientation() {
+    if (isLandscape) {
+      await ScreenOrientation.unlockAsync();
+      setIsLandscape(false);
+    } else {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+      setIsLandscape(true);
+    }
+  }
 
   function handleMediaCaptured(asset: { type: 'photo' | 'video'; uri: string; durationMs?: number }) {
     usePhotoReviewStore.getState().setAssets([{
@@ -85,42 +95,27 @@ export default function CaptureScreen() {
   }
 
   function stopRecord() {
-    if (recordingRef.current) {
-      cameraRef.current?.stopRecording();
-    }
+    if (recordingRef.current) cameraRef.current?.stopRecording();
   }
 
-  const tapGesture = Gesture.Tap().runOnJS(true).onStart(() => {
-    takePhoto();
-  });
-
-  const longPressGesture = Gesture.LongPress()
-    .minDuration(250)
-    .runOnJS(true)
-    .onStart(() => { startRecord(); })
-    .onEnd(() => { stopRecord(); })
-    .onFinalize(() => { stopRecord(); });
-
+  const tapGesture = Gesture.Tap().runOnJS(true).onStart(takePhoto);
+  const longPressGesture = Gesture.LongPress().minDuration(250).runOnJS(true)
+    .onStart(startRecord).onEnd(stopRecord).onFinalize(stopRecord);
   const composed = Gesture.Exclusive(longPressGesture, tapGesture);
 
   if (!permissionResponse) return <View style={styles.container} />;
 
   if (!permissionResponse.granted) {
-    if (permissionResponse.canAskAgain !== false) {
-      requestPermission();
-    }
+    if (permissionResponse.canAskAgain !== false) requestPermission();
     return (
       <View style={styles.container}>
-        <Modal transparent animationType="fade" visible={true}>
+        <Modal transparent animationType="fade" visible>
           <View style={styles.permOverlay}>
             <View style={styles.permSheet}>
               <Text style={styles.permTitle}>{t('capture.perm_title')}</Text>
               <Text style={styles.permBody}>{t('capture.perm_body')}</Text>
               <TouchableOpacity style={styles.permBtn} onPress={() => Linking.openSettings()}>
                 <Text style={styles.permBtnText}>{t('capture.perm_open')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.permCancel}>{t('capture.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -132,29 +127,27 @@ export default function CaptureScreen() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} mode="video" mute={true} />
+      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} mode="video" mute />
 
-      {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color={colors.white} />
+        <TouchableOpacity style={styles.iconBtn} onPress={toggleOrientation} testID="orientation-toggle">
+          <Ionicons
+            name={isLandscape ? 'phone-landscape-outline' : 'phone-portrait-outline'}
+            size={22}
+            color={colors.white}
+          />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
-        >
+        <TouchableOpacity style={styles.iconBtn} onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}>
           <Ionicons name="camera-reverse-outline" size={24} color={colors.white} />
         </TouchableOpacity>
       </View>
 
-      {/* Video hint toast */}
       {showHint && (
         <View style={styles.hint}>
           <Text style={styles.hintText}>{t('capture.hint_video')}</Text>
         </View>
       )}
 
-      {/* Shutter */}
       <View style={[styles.shutterArea, { paddingBottom: insets.bottom + spacing['2xl'] }]}>
         <GestureDetector gesture={composed}>
           <View style={styles.shutterOuter}>
@@ -183,5 +176,4 @@ const styles = StyleSheet.create({
   permBody:     { ...typography.body, color: colors.inkSoft },
   permBtn:      { backgroundColor: colors.pink, borderRadius: 12, paddingVertical: spacing.md, alignItems: 'center' },
   permBtnText:  { ...typography.body, color: colors.white, fontWeight: '700' },
-  permCancel:   { ...typography.body, color: colors.inkMuted, textAlign: 'center', paddingVertical: spacing.sm },
 });

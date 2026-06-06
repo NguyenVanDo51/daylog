@@ -1,76 +1,60 @@
-jest.mock('@/hooks/useAlbums', () => ({
-  useAlbums: jest.fn(),
+jest.mock('react-native-pager-view', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const PagerView = React.forwardRef(({ children, onPageSelected, initialPage }: any, ref: any) => {
+    React.useImperativeHandle(ref, () => ({ setPage: jest.fn() }));
+    return React.createElement(View, { testID: 'pager-view' }, children);
+  });
+  return { __esModule: true, default: PagerView };
+});
+
+jest.mock('@/components/tabs/CameraPage', () => ({
+  CameraPage: () => {
+    const { View } = require('react-native');
+    return require('react').createElement(View, { testID: 'camera-page' });
+  },
 }));
 
-jest.mock('@/stores/albumStore', () => ({
-  useAlbumStore: jest.fn((selector) =>
-    selector({ setAlbum: jest.fn() }),
-  ),
+jest.mock('@/components/tabs/AlbumsPage', () => ({
+  AlbumsPage: () => {
+    const { View } = require('react-native');
+    return require('react').createElement(View, { testID: 'albums-page' });
+  },
 }));
 
-jest.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
-}));
-
-jest.mock('@/lib/api', () => ({
-  api: { post: jest.fn() },
+jest.mock('@/components/tabs/CustomTabBar', () => ({
+  CustomTabBar: ({ activePage, onTabPress }: any) => {
+    const { View, TouchableOpacity } = require('react-native');
+    const React = require('react');
+    return React.createElement(View, { testID: 'custom-tab-bar' },
+      React.createElement(TouchableOpacity, { testID: 'tab-camera', onPress: () => onTabPress(0) }),
+      React.createElement(TouchableOpacity, { testID: 'tab-albums', onPress: () => onTabPress(1) }),
+    );
+  },
 }));
 
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import Screen from '../index';
-import { useAlbums } from '@/hooks/useAlbums';
+import { render, fireEvent } from '@testing-library/react-native';
+import MainScreen from '../index';
 
-const mockUseAlbums = useAlbums as jest.Mock;
+beforeEach(() => jest.clearAllMocks());
 
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
-describe('AlbumsScreen', () => {
-  it('shows a loading spinner when useAlbums is loading', () => {
-    mockUseAlbums.mockReturnValue({ data: undefined, isLoading: true });
-    const { UNSAFE_getByType } = render(<Screen />);
-    const { ActivityIndicator } = require('react-native');
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+describe('MainScreen', () => {
+  it('renders PagerView with camera and albums pages', () => {
+    const { getByTestId } = render(<MainScreen />);
+    expect(getByTestId('pager-view')).toBeTruthy();
+    expect(getByTestId('camera-page')).toBeTruthy();
+    expect(getByTestId('albums-page')).toBeTruthy();
   });
 
-  it('renders album names when data is loaded', () => {
-    mockUseAlbums.mockReturnValue({
-      data: [
-        { id: '1', name: 'My Album', is_private: false, child_birthdate: null, cover_photo_id: null, created_by: 'u1', created_at: '' },
-      ],
-      isLoading: false,
-    });
-    const { getByText } = render(<Screen />);
-    expect(getByText('My Album')).toBeTruthy();
+  it('renders custom tab bar', () => {
+    const { getByTestId } = render(<MainScreen />);
+    expect(getByTestId('custom-tab-bar')).toBeTruthy();
   });
 
-  it('shows private badge for private albums', () => {
-    mockUseAlbums.mockReturnValue({
-      data: [
-        { id: '1', name: 'Private Album', is_private: true, child_birthdate: null, cover_photo_id: null, created_by: 'u1', created_at: '' },
-      ],
-      isLoading: false,
-    });
-    const { getByText } = render(<Screen />);
-    // Vietnamese locale: albums.private = 'Cá nhân'
-    expect(getByText('Cá nhân')).toBeTruthy();
-  });
-
-  it('renders private album before shared album when both exist', () => {
-    mockUseAlbums.mockReturnValue({
-      data: [
-        { id: 'shared', name: 'Shared Album', is_private: false, child_birthdate: null, cover_photo_id: null, created_by: 'u1', created_at: '' },
-        { id: 'priv', name: 'Private Album', is_private: true, child_birthdate: null, cover_photo_id: null, created_by: 'u1', created_at: '' },
-      ],
-      isLoading: false,
-    });
-    const { getAllByText } = render(<Screen />);
-    // Use exact album names to avoid matching the heading text
-    const allNames = getAllByText(/^(Private|Shared) Album$/);
-    // Private album should appear first in the rendered list
-    expect(allNames[0].props.children).toBe('Private Album');
-    expect(allNames[1].props.children).toBe('Shared Album');
+  it('tab bar renders camera and albums tabs', () => {
+    const { getByTestId } = render(<MainScreen />);
+    expect(getByTestId('tab-camera')).toBeTruthy();
+    expect(getByTestId('tab-albums')).toBeTruthy();
   });
 });

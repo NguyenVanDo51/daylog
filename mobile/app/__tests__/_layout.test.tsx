@@ -137,14 +137,6 @@ jest.mock('@/lib/notifications', () => ({
   registerPushToken: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('@/components/upload/UploadSheet', () => {
-  const ReactLib = require('react');
-  const { View } = require('react-native');
-  return {
-    UploadSheet: () => ReactLib.createElement(View, { testID: 'upload-sheet-stub' }),
-  };
-});
-
 // Pull in the mocked modules so we can drive their behavior per test.
 import { api } from '@/lib/api';
 import { registerPushToken } from '@/lib/notifications';
@@ -170,7 +162,7 @@ beforeEach(() => {
 });
 
 describe('RootLayout', () => {
-  it('renders the provider tree and registers eight Stack.Screen entries after the auth bootstrap settles', async () => {
+  it('renders the provider tree and registers seven Stack.Screen entries after the auth bootstrap settles', async () => {
     mockedGetItemAsync.mockResolvedValueOnce(null);
 
     const utils = render(<RootLayout />);
@@ -184,17 +176,16 @@ describe('RootLayout', () => {
     // QueryClientProvider should have wrapped the Stack tree.
     expect(utils.getByTestId('query-client-provider')).toBeTruthy();
 
-    // Eight routes are declared by the layout: (auth), (tabs), albums/[id],
-    // photo/[id], capture, capture-review, photo-review, join/[token].
+    // Seven routes are declared by the layout: (auth), (tabs), albums/[id],
+    // photo/[id], photo-review, story/[albumId]/[date], join/[token].
     const names = __recordedStackScreens.map((s: any) => s.name);
     expect(names).toEqual([
       '(auth)',
       '(tabs)',
       'albums/[id]',
       'photo/[id]',
-      'capture',
-      'capture-review',
       'photo-review',
+      'story/[albumId]/[date]',
       'join/[token]',
     ]);
 
@@ -203,7 +194,7 @@ describe('RootLayout', () => {
       __recordedStackScreens.map((s: any) => [s.name, s]),
     );
     expect(byName['photo/[id]'].options?.presentation).toBe('fullScreenModal');
-    expect(byName['capture'].options?.presentation).toBe('fullScreenModal');
+    expect(byName['story/[albumId]/[date]'].options?.presentation).toBe('fullScreenModal');
 
     // Stack-wide options disable the header globally.
     const stackContainer = utils.getByTestId('stack-container');
