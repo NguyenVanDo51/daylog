@@ -36,6 +36,7 @@ export default function SettingsTab() {
 
   async function handleSignOut() {
     await SecureStore.deleteItemAsync('auth_token');
+    await SecureStore.deleteItemAsync('auth_user');
     clearAuth();
     clearAlbum();
     router.replace('/(auth)');

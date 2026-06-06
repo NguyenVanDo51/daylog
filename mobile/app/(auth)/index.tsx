@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
@@ -15,6 +15,7 @@ import { registerPushToken } from '@/lib/notifications';
 import { t } from '@/lib/i18n';
 
 const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
 
 GoogleSignin.configure({
   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
@@ -32,9 +33,11 @@ function FloatingDot({ x, y, size, color, delay }: { x: string; y: number; size:
 }
 
 export default function SignInScreen() {
-  const { setAuth } = useAuthStore();
+  const { token, setAuth } = useAuthStore();
   const { setAlbum } = useAlbumStore();
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
+
+  if (token) return <Redirect href="/(tabs)" />;
 
   async function handleApple() {
     try {
@@ -70,6 +73,7 @@ export default function SignInScreen() {
 
   async function finishAuth(token: string, user: any) {
     await SecureStore.setItemAsync(TOKEN_KEY, token);
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
     setAuth(token, user);
     registerPushToken().catch(() => {});
     try {

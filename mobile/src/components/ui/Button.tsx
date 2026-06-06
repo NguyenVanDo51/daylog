@@ -21,7 +21,7 @@ export function Button({ label, onPress, variant = 'primary', tier = 'joyful', f
 
   const containerStyle: ViewStyle[] = [
     styles.base,
-    tier === 'joyful' && styles.joyfulShadow,
+    tier === 'joyful' && variant !== 'ghost' && styles.joyfulShadow,
     variant === 'primary' && styles.primary,
     variant === 'ghost' && (tier === 'joyful' ? styles.ghostJoyful : styles.ghostQuiet),
     variant === 'danger' && styles.danger,

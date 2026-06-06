@@ -1,5 +1,7 @@
 # Family Album App — Design Spec
 
+**Superseded in part by** [2026-06-04 Photo Journal Pivot](./2026-06-04-photo-journal-pivot-design.md) — interaction model, milestones (now per-day labels), and auto-sync removal.
+
 **Date:** 2026-06-03  
 **Status:** Approved
 

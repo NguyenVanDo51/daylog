@@ -12,12 +12,14 @@ interface SheetModalProps {
 
 export function SheetModal({ visible, onClose, children, size = 'auto' }: SheetModalProps) {
   const ref = useRef<TrueSheet>(null);
+  const presented = useRef(false);
 
   useEffect(() => {
     if (visible) {
-      ref.current?.present();
-    } else {
-      ref.current?.dismiss();
+      presented.current = true;
+      ref.current?.present().catch(() => {});
+    } else if (presented.current) {
+      ref.current?.dismiss().catch(() => {});
     }
   }, [visible]);
 
