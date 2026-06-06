@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Alert, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/ui/Button';
@@ -20,20 +20,21 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
   const [loading, setLoading] = useState(false);
   const [link, setLink] = useState<string | null>(null);
 
-  async function handleCopyLink() {
+  useEffect(() => {
+    if (!visible || !albumId) return;
+    setLink(null);
     setLoading(true);
-    try {
-      const { data } = await api.post(`/albums/${albumId}/invites`);
-      const generated = `familyguy://join/${data.token}`;
-      setLink(generated);
-      await Clipboard.setStringAsync(generated);
-      success();
-      Alert.alert(t('invite.copied'), t('invite.copied_body'));
-    } catch (e: any) {
-      Alert.alert(t('common.error'), e.message);
-    } finally {
-      setLoading(false);
-    }
+    api.post(`/albums/${albumId}/invites`)
+      .then(({ data }) => setLink(`familyguy://join/${data.token}`))
+      .catch((e: any) => Alert.alert(t('common.error'), e.message))
+      .finally(() => setLoading(false));
+  }, [visible, albumId]);
+
+  async function handleCopyLink() {
+    if (!link) return;
+    await Clipboard.setStringAsync(link);
+    success();
+    Alert.alert(t('invite.copied'), t('invite.copied_body'));
   }
 
   return (
@@ -43,13 +44,13 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
 
       <Card style={styles.linkCard}>
         <Text style={styles.linkLabel}>{t('invite.link_label')}</Text>
-        <Text style={styles.linkValue} numberOfLines={1}>{link ?? '—'}</Text>
+        <Text style={styles.linkValue} numberOfLines={1}>{loading ? '...' : (link ?? '—')}</Text>
       </Card>
 
       <Text style={styles.expires}>{t('invite.expires')}</Text>
 
       <View style={{ gap: spacing.md, marginTop: spacing.lg }}>
-        <Button label={t('family.copy_link')} onPress={handleCopyLink} fullWidth loading={loading} />
+        <Button label={t('family.copy_link')} onPress={handleCopyLink} fullWidth loading={loading} disabled={!link} />
         <Button label={t('common.done')}      onPress={onClose} variant="ghost" fullWidth />
       </View>
     </SheetModal>

@@ -24,6 +24,7 @@ beforeEach(() => {
   mockUseAlbumStore.mockImplementation((selector: (s: { albumId: string | null }) => unknown) =>
     selector({ albumId: 'album-42' }),
   );
+  mockApi.post.mockResolvedValue({ data: { token: 'tok-default' } });
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 });
 
@@ -32,74 +33,69 @@ afterEach(() => {
 });
 
 describe('InviteSheet', () => {
-  it('renders heading, body and action buttons when visible', () => {
-    const onClose = jest.fn();
-    const { getByText } = render(<InviteSheet visible={true} onClose={onClose} />);
-    // Vietnamese heading and buttons
+  it('renders heading, body and action buttons when visible', async () => {
+    const { getByText } = render(<InviteSheet visible={true} onClose={jest.fn()} />);
+    // Wait for API to resolve and loading to clear before asserting button labels
+    await waitFor(() => expect(mockApi.post).toHaveBeenCalled());
     expect(getByText('Mời gia đình')).toBeTruthy();
-    expect(getByText('Sao chép link mời')).toBeTruthy();
+    await waitFor(() => expect(getByText('Sao chép link mời')).toBeTruthy());
     expect(getByText('Xong')).toBeTruthy();
   });
 
-  it('calls onClose when Done (Xong) is pressed', () => {
+  it('calls onClose when Done (Xong) is pressed', async () => {
     const onClose = jest.fn();
     const { getByText } = render(<InviteSheet visible={true} onClose={onClose} />);
+    await waitFor(() => expect(mockApi.post).toHaveBeenCalled());
+    await waitFor(() => getByText('Xong'));
     fireEvent.press(getByText('Xong'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('posts to /albums/:id/invites and copies the deep link to clipboard', async () => {
+  it('fetches invite link on open and copies it when copy button pressed', async () => {
     mockApi.post.mockResolvedValueOnce({ data: { token: 'tok-123' } });
-    const onClose = jest.fn();
-    const { getByText } = render(<InviteSheet visible={true} onClose={onClose} />);
+    const { getByText } = render(<InviteSheet visible={true} onClose={jest.fn()} />);
 
-    fireEvent.press(getByText('Sao chép link mời'));
-
+    // API called on mount
     await waitFor(() => {
       expect(mockApi.post).toHaveBeenCalledWith('/albums/album-42/invites');
     });
+
+    // Pressing copy should not call API again, just copy the resolved link
+    fireEvent.press(getByText('Sao chép link mời'));
     await waitFor(() => {
       expect(mockClipboard.setStringAsync).toHaveBeenCalledWith('familyguy://join/tok-123');
     });
+    expect(mockApi.post).toHaveBeenCalledTimes(1);
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith('Đã sao chép!', 'Đã sao chép link mời vào bộ nhớ tạm.');
     });
   });
 
-  it('shows a loading indicator while the request is in flight', async () => {
+  it('shows loading indicator while fetching on open', async () => {
     let resolvePost: ((v: { data: { token: string } }) => void) | undefined;
     mockApi.post.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolvePost = resolve;
-        }),
+      () => new Promise((resolve) => { resolvePost = resolve; }),
     );
 
-    const { getByText, UNSAFE_queryAllByType } = render(
+    const { UNSAFE_queryAllByType } = render(
       <InviteSheet visible={true} onClose={jest.fn()} />,
     );
-
-    fireEvent.press(getByText('Sao chép link mời'));
 
     const { ActivityIndicator } = require('react-native');
     await waitFor(() => {
       expect(UNSAFE_queryAllByType(ActivityIndicator).length).toBeGreaterThan(0);
     });
 
-    await act(async () => {
-      resolvePost!({ data: { token: 'tok-loading' } });
-    });
+    await act(async () => { resolvePost!({ data: { token: 'tok-loading' } }); });
 
     await waitFor(() => {
       expect(UNSAFE_queryAllByType(ActivityIndicator).length).toBe(0);
     });
   });
 
-  it('shows an error alert when api.post rejects', async () => {
+  it('shows an error alert when api.post rejects on open', async () => {
     mockApi.post.mockRejectedValueOnce(new Error('boom'));
-    const { getByText } = render(<InviteSheet visible={true} onClose={jest.fn()} />);
-
-    fireEvent.press(getByText('Sao chép link mời'));
+    render(<InviteSheet visible={true} onClose={jest.fn()} />);
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith('Có lỗi xảy ra', 'boom');
