@@ -1,137 +1,86 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React from 'react';
+import {
+  View, Text, FlatList, TouchableOpacity,
+  StyleSheet, ActivityIndicator,
+} from 'react-native';
 import { router } from 'expo-router';
-import { useAuthStore } from '@/stores/authStore';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAlbums, Album } from '@/hooks/useAlbums';
 import { useAlbumStore } from '@/stores/albumStore';
-import { useAlbum } from '@/hooks/useAlbum';
-import { useMembers } from '@/hooks/useMembers';
-import { useTimeline } from '@/hooks/useTimeline';
-import { JoyfulHeader } from '@/components/ui/JoyfulHeader';
-import { StorageBadge } from '@/components/ui/StorageBadge';
-import { StorageFreedomModal } from '@/components/ui/StorageFreedomModal';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { TimelineFeed } from '@/components/timeline/TimelineFeed';
-import { CalendarView } from '@/components/timeline/CalendarView';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
-import { formatVnAge, greetingForHour } from '@/lib/format';
-import { useCaptureStore, getCooldownRemaining } from '@/stores/captureStore';
 
-export default function HomeScreen() {
-  const [storageModalVisible, setStorageModalVisible] = useState(false);
-  const [feedMode, setFeedMode] = useState<'feed' | 'calendar'>('calendar');
-  const [calendarInitialDate, setCalendarInitialDate] = useState<string | undefined>(undefined);
-  const user = useAuthStore((s) => s.user);
-  const albumName = useAlbumStore((s) => s.albumName);
-  const childBirthdate = useAlbumStore((s) => s.childBirthdate);
-  const { data: album } = useAlbum();
-  const { data: members } = useMembers();
-  const { data: timeline } = useTimeline();
+export default function AlbumsScreen() {
+  const insets = useSafeAreaInsets();
+  const { data: albums, isLoading } = useAlbums();
+  const setAlbum = useAlbumStore((s) => s.setAlbum);
 
-  const { lastCaptureAt } = useCaptureStore();
-  const cooldownRemaining = getCooldownRemaining(lastCaptureAt);
-  const canCapture = cooldownRemaining === 0;
+  function handleAlbumPress(album: Album) {
+    setAlbum(album);
+    router.push(`/albums/${album.id}`);
+  }
 
-  const firstName = user?.display_name?.split(' ')[0] ?? '';
-  const birthdate = childBirthdate ?? album?.child_birthdate ?? null;
-  const ageLabel = formatVnAge(birthdate);
-  const photoCount = timeline?.pages.reduce((s, p) => s + p.items.filter((i: any) => i.type === 'photo').length, 0) ?? 0;
+  const sorted = albums
+    ? [...albums.filter((a) => a.is_private), ...albums.filter((a) => !a.is_private)]
+    : [];
 
-  function handleCameraPress() {
-    if (!canCapture) {
-      const mins = Math.ceil(cooldownRemaining / 60000);
-      Alert.alert(
-        t('capture.cooldown_title'),
-        t('capture.cooldown_body', { minutes: mins }),
-        [
-          { text: t('capture.cancel'), style: 'cancel' },
-          {
-            text: t('capture.cooldown_fallback'),
-            onPress: () => {},
-          },
-        ]
-      );
-      return;
-    }
-    router.push('/capture');
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
+        <ActivityIndicator color={colors.pink} />
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
-      <JoyfulHeader>
-        <Text style={styles.greeting}>{greetingForHour(new Date().getHours())}, {firstName} ✦</Text>
-        <Text style={styles.albumName}>{albumName ?? t('home.album_default')}</Text>
-
-        <View style={styles.badges}>
-          {ageLabel ? <Badge label={ageLabel} color="yellow" /> : null}
-          {members && members.length > 0 ? <Badge label={t('home.badge_members', { count: members.length })} color="mint" /> : null}
-          {photoCount > 0 ? <Badge label={t('home.badge_photos', { count: photoCount })} color="peach" /> : null}
-        </View>
-
-        {members && members.length > 0 && (
-          <TouchableOpacity style={styles.avatarRow} onPress={() => router.push('/(tabs)/family')}>
-            {members.slice(0, 4).map((m) => (
-              <Avatar key={m.id} uri={m.avatar_url} name={m.display_name} size={28} ring shadow />
-            ))}
-          </TouchableOpacity>
-        )}
-        {/* Feed / Calendar toggle */}
-        <View style={styles.toggleRow}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, feedMode === 'feed' && styles.toggleBtnActive]}
-            onPress={() => setFeedMode('feed')}
-            testID="toggle-feed"
-          >
-            <Ionicons name="grid-outline" size={16} color={feedMode === 'feed' ? colors.white : colors.ink} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleBtn, feedMode === 'calendar' && styles.toggleBtnActive]}
-            onPress={() => setFeedMode('calendar')}
-            testID="toggle-calendar"
-          >
-            <Ionicons name="calendar-outline" size={16} color={feedMode === 'calendar' ? colors.white : colors.ink} />
-          </TouchableOpacity>
-        </View>
-        {feedMode === 'feed' && (
-          <TouchableOpacity style={styles.cameraBtn} onPress={handleCameraPress}>
-            <Ionicons name="camera-outline" size={22} color={canCapture ? colors.ink : colors.inkMuted} />
-          </TouchableOpacity>
-        )}
-      </JoyfulHeader>
-
-      <StorageBadge onPress={() => setStorageModalVisible(true)} />
-
-      {feedMode === 'feed'
-        ? <TimelineFeed onJumpToDay={(dateKey) => {
-            setCalendarInitialDate(dateKey);
-            setFeedMode('calendar');
-          }} />
-        : <CalendarView initialDateKey={calendarInitialDate} />
-      }
-
-      <StorageFreedomModal
-        visible={storageModalVisible}
-        onClose={() => setStorageModalVisible(false)}
-      />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <Text style={styles.heading}>{t('albums.title')}</Text>
+      {sorted.length === 0 ? (
+        <Text style={styles.empty}>{t('albums.empty')}</Text>
+      ) : (
+        <FlatList
+          data={sorted}
+          keyExtractor={(a) => a.id}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => handleAlbumPress(item)}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.albumName}>{item.name}</Text>
+              {item.is_private && (
+                <Text style={styles.badge}>{t('albums.private')}</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
-  greeting:  { ...typography.handAccent, color: colors.pink, fontSize: 18, marginBottom: 4 },
-  albumName: { ...typography.heading, color: colors.ink, marginBottom: spacing.sm },
-  badges:    { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap', marginBottom: spacing.sm },
-  avatarRow: { flexDirection: 'row', gap: -8, marginTop: spacing.sm },
-  cameraBtn: { position: 'absolute', right: 0, top: 36, padding: spacing.xs },
-  toggleRow: { flexDirection: 'row', gap: 4, position: 'absolute', right: 0, top: 0 },
-  toggleBtn: {
-    width: 28, height: 28, borderRadius: 8,
-    borderWidth: 1.5, borderColor: colors.ink,
+  center:    { alignItems: 'center', justifyContent: 'center' },
+  heading:   { ...typography.heading, color: colors.ink, padding: spacing['2xl'], paddingBottom: spacing.lg },
+  empty:     { ...typography.body, color: colors.inkMuted, textAlign: 'center', marginTop: spacing['4xl'] },
+  list:      { paddingHorizontal: spacing['2xl'], gap: spacing.md },
+  row: {
     backgroundColor: colors.white,
-    alignItems: 'center', justifyContent: 'center',
+    borderRadius: 12,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  toggleBtnActive: { backgroundColor: colors.pink, borderColor: colors.pink },
+  albumName: { ...typography.body, color: colors.ink },
+  badge: {
+    ...typography.caption,
+    color: colors.inkMuted,
+    backgroundColor: colors.borderSoft,
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
 });
