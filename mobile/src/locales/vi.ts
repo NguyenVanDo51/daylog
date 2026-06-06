@@ -1,9 +1,15 @@
 export const vi = {
   tabs: {
-    home:    'Nhà',
+    albums:  'Album',
     moments: 'Khoảnh khắc',
     family:  'Gia đình',
     me:      'Tôi',
+  },
+  albums: {
+    title:     'Album của tôi',
+    private:   'Cá nhân',
+    new_album: 'Album mới',
+    empty:     'Chưa có album nào',
   },
   greeting: {
     morning:   'Chào buổi sáng',
