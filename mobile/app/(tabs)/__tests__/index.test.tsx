@@ -8,6 +8,14 @@ jest.mock('@/stores/albumStore', () => ({
   ),
 }));
 
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+}));
+
+jest.mock('@/lib/api', () => ({
+  api: { post: jest.fn() },
+}));
+
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import Screen from '../index';
