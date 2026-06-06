@@ -22,6 +22,7 @@ export interface TestAlbum {
   cover_photo_id: string | null;
   created_by: string;
   created_at: Date | null;
+  is_private: boolean;
 }
 
 function toSnakeUser(u: typeof users.$inferSelect): TestUser {
@@ -44,6 +45,7 @@ function toSnakeAlbum(a: typeof albums.$inferSelect): TestAlbum {
     cover_photo_id: a.coverPhotoId,
     created_by: a.createdBy,
     created_at: a.createdAt,
+    is_private: a.isPrivate,
   };
 }
 
