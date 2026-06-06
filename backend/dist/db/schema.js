@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.presignTokens = exports.invites = exports.milestones = exports.reactions = exports.photos = exports.albumMembers = exports.albums = exports.users = exports.memberRole = void 0;
+exports.presignTokens = exports.invites = exports.dayLabels = exports.reactions = exports.photos = exports.albumMembers = exports.albums = exports.users = exports.memberRole = void 0;
 const drizzle_orm_1 = require("drizzle-orm");
 const pg_core_1 = require("drizzle-orm/pg-core");
 exports.memberRole = (0, pg_core_1.pgEnum)('member_role', ['admin', 'member']);
@@ -25,6 +25,7 @@ exports.albums = (0, pg_core_1.pgTable)('albums', {
         .notNull()
         .references(() => exports.users.id),
     createdAt: (0, pg_core_1.timestamp)('created_at', { withTimezone: true }).defaultNow(),
+    isPrivate: (0, pg_core_1.boolean)('is_private').notNull().default(false),
 });
 exports.albumMembers = (0, pg_core_1.pgTable)('album_members', {
     id: (0, pg_core_1.uuid)('id').primaryKey().default((0, drizzle_orm_1.sql) `uuid_generate_v4()`),
@@ -56,6 +57,8 @@ exports.photos = (0, pg_core_1.pgTable)('photos', {
     mediaType: (0, pg_core_1.varchar)('media_type', { length: 8 }).notNull().default('photo'),
     source: (0, pg_core_1.varchar)('source', { length: 8 }).notNull().default('upload'),
     durationMs: (0, pg_core_1.integer)('duration_ms'),
+    width: (0, pg_core_1.integer)('width'),
+    height: (0, pg_core_1.integer)('height'),
 }, (t) => ({
     byAlbumTakenAt: (0, pg_core_1.index)('idx_photos_album_taken_at').on(t.albumId, t.takenAt.desc()),
     byAlbumLocalAsset: (0, pg_core_1.index)('idx_photos_local_asset')
@@ -75,21 +78,19 @@ exports.reactions = (0, pg_core_1.pgTable)('reactions', {
     uniqPhotoUser: (0, pg_core_1.uniqueIndex)('reactions_photo_user_uniq').on(t.photoId, t.userId),
     byPhoto: (0, pg_core_1.index)('idx_reactions_photo').on(t.photoId),
 }));
-exports.milestones = (0, pg_core_1.pgTable)('milestones', {
+exports.dayLabels = (0, pg_core_1.pgTable)('day_labels', {
     id: (0, pg_core_1.uuid)('id').primaryKey().default((0, drizzle_orm_1.sql) `uuid_generate_v4()`),
     albumId: (0, pg_core_1.uuid)('album_id')
         .notNull()
         .references(() => exports.albums.id, { onDelete: 'cascade' }),
-    createdBy: (0, pg_core_1.uuid)('created_by')
+    date: (0, pg_core_1.date)('date').notNull(),
+    label: (0, pg_core_1.text)('label').notNull(),
+    updatedBy: (0, pg_core_1.uuid)('updated_by')
         .notNull()
         .references(() => exports.users.id),
-    title: (0, pg_core_1.varchar)('title').notNull(),
-    note: (0, pg_core_1.text)('note'),
-    occurredAt: (0, pg_core_1.timestamp)('occurred_at', { withTimezone: true }).notNull(),
-    coverPhotoId: (0, pg_core_1.uuid)('cover_photo_id').references(() => exports.photos.id, { onDelete: 'set null' }),
-    createdAt: (0, pg_core_1.timestamp)('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: (0, pg_core_1.timestamp)('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
-    byAlbumOccurredAt: (0, pg_core_1.index)('idx_milestones_album_occurred_at').on(t.albumId, t.occurredAt.desc()),
+    uniqAlbumDate: (0, pg_core_1.uniqueIndex)('day_labels_album_date_uniq').on(t.albumId, t.date),
 }));
 exports.invites = (0, pg_core_1.pgTable)('invites', {
     id: (0, pg_core_1.uuid)('id').primaryKey().default((0, drizzle_orm_1.sql) `uuid_generate_v4()`),

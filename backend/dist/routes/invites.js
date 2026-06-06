@@ -25,6 +25,15 @@ router.post('/albums/:albumId/invites', auth_1.requireAuth, async (req, res, nex
             .limit(1);
         if (!membership[0])
             return res.status(403).json({ error: 'Forbidden' });
+        const [albumRow] = await db_1.db
+            .select({ isPrivate: schema_1.albums.isPrivate })
+            .from(schema_1.albums)
+            .where((0, drizzle_orm_1.eq)(schema_1.albums.id, albumId))
+            .limit(1);
+        if (!albumRow)
+            return res.status(404).json({ error: 'Album not found' });
+        if (albumRow.isPrivate)
+            return res.status(403).json({ error: 'Cannot invite to a private album' });
         if (expires_in_days !== undefined) {
             const days = Number(expires_in_days);
             if (!Number.isInteger(days) || days < 1) {

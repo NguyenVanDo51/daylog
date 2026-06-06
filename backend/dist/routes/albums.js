@@ -19,21 +19,35 @@ const albumSelect = {
     cover_photo_id: schema_1.albums.coverPhotoId,
     created_by: schema_1.albums.createdBy,
     created_at: schema_1.albums.createdAt,
+    is_private: schema_1.albums.isPrivate,
 };
 router.post('/', async (req, res, next) => {
     try {
-        const { name, child_birthdate } = req.body ?? {};
+        const { name, child_birthdate, is_private } = req.body ?? {};
         if (!name) {
             res.status(400).json({ error: 'name required' });
             return;
         }
         const album = await db_1.db.transaction(async (tx) => {
+            if (is_private === true) {
+                const [existing] = await tx
+                    .select({ x: (0, drizzle_orm_1.sql) `1` })
+                    .from(schema_1.albums)
+                    .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.albums.createdBy, req.user.id), (0, drizzle_orm_1.eq)(schema_1.albums.isPrivate, true)))
+                    .limit(1);
+                if (existing) {
+                    const err = new Error('Private album already exists');
+                    err.status = 400;
+                    throw err;
+                }
+            }
             const [created] = await tx
                 .insert(schema_1.albums)
                 .values({
                 name,
                 childBirthdate: child_birthdate || null,
                 createdBy: req.user.id,
+                isPrivate: is_private === true,
             })
                 .returning(albumSelect);
             await tx.insert(schema_1.albumMembers).values({
@@ -46,6 +60,10 @@ router.post('/', async (req, res, next) => {
         res.status(201).json(album);
     }
     catch (err) {
+        if (err?.status === 400) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
         next(err);
     }
 });

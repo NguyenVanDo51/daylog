@@ -11,6 +11,18 @@ const appleAuth_1 = require("../services/appleAuth");
 const googleAuth_1 = require("../services/googleAuth");
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
+async function ensureDefaultAlbum(userId) {
+    await db_1.db.transaction(async (tx) => {
+        const [album] = await tx
+            .insert(schema_1.albums)
+            .values({ name: 'Ảnh của tôi', createdBy: userId, isPrivate: true })
+            .onConflictDoNothing()
+            .returning({ id: schema_1.albums.id });
+        if (!album)
+            return; // already existed
+        await tx.insert(schema_1.albumMembers).values({ albumId: album.id, userId, role: 'admin' });
+    });
+}
 function signJwt(userId) {
     const secret = process.env.JWT_SECRET;
     if (!secret)
@@ -52,6 +64,7 @@ router.post('/apple', async (req, res, next) => {
             },
         })
             .returning();
+        await ensureDefaultAlbum(user.id);
         res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
     }
     catch (err) {
@@ -82,6 +95,7 @@ router.post('/google', async (req, res, next) => {
             },
         })
             .returning();
+        await ensureDefaultAlbum(user.id);
         res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
     }
     catch (err) {

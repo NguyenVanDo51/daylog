@@ -9,12 +9,16 @@ const crypto_1 = require("crypto");
 const r2_1 = require("./r2");
 async function generateThumbnail(r2Key) {
     const buffer = await (0, r2_1.getObjectBuffer)(r2Key);
-    const thumb = await (0, sharp_1.default)(buffer)
+    const image = (0, sharp_1.default)(buffer);
+    const metadata = await image.metadata();
+    const width = metadata.width ?? 0;
+    const height = metadata.height ?? 0;
+    const thumb = await image
         .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 80 })
         .toBuffer();
-    const thumbKey = `thumbnails/${(0, crypto_1.randomUUID)()}.webp`;
-    await (0, r2_1.putObject)(thumbKey, thumb);
-    return thumbKey;
+    const key = `thumbnails/${(0, crypto_1.randomUUID)()}.webp`;
+    await (0, r2_1.putObject)(key, thumb);
+    return { key, width, height };
 }
 //# sourceMappingURL=thumbnail.js.map

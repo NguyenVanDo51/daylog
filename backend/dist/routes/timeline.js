@@ -33,29 +33,18 @@ router.get('/', async (req, res, next) => {
             .limit(1);
         if (!membership[0])
             return res.status(403).json({ error: 'Forbidden' });
-        // Build the per-subquery cursor predicates. When no cursor, these collapse
-        // to empty SQL fragments so the WHERE keeps just the album_id filter.
-        const photoCursorClause = cursor
+        // Build the cursor predicate. When no cursor, collapses to an empty SQL
+        // fragment so the WHERE keeps just the album_id filter.
+        const cursorClause = cursor
             ? (0, drizzle_orm_1.sql) `AND (taken_at < ${cursor.event_time} OR (taken_at = ${cursor.event_time} AND id < ${cursor.id}))`
-            : (0, drizzle_orm_1.sql) ``;
-        const milestoneCursorClause = cursor
-            ? (0, drizzle_orm_1.sql) `AND (occurred_at < ${cursor.event_time} OR (occurred_at = ${cursor.event_time} AND id < ${cursor.id}))`
             : (0, drizzle_orm_1.sql) ``;
         const result = await db_1.db.execute((0, drizzle_orm_1.sql) `
       SELECT id, 'photo' AS type, taken_at AS event_time,
              r2_key, thumbnail_key, caption, uploaded_by AS user_id,
-             local_asset_id, NULL AS title, NULL AS note
+             local_asset_id, media_type, source, duration_ms,
+             width, height
       FROM photos
-      WHERE album_id = ${albumId} ${photoCursorClause}
-
-      UNION ALL
-
-      SELECT id, 'milestone' AS type, occurred_at AS event_time,
-             NULL, NULL, NULL, created_by AS user_id,
-             NULL, title, note
-      FROM milestones
-      WHERE album_id = ${albumId} ${milestoneCursorClause}
-
+      WHERE album_id = ${albumId} ${cursorClause}
       ORDER BY event_time DESC, id DESC
       LIMIT ${limit + 1}
     `);
@@ -68,7 +57,7 @@ router.get('/', async (req, res, next) => {
                 id: items[items.length - 1].id,
             })).toString('base64')
             : null;
-        res.json({ items, next_cursor: nextCursor });
+        res.json({ items, nextCursor });
     }
     catch (err) {
         next(err);
