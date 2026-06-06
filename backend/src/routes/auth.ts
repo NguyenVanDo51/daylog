@@ -1,13 +1,29 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { sql, eq } from 'drizzle-orm';
+import { sql, eq, and } from 'drizzle-orm';
 import { db } from '../db';
-import { users } from '../db/schema';
+import { users, albums, albumMembers } from '../db/schema';
 import { verifyAppleToken } from '../services/appleAuth';
 import { verifyGoogleToken } from '../services/googleAuth';
 import { requireAuth } from '../middleware/auth';
 
 const router = Router();
+
+async function ensureDefaultAlbum(userId: string): Promise<void> {
+  const [existing] = await db
+    .select({ x: sql<number>`1` })
+    .from(albums)
+    .where(and(eq(albums.createdBy, userId), eq(albums.isPrivate, true)))
+    .limit(1);
+  if (existing) return;
+  await db.transaction(async (tx) => {
+    const [album] = await tx
+      .insert(albums)
+      .values({ name: 'Ảnh của tôi', createdBy: userId, isPrivate: true })
+      .returning({ id: albums.id });
+    await tx.insert(albumMembers).values({ albumId: album.id, userId, role: 'admin' });
+  });
+}
 
 function signJwt(userId: string): string {
   const secret = process.env.JWT_SECRET;
@@ -53,6 +69,7 @@ router.post('/apple', async (req: Request, res: Response, next: NextFunction) =>
       })
       .returning();
 
+    await ensureDefaultAlbum(user.id);
     res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
   } catch (err) {
     next(err);
@@ -85,6 +102,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
       })
       .returning();
 
+    await ensureDefaultAlbum(user.id);
     res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
   } catch (err) {
     next(err);

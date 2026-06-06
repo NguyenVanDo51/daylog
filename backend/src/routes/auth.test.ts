@@ -20,6 +20,38 @@ describe('Security middleware', () => {
 });
 
 describe('POST /auth/apple', () => {
+  it('creates a private album named "Ảnh của tôi" on first sign-in', async () => {
+    mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-private-album', name: 'Test', email: null });
+
+    await request(app).post('/auth/apple').send({ idToken: 'tok' });
+
+    const { rows } = await pool.query(
+      `SELECT a.name, a.is_private, am.role
+       FROM albums a
+       JOIN album_members am ON am.album_id = a.id
+       JOIN users u ON u.id = a.created_by
+       WHERE u.apple_sub = 'apple-sub-private-album'`
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].name).toBe('Ảnh của tôi');
+    expect(rows[0].is_private).toBe(true);
+    expect(rows[0].role).toBe('admin');
+  });
+
+  it('does not create a second private album on second sign-in', async () => {
+    mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-idempotent', name: 'Test', email: null });
+
+    await request(app).post('/auth/apple').send({ idToken: 'tok' });
+    await request(app).post('/auth/apple').send({ idToken: 'tok' });
+
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS cnt FROM albums a
+       JOIN users u ON u.id = a.created_by
+       WHERE u.apple_sub = 'apple-sub-idempotent' AND a.is_private = true`
+    );
+    expect(rows[0].cnt).toBe(1);
+  });
+
   it('creates a new user and returns a JWT', async () => {
     mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-123', name: 'Jane Doe', email: 'jane@example.com' });
 
@@ -157,6 +189,56 @@ describe('POST /auth/google', () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('Internal server error');  // was: 'invalid audience'
+  });
+});
+
+describe('Default album on first sign-in', () => {
+  it('creates a default album for a new Apple user', async () => {
+    mockVerifyApple.mockResolvedValueOnce({ sub: 'apple-sub-newalbum', name: 'New User', email: null });
+
+    const res = await request(app).post('/auth/apple').send({ idToken: 'token' });
+    expect(res.status).toBe(200);
+
+    const { rows } = await pool.query(
+      `SELECT am.role, a.name FROM album_members am
+       JOIN albums a ON a.id = am.album_id
+       JOIN users u ON u.id = am.user_id
+       WHERE u.apple_sub = 'apple-sub-newalbum'`
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].role).toBe('admin');
+    expect(rows[0].name).toBe('Ảnh của tôi');
+  });
+
+  it('does not create a second album on repeated Apple sign-in', async () => {
+    mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-repeat', name: 'Repeat User', email: null });
+
+    await request(app).post('/auth/apple').send({ idToken: 'token' });
+    await request(app).post('/auth/apple').send({ idToken: 'token' });
+
+    const { rows } = await pool.query(
+      `SELECT am.id FROM album_members am
+       JOIN users u ON u.id = am.user_id
+       WHERE u.apple_sub = 'apple-sub-repeat'`
+    );
+    expect(rows).toHaveLength(1);
+  });
+
+  it('creates a default album for a new Google user', async () => {
+    mockVerifyGoogle.mockResolvedValueOnce({ sub: 'google-sub-newalbum', name: 'New Google User', picture: null });
+
+    const res = await request(app).post('/auth/google').send({ idToken: 'token' });
+    expect(res.status).toBe(200);
+
+    const { rows } = await pool.query(
+      `SELECT am.role, a.name FROM album_members am
+       JOIN albums a ON a.id = am.album_id
+       JOIN users u ON u.id = am.user_id
+       WHERE u.google_sub = 'google-sub-newalbum'`
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].role).toBe('admin');
+    expect(rows[0].name).toBe('Ảnh của tôi');
   });
 });
 
