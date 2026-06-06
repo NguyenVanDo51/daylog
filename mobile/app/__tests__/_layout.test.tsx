@@ -162,7 +162,7 @@ beforeEach(() => {
 });
 
 describe('RootLayout', () => {
-  it('renders the provider tree and registers six Stack.Screen entries after the auth bootstrap settles', async () => {
+  it('renders the provider tree and registers seven Stack.Screen entries after the auth bootstrap settles', async () => {
     mockedGetItemAsync.mockResolvedValueOnce(null);
 
     const utils = render(<RootLayout />);
@@ -176,12 +176,13 @@ describe('RootLayout', () => {
     // QueryClientProvider should have wrapped the Stack tree.
     expect(utils.getByTestId('query-client-provider')).toBeTruthy();
 
-    // Six routes are declared by the layout: (auth), (tabs), photo/[id],
-    // capture, capture-review, join/[token].
+    // Seven routes are declared by the layout: (auth), (tabs), albums/[id],
+    // photo/[id], capture, capture-review, join/[token].
     const names = __recordedStackScreens.map((s: any) => s.name);
     expect(names).toEqual([
       '(auth)',
       '(tabs)',
+      'albums/[id]',
       'photo/[id]',
       'capture',
       'capture-review',
@@ -221,13 +222,14 @@ describe('RootLayout', () => {
     expect(mockedGet).toHaveBeenCalledWith('/users/me', {
       headers: { Authorization: 'Bearer stored-jwt' },
     });
+    expect(mockedGet).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState().user).toEqual(fakeUser);
     expect(mockedRegisterPushToken).toHaveBeenCalledTimes(1);
   });
 
   it('when SecureStore has a token but /users/me fails: clears token and clears auth state', async () => {
     mockedGetItemAsync.mockResolvedValueOnce('bad-jwt');
-    mockedGet.mockRejectedValueOnce(new Error('401'));
+    mockedGet.mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { response: { status: 401 } }));
 
     // Pre-populate the store so we can assert clearAuth() was called.
     useAuthStore.setState({

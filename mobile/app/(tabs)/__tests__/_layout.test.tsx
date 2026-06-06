@@ -173,79 +173,33 @@ describe('TabLayout', () => {
     });
   });
 
-  it('declares the expected 4 Tabs.Screen entries in order', () => {
+  it('declares the expected 2 Tabs.Screen entries in order', () => {
     render(<TabLayout />);
     const names = recordedScreens.map((s) => s.name);
-    expect(names).toEqual(['index', 'upload', 'family', 'settings']);
+    expect(names).toEqual(['index', 'settings']);
   });
 
-  it('configures the home / family / settings tabs with the right titles and Ionicons', () => {
+  it('configures the albums / settings tabs with the right titles and Ionicons', () => {
     const utils = render(<TabLayout />);
     const byName = Object.fromEntries(recordedScreens.map((s) => [s.name, s]));
 
     // Vietnamese tab titles
-    expect(byName.index.options.title).toBe('Nhà');
-    expect(byName.family.options.title).toBe('Gia đình');
+    expect(byName.index.options.title).toBe('Album');
     expect(byName.settings.options.title).toBe('Tôi');
 
     // The pass-through icon-host renders a <View testID="Ionicons-<name>"> for
     // each call to tabBarIcon. Verify each expected icon is present in the
     // rendered tree.
-    expect(utils.getByTestId('Ionicons-home')).toBeTruthy();
-    expect(utils.getByTestId('Ionicons-people')).toBeTruthy();
+    expect(utils.getByTestId('Ionicons-images-outline')).toBeTruthy();
     expect(utils.getByTestId('Ionicons-settings-outline')).toBeTruthy();
   });
 
-  it("renders the upload tab as a FAB button (no title) using tabBarButton instead of tabBarIcon", () => {
+  it('mounts UploadSheet hidden by default and closes it via its onClose callback', () => {
     const utils = render(<TabLayout />);
-    const upload = recordedScreens.find((s) => s.name === 'upload')!;
-    expect(upload).toBeDefined();
-    expect(upload.options.title).toBe('');
-    expect(typeof upload.options.tabBarButton).toBe('function');
-    expect(upload.options.tabBarIcon).toBeUndefined();
-    // The FAB renders an Ionicons "add" inside a LinearGradient.
-    expect(utils.getByTestId('Ionicons-add')).toBeTruthy();
-    expect(utils.getByTestId('tab-button-upload')).toBeTruthy();
-  });
-
-  it('mounts UploadSheet, hidden by default, and shows it when the FAB is pressed', () => {
-    const utils = render(<TabLayout />);
-
-    // Stub initially renders 'hidden'.
     expect(utils.getByTestId('upload-sheet-stub')).toBeTruthy();
     expect(utils.getByText('hidden')).toBeTruthy();
-
-    // Press the FAB rendered through tabBarButton. The FABButton wraps a
-    // TouchableOpacity whose onPress flips uploadVisible to true.
-    const upload = recordedScreens.find((s) => s.name === 'upload')!;
-    // Find the touchable inside the tab-button-upload subtree by walking the
-    // rendered tree.
-    const buttonHost = utils.getByTestId('tab-button-upload');
-    // The TouchableOpacity is rendered with an onPress prop coming from
-    // FABButton — find it via the host instance's children.
-    const findOnPress = (node: any): ((...args: any[]) => void) | null => {
-      if (!node) return null;
-      if (node.props?.onPress) return node.props.onPress;
-      const children = Array.isArray(node.children) ? node.children : [];
-      for (const child of children) {
-        const found = findOnPress(child);
-        if (found) return found;
-      }
-      return null;
-    };
-    const onPress = findOnPress(buttonHost);
-    expect(onPress).toBeTruthy();
-    act(() => {
-      onPress!();
-    });
-    expect(utils.getByText('visible')).toBeTruthy();
-
-    // Fire the stub's close — UploadSheet becomes hidden again.
+    // Closing while hidden is a no-op but exercises the wiring.
     fireEvent.press(utils.getByTestId('upload-sheet-close'));
     expect(utils.getByText('hidden')).toBeTruthy();
-
-    // Sanity: options.title for the upload tab is empty and we used the button
-    // factory, not an icon.
-    expect(upload.options.title).toBe('');
   });
 });
