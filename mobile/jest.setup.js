@@ -250,9 +250,20 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 // @lodev09/react-native-true-sheet — native sheet component used by SheetModal and UploadSheet.
-jest.mock('@lodev09/react-native-true-sheet', () => ({
-  TrueSheet: 'TrueSheet',
-}));
+// We use a forwardRef stub so that ref.current?.present()/.dismiss() return resolved Promises.
+jest.mock('@lodev09/react-native-true-sheet', () => {
+  const React = require('react');
+  const resolvedFn = jest.fn(() => Promise.resolve());
+  return {
+    TrueSheet: React.forwardRef(({ children, ...props }, ref) => {
+      React.useImperativeHandle(ref, () => ({
+        present: resolvedFn,
+        dismiss: resolvedFn,
+      }), []);
+      return React.createElement('TrueSheet', props, children);
+    }),
+  };
+});
 
 // expo-video — used by photo detail screen for video playback.
 jest.mock('expo-video', () => {

@@ -42,11 +42,12 @@ jest.mock('@lodev09/react-native-true-sheet', () => {
   const React = require('react');
   let onPresentRef: (() => void) | undefined;
   const TrueSheet = React.forwardRef((props: any, ref: any) => {
-    onPresentRef = props.onPresent;
+    onPresentRef = props.onDidPresent;
     // Expose imperative methods via ref
+    const resolvedFn = jest.fn(() => Promise.resolve());
     React.useImperativeHandle(ref, () => ({
-      present: jest.fn(),
-      dismiss: jest.fn(),
+      present: resolvedFn,
+      dismiss: resolvedFn,
     }));
     return React.createElement('TrueSheet', props, props.children);
   });

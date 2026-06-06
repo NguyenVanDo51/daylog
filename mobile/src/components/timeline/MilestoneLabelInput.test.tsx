@@ -4,10 +4,11 @@ import { MilestoneLabelInput } from './MilestoneLabelInput';
 
 jest.mock('@lodev09/react-native-true-sheet', () => {
   const React = require('react');
+  const resolvedFn = jest.fn(() => Promise.resolve());
   return {
-    TrueSheet: React.forwardRef(({ children }: any, ref: any) => {
-      React.useImperativeHandle(ref, () => ({ present: jest.fn(), dismiss: jest.fn() }), []);
-      return <>{children}</>;
+    TrueSheet: React.forwardRef(({ children, ...props }: any, ref: any) => {
+      React.useImperativeHandle(ref, () => ({ present: resolvedFn, dismiss: resolvedFn }), []);
+      return React.createElement('TrueSheet', props, children);
     }),
   };
 });

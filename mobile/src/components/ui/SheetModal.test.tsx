@@ -14,27 +14,27 @@ describe('SheetModal', () => {
     expect(getByText('Sheet content')).toBeTruthy();
   });
 
-  it('passes sizes=["auto"] by default', () => {
+  it('passes detents=["auto"] by default', () => {
     const { UNSAFE_getByType } = render(
       <SheetModal visible onClose={jest.fn()}>
         <Text>x</Text>
       </SheetModal>,
     );
     const sheet = UNSAFE_getByType('TrueSheet' as unknown as React.ComponentType);
-    expect(sheet.props.sizes).toEqual(['auto']);
+    expect(sheet.props.detents).toEqual(['auto']);
   });
 
-  it('passes sizes=["92%"] when size="large"', () => {
+  it('passes detents=[0.92] when size="large"', () => {
     const { UNSAFE_getByType } = render(
       <SheetModal visible onClose={jest.fn()} size="large">
         <Text>x</Text>
       </SheetModal>,
     );
     const sheet = UNSAFE_getByType('TrueSheet' as unknown as React.ComponentType);
-    expect(sheet.props.sizes).toEqual(['92%']);
+    expect(sheet.props.detents).toEqual([0.92]);
   });
 
-  it('wires onDismiss to onClose', () => {
+  it('wires onDidDismiss to onClose', () => {
     const onClose = jest.fn();
     const { UNSAFE_getByType } = render(
       <SheetModal visible={false} onClose={onClose}>
@@ -42,7 +42,7 @@ describe('SheetModal', () => {
       </SheetModal>,
     );
     const sheet = UNSAFE_getByType('TrueSheet' as unknown as React.ComponentType);
-    sheet.props.onDismiss();
+    sheet.props.onDidDismiss();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

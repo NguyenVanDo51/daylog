@@ -6,7 +6,7 @@ describe('i18n', () => {
   });
 
   it('renders Vietnamese strings by default', () => {
-    expect(t('tabs.home')).toBe('Nhà');
+    expect(t('tabs.albums')).toBe('Album');
     expect(t('tabs.moments')).toBe('Khoảnh khắc');
     expect(t('tabs.family')).toBe('Gia đình');
     expect(t('tabs.me')).toBe('Tôi');
