@@ -117,7 +117,7 @@ describe('Invites', () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].expires_at).not.toBeNull();
-    expect(rows[0].max_uses).toBeNull();
+    expect(rows[0].max_uses).toBe(1000);
   });
 
   it('POST /albums/:id/invites returns 400 when albumId is not a valid UUID', async () => {

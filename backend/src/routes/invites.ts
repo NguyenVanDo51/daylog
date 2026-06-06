@@ -11,6 +11,7 @@ import { isValidUUID } from '../lib/validation';
 const router = Router();
 
 const DEFAULT_INVITE_EXPIRES_DAYS = 7;
+const DEFAULT_INVITE_MAX_USES = 1000;
 
 function generateToken(): string {
   return randomBytes(16).toString('base64url');
@@ -67,7 +68,7 @@ router.post(
         token,
         createdBy: req.user!.id,
         expiresAt: expiresAt ?? null,
-        maxUses: max_uses ?? null,
+        maxUses: max_uses ?? DEFAULT_INVITE_MAX_USES,
       });
 
       const deepLink = `familyguy://join/${token}`;

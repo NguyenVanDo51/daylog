@@ -10,6 +10,7 @@ const qrcode_1 = require("../services/qrcode");
 const validation_1 = require("../lib/validation");
 const router = (0, express_1.Router)();
 const DEFAULT_INVITE_EXPIRES_DAYS = 7;
+const DEFAULT_INVITE_MAX_USES = 1000;
 function generateToken() {
     return (0, crypto_1.randomBytes)(16).toString('base64url');
 }
@@ -55,7 +56,7 @@ router.post('/albums/:albumId/invites', auth_1.requireAuth, async (req, res, nex
             token,
             createdBy: req.user.id,
             expiresAt: expiresAt ?? null,
-            maxUses: max_uses ?? null,
+            maxUses: max_uses ?? DEFAULT_INVITE_MAX_USES,
         });
         const deepLink = `familyguy://join/${token}`;
         const qrCode = await (0, qrcode_1.generateQRCode)(deepLink);
