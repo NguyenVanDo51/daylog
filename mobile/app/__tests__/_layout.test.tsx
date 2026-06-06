@@ -137,6 +137,14 @@ jest.mock('@/lib/notifications', () => ({
   registerPushToken: jest.fn().mockResolvedValue(true),
 }));
 
+jest.mock('@/components/upload/UploadSheet', () => {
+  const ReactLib = require('react');
+  const { View } = require('react-native');
+  return {
+    UploadSheet: () => ReactLib.createElement(View, { testID: 'upload-sheet-stub' }),
+  };
+});
+
 // Pull in the mocked modules so we can drive their behavior per test.
 import { api } from '@/lib/api';
 import { registerPushToken } from '@/lib/notifications';
@@ -162,7 +170,7 @@ beforeEach(() => {
 });
 
 describe('RootLayout', () => {
-  it('renders the provider tree and registers seven Stack.Screen entries after the auth bootstrap settles', async () => {
+  it('renders the provider tree and registers eight Stack.Screen entries after the auth bootstrap settles', async () => {
     mockedGetItemAsync.mockResolvedValueOnce(null);
 
     const utils = render(<RootLayout />);
@@ -176,8 +184,8 @@ describe('RootLayout', () => {
     // QueryClientProvider should have wrapped the Stack tree.
     expect(utils.getByTestId('query-client-provider')).toBeTruthy();
 
-    // Seven routes are declared by the layout: (auth), (tabs), albums/[id],
-    // photo/[id], capture, capture-review, join/[token].
+    // Eight routes are declared by the layout: (auth), (tabs), albums/[id],
+    // photo/[id], capture, capture-review, photo-review, join/[token].
     const names = __recordedStackScreens.map((s: any) => s.name);
     expect(names).toEqual([
       '(auth)',
@@ -186,6 +194,7 @@ describe('RootLayout', () => {
       'photo/[id]',
       'capture',
       'capture-review',
+      'photo-review',
       'join/[token]',
     ]);
 

@@ -9,12 +9,20 @@ import { useFonts, Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, F
 import { Caveat_500Medium, Caveat_600SemiBold, Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
+import { useUploadSheetStore } from '@/stores/uploadSheetStore';
+import { UploadSheet } from '@/components/upload/UploadSheet';
 import { api } from '@/lib/api';
 import { registerPushToken } from '@/lib/notifications';
 import '@/lib/i18n'; // initialize default locale
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
+
+function UploadSheetHost() {
+  const uploadVisible = useUploadSheetStore((s) => s.isOpen);
+  const closeUpload = useUploadSheetStore((s) => s.close);
+  return <UploadSheet visible={uploadVisible} onClose={closeUpload} />;
+}
 
 export default function RootLayout() {
   const { setAuth, clearAuth } = useAuthStore();
@@ -65,8 +73,10 @@ export default function RootLayout() {
             <Stack.Screen name="photo/[id]" options={{ presentation: 'fullScreenModal' }} />
             <Stack.Screen name="capture" options={{ presentation: 'fullScreenModal', headerShown: false }} />
             <Stack.Screen name="capture-review" options={{ headerShown: false }} />
+            <Stack.Screen name="photo-review" options={{ headerShown: false }} />
             <Stack.Screen name="join/[token]" />
           </Stack>
+          <UploadSheetHost />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

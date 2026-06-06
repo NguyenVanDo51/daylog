@@ -165,6 +165,7 @@ describe('PhotoReview — multiple gallery assets', () => {
   });
 
   it('pressing upload CTA calls uploadImages with selected assets', async () => {
+    jest.useFakeTimers();
     const uploadImages = jest.fn().mockResolvedValue(0);
     (useUpload as jest.Mock).mockReturnValue({ pickImages: jest.fn(), uploadImages, uploading: false, progress: 0, failedCount: 0 });
     const utils = render(<PhotoReviewScreen />);
@@ -173,7 +174,9 @@ describe('PhotoReview — multiple gallery assets', () => {
       expect.arrayContaining([expect.objectContaining({ uri: 'file://a.jpg' })]),
       undefined,
     ));
+    act(() => { jest.advanceTimersByTime(1300); });
     expect(router.dismissAll).toHaveBeenCalled();
+    jest.useRealTimers();
   });
 
   it('shows Alert on partial failure', async () => {

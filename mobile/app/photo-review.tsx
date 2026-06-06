@@ -111,8 +111,8 @@ export default function PhotoReviewScreen() {
       Alert.alert(t('upload.error_title'), t('upload.error_body', { success: toUpload.length - failed, failed }));
     } else {
       success();
-      clear();
-      router.dismissAll();
+      setCelebrate(true);
+      setTimeout(() => { setCelebrate(false); clear(); router.dismissAll(); }, 1300);
     }
   }
 
