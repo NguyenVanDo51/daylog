@@ -12,7 +12,7 @@ import Animated, {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCaptureStore } from '@/stores/captureStore';
+import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { colors, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -26,7 +26,6 @@ export default function CaptureScreen() {
   const cameraRef = useRef<CameraView>(null);
   const recordingRef = useRef(false);
   const insets = useSafeAreaInsets();
-  const { setPendingAsset } = useCaptureStore();
 
   const progress = useSharedValue(0);
   const progressStyle = useAnimatedStyle(() => ({
@@ -57,8 +56,14 @@ export default function CaptureScreen() {
   }, []);
 
   function handleMediaCaptured(asset: { type: 'photo' | 'video'; uri: string; durationMs?: number }) {
-    setPendingAsset(asset);
-    router.push('/capture-review');
+    usePhotoReviewStore.getState().setAssets([{
+      uri: asset.uri,
+      type: asset.type,
+      source: 'camera',
+      durationMs: asset.durationMs,
+      takenAt: new Date().toISOString(),
+    }]);
+    router.push('/photo-review');
   }
 
   async function takePhoto() {
