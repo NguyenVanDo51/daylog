@@ -107,10 +107,10 @@ export default function PhotoReviewScreen() {
   async function handleUploadMulti() {
     const toUpload = assets.filter((a) => selected.has(a.uri)).map(toUploadAsset);
     const failed = await uploadImages(toUpload, undefined);
-    success();
     if (failed > 0) {
       Alert.alert(t('upload.error_title'), t('upload.error_body', { success: toUpload.length - failed, failed }));
     } else {
+      success();
       clear();
       router.dismissAll();
     }
