@@ -1,8 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { and, desc, eq, isNotNull, ne, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, ne, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
-import { users, albumMembers, photos, presignTokens } from '../db/schema';
+import { users, albumMembers, photos, presignTokens, albumPhotos } from '../db/schema';
 import { getPresignedPutUrl } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/apns';
@@ -69,17 +69,17 @@ router.post('/presign', presignLimiter, async (req: Request, res: Response, next
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
-      album_id, r2_key, taken_at, caption, local_asset_id,
+      album_ids, r2_key, taken_at, caption, local_asset_id,
       media_type = 'photo', source = 'upload',
       duration_ms, thumbnail_r2_key,
       width: clientWidth, height: clientHeight,
     } = req.body ?? {};
 
-    if (!album_id || !r2_key || !taken_at) {
-      return res.status(400).json({ error: 'album_id, r2_key, taken_at required' });
+    if (!Array.isArray(album_ids) || album_ids.length === 0) {
+      return res.status(400).json({ error: 'album_ids must be a non-empty array' });
     }
-    if (!isValidUUID(album_id)) {
-      return res.status(400).json({ error: 'album_id must be a valid UUID' });
+    if (!r2_key || !taken_at) {
+      return res.status(400).json({ error: 'album_ids, r2_key, taken_at required' });
     }
     if (!isValidDate(taken_at)) {
       return res.status(400).json({ error: 'taken_at must be a valid ISO date' });
@@ -107,32 +107,15 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       }
     }
 
-    if (!(await requireMember(album_id, req.user!.id))) {
+    // Check membership for all album_ids
+    const memberChecks = await Promise.all(
+      (album_ids as string[]).map((albumId) => requireMember(albumId, req.user!.id))
+    );
+    if (memberChecks.some((isMember) => !isMember)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    // Rate limit: 30 min between captures per user
-    if (typedSource === 'capture') {
-      const [lastCapture] = await db
-        .select({ createdAt: photos.createdAt })
-        .from(photos)
-        .where(and(eq(photos.uploadedBy, req.user!.id), eq(photos.source, 'capture')))
-        .orderBy(desc(photos.createdAt))
-        .limit(1);
-
-      if (lastCapture?.createdAt) {
-        const elapsed = Date.now() - new Date(lastCapture.createdAt).getTime();
-        const COOLDOWN_MS = 30 * 60 * 1000;
-        if (elapsed < COOLDOWN_MS) {
-          const retryAfterSeconds = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
-          return res.status(429).json({
-            error: 'rate_limited',
-            retry_after_seconds: retryAfterSeconds,
-            message: `Bạn có thể chụp tiếp sau ${Math.ceil(retryAfterSeconds / 60)} phút.`,
-          });
-        }
-      }
-    }
+    const primaryAlbumId = (album_ids as string[])[0];
 
     // Idempotency check first — before consuming a presign token
     if (local_asset_id) {
@@ -140,7 +123,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         .select()
         .from(photos)
         .where(and(
-          eq(photos.albumId, album_id),
+          eq(photos.albumId, primaryAlbumId),
           eq(photos.localAssetId, local_asset_id),
           eq(photos.uploadedBy, req.user!.id)
         ))
@@ -195,10 +178,10 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         photoHeight = result.height;
       }
 
-      return tx
+      const inserted = await tx
         .insert(photos)
         .values({
-          albumId: album_id,
+          albumId: primaryAlbumId,
           uploadedBy: req.user!.id,
           r2Key: r2_key,
           thumbnailKey,
@@ -212,15 +195,25 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
           height: photoHeight,
         })
         .returning();
+
+      // Insert join-table rows for all album_ids
+      await tx.insert(albumPhotos).values(
+        (album_ids as string[]).map((albumId) => ({
+          photoId: inserted[0].id,
+          albumId: albumId,
+        }))
+      );
+
+      return inserted;
     });
 
-    // Push notification
+    // Push notification (send to primary album members)
     const recipients = await db
       .select({ token: users.apnsToken })
       .from(users)
       .innerJoin(albumMembers, eq(albumMembers.userId, users.id))
       .where(and(
-        eq(albumMembers.albumId, album_id),
+        eq(albumMembers.albumId, primaryAlbumId),
         isNotNull(users.apnsToken),
         ne(users.id, req.user!.id)
       ));

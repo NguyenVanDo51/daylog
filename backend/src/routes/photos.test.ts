@@ -101,7 +101,7 @@ describe('POST /photos', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'photos/abc.webp',
         taken_at: '2024-06-01T10:00:00Z',
         caption: 'First smile!',
@@ -118,7 +118,7 @@ describe('POST /photos', () => {
 
   it('is idempotent — same local_asset_id returns existing photo', async () => {
     await createPresignToken(user.id, 'photos/abc.webp');  // seed presign token (only one needed — second call hits idempotency return)
-    const payload = { album_id: album.id, r2_key: 'photos/abc.webp', taken_at: '2024-06-01T10:00:00Z', local_asset_id: 'same-asset' };
+    const payload = { album_ids: [album.id], r2_key: 'photos/abc.webp', taken_at: '2024-06-01T10:00:00Z', local_asset_id: 'same-asset' };
     await request(app).post('/photos').set(headers).send(payload);
     const res = await request(app).post('/photos').set(headers).send(payload);
 
@@ -139,7 +139,7 @@ describe('POST /photos', () => {
     await request(app)
       .post('/photos')
       .set(headers)
-      .send({ album_id: album.id, r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
+      .send({ album_ids: [album.id], r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
 
     expect(mockSendPush).toHaveBeenCalledWith(
       ['token-abc'],
@@ -149,44 +149,34 @@ describe('POST /photos', () => {
     );
   });
 
-  it('returns 400 when album_id is missing', async () => {
+  it('returns 400 when album_ids is missing', async () => {
     const res = await request(app)
       .post('/photos')
       .set(headers)
       .send({ r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/album_id, r2_key, taken_at required/);
+    expect(res.body.error).toMatch(/album_ids/);
   });
 
   it('returns 400 when r2_key is missing', async () => {
     const res = await request(app)
       .post('/photos')
       .set(headers)
-      .send({ album_id: album.id, taken_at: '2024-06-01T10:00:00Z' });
+      .send({ album_ids: [album.id], taken_at: '2024-06-01T10:00:00Z' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/album_id, r2_key, taken_at required/);
+    expect(res.body.error).toMatch(/r2_key/);
   });
 
   it('returns 400 when taken_at is missing', async () => {
     const res = await request(app)
       .post('/photos')
       .set(headers)
-      .send({ album_id: album.id, r2_key: 'photos/x.webp' });
+      .send({ album_ids: [album.id], r2_key: 'photos/x.webp' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/album_id, r2_key, taken_at required/);
-  });
-
-  it('returns 400 when album_id is not a valid UUID', async () => {
-    const res = await request(app)
-      .post('/photos')
-      .set(headers)
-      .send({ album_id: 'not-a-uuid', r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
-
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/valid UUID/);
+    expect(res.body.error).toMatch(/taken_at/);
   });
 
   it('returns 403 when user is not album member', async () => {
@@ -196,7 +186,7 @@ describe('POST /photos', () => {
     const res = await request(app)
       .post('/photos')
       .set(headers)
-      .send({ album_id: otherAlbum.id, r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
+      .send({ album_ids: [otherAlbum.id], r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
 
     expect(res.status).toBe(403);
   });
@@ -207,7 +197,7 @@ describe('POST /photos', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'photos/new-asset.webp',
         taken_at: '2024-06-01T10:00:00Z',
         local_asset_id: 'brand-new-asset',
@@ -224,7 +214,7 @@ describe('POST /photos', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'photos/no-asset.webp',
         taken_at: '2024-06-01T10:00:00Z',
       });
@@ -241,7 +231,7 @@ describe('POST /photos', () => {
     const res = await request(app)
       .post('/photos')
       .set(headers)
-      .send({ album_id: album.id, r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
+      .send({ album_ids: [album.id], r2_key: 'photos/x.webp', taken_at: '2024-06-01T10:00:00Z' });
 
     expect(res.status).toBe(500);
   });
@@ -251,7 +241,7 @@ describe('POST /photos', () => {
     await request(app)
       .post('/photos')
       .set(headers)
-      .send({ album_id: album.id, r2_key: 'photos/solo.webp', taken_at: '2024-06-01T10:00:00Z' });
+      .send({ album_ids: [album.id], r2_key: 'photos/solo.webp', taken_at: '2024-06-01T10:00:00Z' });
 
     expect(mockSendPush).toHaveBeenCalledWith(
       [],
@@ -266,7 +256,7 @@ describe('POST /photos', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'photos/not-presigned.webp',
         taken_at: '2024-06-01T10:00:00Z',
       });
@@ -282,7 +272,7 @@ describe('POST /photos', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'photos/other-key.webp',
         taken_at: '2024-06-01T10:00:00Z',
       });
@@ -364,7 +354,7 @@ describe('POST /photos — capture fields', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'key-capture-photo',
         taken_at: new Date().toISOString(),
         source: 'capture',
@@ -382,7 +372,7 @@ describe('POST /photos — capture fields', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'key-video',
         taken_at: new Date().toISOString(),
         source: 'capture',
@@ -403,7 +393,7 @@ describe('POST /photos — capture fields', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'key-video-dims',
         taken_at: new Date().toISOString(),
         source: 'capture',
@@ -425,7 +415,7 @@ describe('POST /photos — capture fields', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'key-vid2',
         taken_at: new Date().toISOString(),
         source: 'capture',
@@ -443,7 +433,7 @@ describe('POST /photos — capture fields', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'key-vid3',
         taken_at: new Date().toISOString(),
         source: 'capture',
@@ -461,7 +451,7 @@ describe('POST /photos — capture fields', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'key-vid4',
         taken_at: new Date().toISOString(),
         source: 'capture',
@@ -478,7 +468,7 @@ describe('POST /photos — capture fields', () => {
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
+        album_ids: [album.id],
         r2_key: 'key-capture-push',
         taken_at: new Date().toISOString(),
         source: 'capture',
@@ -492,50 +482,82 @@ describe('POST /photos — capture fields', () => {
     );
   });
 
-  it('enforces 30-minute rate limit on captures', async () => {
-    // First capture — should succeed
-    await createPresignToken(user.id, 'key-rl-1');
-    const first = await request(app)
-      .post('/photos')
-      .set(headers)
-      .send({
-        album_id: album.id,
-        r2_key: 'key-rl-1',
-        taken_at: new Date().toISOString(),
-        source: 'capture',
-        media_type: 'photo',
-      });
-    expect(first.status).toBe(201);
+});
 
-    // Second capture immediately — should 429
-    await createPresignToken(user.id, 'key-rl-2');
-    const second = await request(app)
-      .post('/photos')
-      .set(headers)
-      .send({
-        album_id: album.id,
-        r2_key: 'key-rl-2',
-        taken_at: new Date().toISOString(),
-        source: 'capture',
-        media_type: 'photo',
-      });
-    expect(second.status).toBe(429);
-    expect(second.body.error).toBe('rate_limited');
-    expect(second.body.retry_after_seconds).toBeGreaterThan(0);
+describe('POST /photos — multi-album', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+  let album1: Awaited<ReturnType<typeof createTestAlbum>>;
+  let album2: Awaited<ReturnType<typeof createTestAlbum>>;
+  let headers: ReturnType<typeof authHeader>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    album1 = await createTestAlbum(user.id);
+    album2 = await createTestAlbum(user.id);
+    headers = authHeader(user);
+    mockPresign.mockResolvedValue({ url: 'https://r2.example.com/presigned', key: 'photos/abc.webp' });
+    mockGenThumb.mockResolvedValue({ key: 'thumbnails/abc.webp', width: 800, height: 600 });
   });
 
-  it('does NOT rate-limit source=upload', async () => {
-    await createPresignToken(user.id, 'key-upload-notlimited');
+  it('creates album_photos records for each album_id', async () => {
+    await createPresignToken(user.id, 'photos/abc.webp');
     const res = await request(app)
       .post('/photos')
       .set(headers)
       .send({
-        album_id: album.id,
-        r2_key: 'key-upload-notlimited',
+        album_ids: [album1.id, album2.id],
+        r2_key: 'photos/abc.webp',
         taken_at: new Date().toISOString(),
-        source: 'upload',
-        media_type: 'photo',
       });
     expect(res.status).toBe(201);
+
+    const rows = await pool.query(
+      'SELECT album_id FROM album_photos WHERE photo_id = $1 ORDER BY album_id',
+      [res.body.id]
+    );
+    const albumIds = rows.rows.map((r: any) => r.album_id).sort();
+    expect(albumIds).toEqual([album1.id, album2.id].sort());
+  });
+
+  it('returns 400 when album_ids is empty', async () => {
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({ album_ids: [], r2_key: 'photos/abc.webp', taken_at: new Date().toISOString() });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/album_ids/);
+  });
+
+  it('returns 403 when user is not a member of one of the albums', async () => {
+    const other = await createTestUser({ apple_sub: 'other-' + Date.now() });
+    const otherAlbum = await createTestAlbum(other.id);
+    await createPresignToken(user.id, 'photos/abc.webp');
+
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({
+        album_ids: [album1.id, otherAlbum.id],
+        r2_key: 'photos/abc.webp',
+        taken_at: new Date().toISOString(),
+      });
+    expect(res.status).toBe(403);
+  });
+
+  it('allows immediate re-capture (no rate limit)', async () => {
+    for (let i = 0; i < 3; i++) {
+      mockPresign.mockResolvedValueOnce({ url: 'https://r2.example.com/presigned', key: `photos/${i}.webp` });
+      await createPresignToken(user.id, `photos/${i}.webp`);
+      const res = await request(app)
+        .post('/photos')
+        .set(headers)
+        .send({
+          album_ids: [album1.id],
+          r2_key: `photos/${i}.webp`,
+          taken_at: new Date().toISOString(),
+          source: 'capture',
+        });
+      expect(res.status).toBe(201);
+    }
   });
 });
