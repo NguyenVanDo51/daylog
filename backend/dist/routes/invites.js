@@ -9,6 +9,7 @@ const schema_1 = require("../db/schema");
 const qrcode_1 = require("../services/qrcode");
 const validation_1 = require("../lib/validation");
 const router = (0, express_1.Router)();
+const DEFAULT_INVITE_EXPIRES_DAYS = 7;
 function generateToken() {
     return (0, crypto_1.randomBytes)(16).toString('base64url');
 }
@@ -47,9 +48,8 @@ router.post('/albums/:albumId/invites', auth_1.requireAuth, async (req, res, nex
             }
         }
         const token = generateToken();
-        const expiresAt = expires_in_days
-            ? new Date(Date.now() + expires_in_days * 86400000)
-            : null;
+        const days = expires_in_days ?? DEFAULT_INVITE_EXPIRES_DAYS;
+        const expiresAt = new Date(Date.now() + days * 86400000);
         await db_1.db.insert(schema_1.invites).values({
             albumId,
             token,

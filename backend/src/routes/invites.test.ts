@@ -99,21 +99,24 @@ describe('Invites', () => {
     expect(Math.abs(actualMs - expectedMs)).toBeLessThan(10000);
   });
 
-  it('POST /albums/:id/invites without expires_in_days or max_uses persists null for both', async () => {
+  it('POST /albums/:id/invites without expires_in_days defaults to 7 days expiry', async () => {
+    const before = Date.now();
     const res = await request(app)
       .post(`/albums/${album.id}/invites`)
       .set(headers)
       .send({});
 
     expect(res.status).toBe(201);
-    expect(res.body.expires_at).toBeNull();
+    const expiresAt = new Date(res.body.expires_at).getTime();
+    expect(expiresAt).toBeGreaterThanOrEqual(before + 6 * 86400000);
+    expect(expiresAt).toBeLessThanOrEqual(before + 8 * 86400000);
 
     const { rows } = await pool.query(
       'SELECT expires_at, max_uses FROM invites WHERE token = $1',
       [res.body.token]
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0].expires_at).toBeNull();
+    expect(rows[0].expires_at).not.toBeNull();
     expect(rows[0].max_uses).toBeNull();
   });
 

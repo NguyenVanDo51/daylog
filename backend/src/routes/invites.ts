@@ -10,6 +10,8 @@ import { isValidUUID } from '../lib/validation';
 
 const router = Router();
 
+const DEFAULT_INVITE_EXPIRES_DAYS = 7;
+
 function generateToken(): string {
   return randomBytes(16).toString('base64url');
 }
@@ -57,9 +59,8 @@ router.post(
       }
 
       const token = generateToken();
-      const expiresAt: Date | null = expires_in_days
-        ? new Date(Date.now() + expires_in_days * 86400000)
-        : null;
+      const days = expires_in_days ?? DEFAULT_INVITE_EXPIRES_DAYS;
+      const expiresAt = new Date(Date.now() + days * 86400000);
 
       await db.insert(invites).values({
         albumId,
