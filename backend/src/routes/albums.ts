@@ -29,19 +29,20 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    if (is_private === true) {
-      const [existing] = await db
-        .select({ x: sql<number>`1` })
-        .from(albums)
-        .where(and(eq(albums.createdBy, req.user!.id), eq(albums.isPrivate, true)))
-        .limit(1);
-      if (existing) {
-        res.status(400).json({ error: 'Private album already exists' });
-        return;
-      }
-    }
-
     const album = await db.transaction(async (tx) => {
+      if (is_private === true) {
+        const [existing] = await tx
+          .select({ x: sql<number>`1` })
+          .from(albums)
+          .where(and(eq(albums.createdBy, req.user!.id), eq(albums.isPrivate, true)))
+          .limit(1);
+        if (existing) {
+          const err: any = new Error('Private album already exists');
+          err.status = 400;
+          throw err;
+        }
+      }
+
       const [created] = await tx
         .insert(albums)
         .values({
@@ -62,7 +63,11 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     });
 
     res.status(201).json(album);
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.status === 400) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
     next(err);
   }
 });
