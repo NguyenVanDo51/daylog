@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { sql, eq, and } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users, albums, albumMembers } from '../db/schema';
 import { verifyAppleToken } from '../services/appleAuth';
@@ -10,17 +10,13 @@ import { requireAuth } from '../middleware/auth';
 const router = Router();
 
 async function ensureDefaultAlbum(userId: string): Promise<void> {
-  const [existing] = await db
-    .select({ x: sql<number>`1` })
-    .from(albums)
-    .where(and(eq(albums.createdBy, userId), eq(albums.isPrivate, true)))
-    .limit(1);
-  if (existing) return;
   await db.transaction(async (tx) => {
     const [album] = await tx
       .insert(albums)
       .values({ name: 'Ảnh của tôi', createdBy: userId, isPrivate: true })
+      .onConflictDoNothing()
       .returning({ id: albums.id });
+    if (!album) return; // already existed
     await tx.insert(albumMembers).values({ albumId: album.id, userId, role: 'admin' });
   });
 }

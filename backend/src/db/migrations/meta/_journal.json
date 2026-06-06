@@ -64,6 +64,13 @@
       "when": 1780717852146,
       "tag": "0008_add_is_private",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780717900000,
+      "tag": "0009_unique_private_album",
+      "breakpoints": true
     }
   ]
 }

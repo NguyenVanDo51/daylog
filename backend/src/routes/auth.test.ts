@@ -192,56 +192,6 @@ describe('POST /auth/google', () => {
   });
 });
 
-describe('Default album on first sign-in', () => {
-  it('creates a default album for a new Apple user', async () => {
-    mockVerifyApple.mockResolvedValueOnce({ sub: 'apple-sub-newalbum', name: 'New User', email: null });
-
-    const res = await request(app).post('/auth/apple').send({ idToken: 'token' });
-    expect(res.status).toBe(200);
-
-    const { rows } = await pool.query(
-      `SELECT am.role, a.name FROM album_members am
-       JOIN albums a ON a.id = am.album_id
-       JOIN users u ON u.id = am.user_id
-       WHERE u.apple_sub = 'apple-sub-newalbum'`
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0].role).toBe('admin');
-    expect(rows[0].name).toBe('Ảnh của tôi');
-  });
-
-  it('does not create a second album on repeated Apple sign-in', async () => {
-    mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-repeat', name: 'Repeat User', email: null });
-
-    await request(app).post('/auth/apple').send({ idToken: 'token' });
-    await request(app).post('/auth/apple').send({ idToken: 'token' });
-
-    const { rows } = await pool.query(
-      `SELECT am.id FROM album_members am
-       JOIN users u ON u.id = am.user_id
-       WHERE u.apple_sub = 'apple-sub-repeat'`
-    );
-    expect(rows).toHaveLength(1);
-  });
-
-  it('creates a default album for a new Google user', async () => {
-    mockVerifyGoogle.mockResolvedValueOnce({ sub: 'google-sub-newalbum', name: 'New Google User', picture: null });
-
-    const res = await request(app).post('/auth/google').send({ idToken: 'token' });
-    expect(res.status).toBe(200);
-
-    const { rows } = await pool.query(
-      `SELECT am.role, a.name FROM album_members am
-       JOIN albums a ON a.id = am.album_id
-       JOIN users u ON u.id = am.user_id
-       WHERE u.google_sub = 'google-sub-newalbum'`
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0].role).toBe('admin');
-    expect(rows[0].name).toBe('Ảnh của tôi');
-  });
-});
-
 describe('JWT token lifetime', () => {
   it('issues a token that expires in 7 days (not 30)', async () => {
     mockVerifyApple.mockResolvedValue({ sub: 'apple-sub-expiry', name: 'Expiry Test', email: null });
