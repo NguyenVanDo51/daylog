@@ -6,21 +6,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { TimelineFeed } from '@/components/timeline/TimelineFeed';
 import { InviteSheet } from '@/components/family/InviteSheet';
-import { useUploadSheetStore } from '@/stores/uploadSheetStore';
+import { AddPhotoSheet } from '@/components/ui/AddPhotoSheet';
 import { useAlbumStore } from '@/stores/albumStore';
 import { tap } from '@/lib/haptics';
 import { colors, shadows, spacing, typography } from '@/constants/theme';
 
 export default function AlbumScreen() {
   const insets = useSafeAreaInsets();
-  const openUpload = useUploadSheetStore((s) => s.open);
   const albumName = useAlbumStore((s) => s.albumName);
   const isPrivate = useAlbumStore((s) => s.isPrivate);
   const [inviteVisible, setInviteVisible] = useState(false);
+  const [addPhotoVisible, setAddPhotoVisible] = useState(false);
 
   function handleFab() {
     tap();
-    openUpload();
+    setAddPhotoVisible(true);
   }
 
   return (
@@ -58,6 +58,7 @@ export default function AlbumScreen() {
       </TouchableOpacity>
 
       <InviteSheet visible={inviteVisible} onClose={() => setInviteVisible(false)} />
+      <AddPhotoSheet visible={addPhotoVisible} onClose={() => setAddPhotoVisible(false)} />
     </View>
   );
 }
