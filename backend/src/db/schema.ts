@@ -7,6 +7,7 @@ import {
   timestamp,
   date,
   integer,
+  boolean,
   pgEnum,
   index,
   uniqueIndex,
@@ -36,6 +37,7 @@ export const albums = pgTable('albums', {
     .notNull()
     .references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  isPrivate: boolean('is_private').notNull().default(false),
 });
 
 export const albumMembers = pgTable(

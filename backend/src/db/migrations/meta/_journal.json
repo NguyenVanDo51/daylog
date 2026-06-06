@@ -29,6 +29,41 @@
       "when": 1780558911129,
       "tag": "0003_great_scalphunter",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780560000000,
+      "tag": "0004_photo_dimensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780561000000,
+      "tag": "0005_day_labels",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780562000000,
+      "tag": "0006_migrate_milestones_to_day_labels",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780563000000,
+      "tag": "0007_drop_milestones",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780717852146,
+      "tag": "0008_add_is_private",
+      "breakpoints": true
     }
   ]
 }
