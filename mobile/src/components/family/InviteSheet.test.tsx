@@ -66,9 +66,8 @@ describe('InviteSheet', () => {
       expect(mockClipboard.setStringAsync).toHaveBeenCalledWith('familyguy://join/tok-123');
     });
     expect(mockApi.post).toHaveBeenCalledTimes(1);
-    await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Đã sao chép!', 'Đã sao chép link mời vào bộ nhớ tạm.');
-    });
+    expect(Alert.alert).not.toHaveBeenCalled();
+    await waitFor(() => expect(getByText('Đã sao chép!')).toBeTruthy());
   });
 
   it('shows loading indicator while fetching on open', async () => {
@@ -93,13 +92,12 @@ describe('InviteSheet', () => {
     });
   });
 
-  it('shows an error alert when api.post rejects on open', async () => {
+  it('does not copy when api.post rejects on open', async () => {
     mockApi.post.mockRejectedValueOnce(new Error('boom'));
     render(<InviteSheet visible={true} onClose={jest.fn()} />);
 
-    await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith('Có lỗi xảy ra', 'boom');
-    });
+    await waitFor(() => expect(mockApi.post).toHaveBeenCalled());
+    expect(Alert.alert).not.toHaveBeenCalled();
     expect(mockClipboard.setStringAsync).not.toHaveBeenCalled();
   });
 });

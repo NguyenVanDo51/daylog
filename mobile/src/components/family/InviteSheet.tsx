@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Alert, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -19,14 +19,16 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
   const albumId = useAlbumStore((s) => s.albumId);
   const [loading, setLoading] = useState(false);
   const [link, setLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!visible || !albumId) return;
     setLink(null);
+    setCopied(false);
     setLoading(true);
     api.post(`/albums/${albumId}/invites`)
       .then(({ data }) => setLink(`familyguy://join/${data.token}`))
-      .catch((e: any) => Alert.alert(t('common.error'), e.message))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [visible, albumId]);
 
@@ -34,7 +36,7 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
     if (!link) return;
     await Clipboard.setStringAsync(link);
     success();
-    Alert.alert(t('invite.copied'), t('invite.copied_body'));
+    setCopied(true);
   }
 
   return (
@@ -50,7 +52,7 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
       <Text style={styles.expires}>{t('invite.expires')}</Text>
 
       <View style={{ gap: spacing.md, marginTop: spacing.lg }}>
-        <Button label={t('family.copy_link')} onPress={handleCopyLink} fullWidth loading={loading} disabled={!link} />
+        <Button label={copied ? t('invite.copied') : t('family.copy_link')} onPress={handleCopyLink} fullWidth loading={loading} disabled={!link} />
         <Button label={t('common.done')}      onPress={onClose} variant="ghost" fullWidth />
       </View>
     </SheetModal>
