@@ -30,33 +30,6 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-// The tabs layout pulls in UploadSheet, which internally uses useUpload and
-// renders a Modal. Stub it out as a tiny component so we can verify it
-// mounted/unmounted via testID and trigger its onClose callback.
-jest.mock('@/components/upload/UploadSheet', () => {
-  const ReactLib = require('react');
-  const { View, Text, TouchableOpacity } = require('react-native');
-  return {
-    UploadSheet: ({
-      visible,
-      onClose,
-    }: {
-      visible: boolean;
-      onClose: () => void;
-    }) =>
-      ReactLib.createElement(
-        View,
-        { testID: 'upload-sheet-stub' },
-        ReactLib.createElement(Text, null, visible ? 'visible' : 'hidden'),
-        ReactLib.createElement(
-          TouchableOpacity,
-          { testID: 'upload-sheet-close', onPress: onClose },
-          ReactLib.createElement(Text, null, 'close'),
-        ),
-      ),
-  };
-});
-
 // Override expo-router's Tabs mock so Tabs.Screen records the props it was
 // rendered with (the global jest.setup.js mock renders pass-through children,
 // which discards the rich `options` object we care about for assertions).
@@ -149,27 +122,14 @@ beforeEach(() => {
 });
 
 describe('TabLayout', () => {
-  it('renders the Tabs container with screen-wide options applied', () => {
+  it('renders the Tabs container with minimal options', () => {
     const utils = render(<TabLayout />);
     expect(utils.getByTestId('tabs-container')).toBeTruthy();
     // screenOptions passed to <Tabs>
     expect(recordedTabsProps).toBeTruthy();
     expect(recordedTabsProps.screenOptions.headerShown).toBe(false);
-    expect(typeof recordedTabsProps.screenOptions.tabBarActiveTintColor).toBe(
-      'string',
-    );
-    expect(typeof recordedTabsProps.screenOptions.tabBarInactiveTintColor).toBe(
-      'string',
-    );
-    expect(recordedTabsProps.screenOptions.tabBarStyle).toEqual(
-      expect.objectContaining({
-        borderTopColor: expect.any(String),
-        backgroundColor: expect.any(String),
-      }),
-    );
-    expect(recordedTabsProps.screenOptions.tabBarLabelStyle).toEqual({
-      fontFamily: 'Fredoka_600SemiBold',
-      fontSize: 11,
+    expect(recordedTabsProps.screenOptions.tabBarStyle).toEqual({
+      display: 'none',
     });
   });
 
@@ -179,27 +139,12 @@ describe('TabLayout', () => {
     expect(names).toEqual(['index', 'settings']);
   });
 
-  it('configures the albums / settings tabs with the right titles and Ionicons', () => {
-    const utils = render(<TabLayout />);
+  it('hides settings tab from navigation', () => {
+    render(<TabLayout />);
     const byName = Object.fromEntries(recordedScreens.map((s) => [s.name, s]));
 
-    // Vietnamese tab titles
-    expect(byName.index.options.title).toBe('Album');
-    expect(byName.settings.options.title).toBe('Tôi');
-
-    // The pass-through icon-host renders a <View testID="Ionicons-<name>"> for
-    // each call to tabBarIcon. Verify each expected icon is present in the
-    // rendered tree.
-    expect(utils.getByTestId('Ionicons-images-outline')).toBeTruthy();
-    expect(utils.getByTestId('Ionicons-settings-outline')).toBeTruthy();
+    // Settings should have href: null to hide it from tab navigation
+    expect(byName.settings.options?.href).toBe(null);
   });
 
-  it('mounts UploadSheet hidden by default and closes it via its onClose callback', () => {
-    const utils = render(<TabLayout />);
-    expect(utils.getByTestId('upload-sheet-stub')).toBeTruthy();
-    expect(utils.getByText('hidden')).toBeTruthy();
-    // Closing while hidden is a no-op but exercises the wiring.
-    fireEvent.press(utils.getByTestId('upload-sheet-close'));
-    expect(utils.getByText('hidden')).toBeTruthy();
-  });
 });
