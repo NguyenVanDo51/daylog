@@ -11,6 +11,7 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 
 export const memberRole = pgEnum('member_role', ['admin', 'member']);
@@ -114,6 +115,7 @@ export const albumPhotos = pgTable(
     addedAt: timestamp('added_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
+    pk: primaryKey({ columns: [t.photoId, t.albumId] }),
     byAlbum: index('idx_album_photos_album_id').on(t.albumId, t.addedAt.desc()),
   })
 );
