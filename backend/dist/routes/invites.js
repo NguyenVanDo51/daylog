@@ -17,7 +17,7 @@ router.post('/albums/:albumId/invites', auth_1.requireAuth, async (req, res, nex
         const { albumId } = req.params;
         if (!(0, validation_1.isValidUUID)(albumId))
             return res.status(400).json({ error: 'Invalid albumId' });
-        const { expires_in_days, max_uses } = req.body;
+        const { expires_in_days, max_uses } = req.body ?? {};
         const membership = await db_1.db
             .select({ x: (0, drizzle_orm_1.sql) `1` })
             .from(schema_1.albumMembers)
