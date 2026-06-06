@@ -126,4 +126,15 @@ export const vi = {
     perm_body:         'App cần quyền camera để chụp khoảnh khắc.',
     perm_open:         'Mở Settings',
   },
+  add_photo: {
+    camera:  'Chụp ảnh mới',
+    upload:  'Tải lên',
+  },
+  photo_review: {
+    note_ph:    'ghi chú nhỏ cho ảnh...',
+    send:       'Gửi',
+    retake:     'Chụp lại',
+    upload_one: 'Tải lên',
+    upload_n:   'Tải lên {{n}} ảnh',
+  },
 };

@@ -36,4 +36,15 @@ export const en = {
     perm_body:         'App needs camera access to capture moments.',
     perm_open:         'Open Settings',
   },
+  add_photo: {
+    camera:  'New photo',
+    upload:  'Upload',
+  },
+  photo_review: {
+    note_ph:    'short note for the photo...',
+    send:       'Send',
+    retake:     'Retake',
+    upload_one: 'Upload',
+    upload_n:   'Upload {{n}} photos',
+  },
 };
