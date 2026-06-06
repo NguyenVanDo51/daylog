@@ -199,6 +199,22 @@ describe('Invites', () => {
     expect(rows[0].use_count).toBe(1);
   });
 
+  it('POST /albums/:id/invites returns 403 for a private album', async () => {
+    const res1 = await request(app)
+      .post('/albums')
+      .set(headers)
+      .send({ name: 'My Photos', is_private: true });
+    const privateAlbumId = res1.body.id;
+
+    const res = await request(app)
+      .post(`/albums/${privateAlbumId}/invites`)
+      .set(headers)
+      .send({});
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('Cannot invite to a private album');
+  });
+
   describe('POST /albums/:albumId/invites — param validation', () => {
     it('returns 400 when expires_in_days is 0', async () => {
       const res = await request(app)
