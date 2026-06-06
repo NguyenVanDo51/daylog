@@ -221,3 +221,48 @@ describe('Albums error paths and edge cases', () => {
     expect(res.body.child_birthdate).toBeNull();
   });
 });
+
+describe('Albums is_private', () => {
+  let user: any;
+  let headers: Record<string, string>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    headers = authHeader(user);
+  });
+
+  it('POST /albums returns is_private=false by default', async () => {
+    const res = await request(app)
+      .post('/albums')
+      .set(headers)
+      .send({ name: 'My Album' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.is_private).toBe(false);
+  });
+
+  it('POST /albums with is_private:true creates a private album', async () => {
+    const res = await request(app)
+      .post('/albums')
+      .set(headers)
+      .send({ name: 'Personal', is_private: true });
+
+    expect(res.status).toBe(201);
+    expect(res.body.is_private).toBe(true);
+  });
+
+  it('POST /albums with is_private:true returns 400 when private album already exists', async () => {
+    await request(app).post('/albums').set(headers).send({ name: 'First', is_private: true });
+    const res = await request(app).post('/albums').set(headers).send({ name: 'Second', is_private: true });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Private album already exists');
+  });
+
+  it('GET /albums returns is_private field on each album', async () => {
+    await createTestAlbum(user.id, { name: 'Shared' });
+    const res = await request(app).get('/albums').set(headers);
+    expect(res.status).toBe(200);
+    expect(typeof res.body[0].is_private).toBe('boolean');
+  });
+});

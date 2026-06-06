@@ -18,14 +18,27 @@ const albumSelect = {
   cover_photo_id: albums.coverPhotoId,
   created_by: albums.createdBy,
   created_at: albums.createdAt,
+  is_private: albums.isPrivate,
 };
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, child_birthdate } = req.body ?? {};
+    const { name, child_birthdate, is_private } = req.body ?? {};
     if (!name) {
       res.status(400).json({ error: 'name required' });
       return;
+    }
+
+    if (is_private === true) {
+      const [existing] = await db
+        .select({ x: sql<number>`1` })
+        .from(albums)
+        .where(and(eq(albums.createdBy, req.user!.id), eq(albums.isPrivate, true)))
+        .limit(1);
+      if (existing) {
+        res.status(400).json({ error: 'Private album already exists' });
+        return;
+      }
     }
 
     const album = await db.transaction(async (tx) => {
@@ -35,6 +48,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
           name,
           childBirthdate: child_birthdate || null,
           createdBy: req.user!.id,
+          isPrivate: is_private === true,
         })
         .returning(albumSelect);
 
