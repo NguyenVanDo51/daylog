@@ -10,6 +10,9 @@ jest.mock('@/lib/api', () => ({
 jest.mock('@/lib/compression', () => ({
   compressToWebP: jest.fn().mockResolvedValue('file:///compressed.webp'),
 }));
+jest.mock('@/lib/uploadFile', () => ({
+  putLocalFile: jest.fn().mockResolvedValue(1024),
+}));
 jest.mock('@/stores/albumStore', () => ({
   useAlbumStore: jest.fn(() => 'album-uuid-123'),
 }));
@@ -18,21 +21,14 @@ jest.mock('@tanstack/react-query', () => ({
 }));
 
 import { api } from '@/lib/api';
+import { putLocalFile } from '@/lib/uploadFile';
 const mockApi = api as jest.Mocked<typeof api>;
-
-global.fetch = jest.fn().mockImplementation((url: string) => {
-  if (url.startsWith('file://')) {
-    return Promise.resolve({
-      blob: () => Promise.resolve(new Blob(['data'], { type: 'image/webp' })),
-    });
-  }
-  return Promise.resolve({ ok: true });
-}) as jest.Mock;
+const mockPutLocalFile = putLocalFile as jest.MockedFunction<typeof putLocalFile>;
 
 describe('useCapture', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useCaptureStore.setState({ lastCaptureAt: null, pendingAsset: null });
+    useCaptureStore.setState({ lastCaptureAt: null });
   });
 
   it('canCapture is true when no prior capture', () => {
@@ -67,6 +63,11 @@ describe('useCapture', () => {
       '/photos/presign',
       { album_id: 'album-uuid-123', content_type: 'image/webp' }
     );
+    expect(mockPutLocalFile).toHaveBeenCalledWith(
+      'https://r2.test/upload',
+      'file:///compressed.webp',
+      'image/webp',
+    );
     expect(mockApi.post).toHaveBeenNthCalledWith(
       2,
       '/photos',
@@ -94,6 +95,7 @@ describe('useCapture', () => {
       '/photos/presign',
       { album_id: 'album-uuid-123', content_type: 'image/jpeg' }
     );
+    expect(mockPutLocalFile).toHaveBeenCalledTimes(2);
     expect(mockApi.post).toHaveBeenCalledWith(
       '/photos',
       expect.objectContaining({ media_type: 'video', duration_ms: 1800 })
