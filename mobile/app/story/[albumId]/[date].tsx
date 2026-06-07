@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -91,6 +92,24 @@ function VideoItem({ photo, onEnd }: { photo: DayPhoto; onEnd: () => void }) {
   );
 }
 
+function VlogOverlay({ photo }: { photo: DayPhoto }) {
+  const dt = new Date(photo.taken_at);
+  const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
+
+  return (
+    <LinearGradient
+      colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.85)']}
+      style={vlog.container}
+      pointerEvents="none"
+    >
+      <Text style={vlog.date} testID="vlog-date">{dateStr}</Text>
+      <Text style={vlog.time} testID="vlog-time">▶ {timeStr}</Text>
+      {photo.caption?.trim() ? <Text style={vlog.caption} testID="vlog-caption">{photo.caption}</Text> : null}
+    </LinearGradient>
+  );
+}
+
 export default function StoryScreen() {
   const { albumId, date } = useLocalSearchParams<{ albumId: string; date: string }>();
   const insets = useSafeAreaInsets();
@@ -172,6 +191,8 @@ export default function StoryScreen() {
           <TouchableOpacity style={styles.tapLeft} onPress={goPrev} testID="story-prev" />
           <TouchableOpacity style={styles.tapRight} onPress={goNext} testID="story-next" />
         </View>
+
+        <VlogOverlay photo={current} />
       </View>
     </GestureDetector>
   );
@@ -186,4 +207,47 @@ const styles = StyleSheet.create({
   tapAreas:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
   tapLeft:       { flex: 1 },
   tapRight:      { flex: 1 },
+});
+
+const vlog = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+    paddingTop: spacing.xl * 2,
+    zIndex: 10,
+  },
+  date: {
+    fontFamily: 'Courier New',
+    fontSize: 8,
+    color: 'rgba(255,180,0,0.7)',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  time: {
+    fontFamily: 'Courier New',
+    fontSize: 11,
+    color: '#ffcc44',
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 4,
+    textShadowColor: 'rgba(255,180,0,0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  caption: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.92)',
+    fontStyle: 'italic',
+    lineHeight: 17,
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
 });
