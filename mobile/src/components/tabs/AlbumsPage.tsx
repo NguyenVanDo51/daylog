@@ -101,6 +101,16 @@ export function AlbumsPage({ onCameraPress }: Props) {
           data={sorted}
           keyExtractor={(a) => a.id}
           contentContainerStyle={styles.list}
+          ListFooterComponent={
+            <TouchableOpacity
+              style={styles.createBtn}
+              onPress={() => { setNewName(''); setShowInput(true); }}
+              testID="create-album-btn"
+            >
+              <Ionicons name="add-circle-outline" size={20} color={colors.pink} />
+              <Text style={styles.createBtnText}>Tạo album mới</Text>
+            </TouchableOpacity>
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.row}
@@ -136,14 +146,6 @@ export function AlbumsPage({ onCameraPress }: Props) {
         >
           <Ionicons name="camera" size={18} color={colors.white} />
           <Text style={styles.cameraPillText}>Chụp ảnh</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => { setNewName(''); setShowInput(true); }}
-          testID="create-album-btn"
-        >
-          <Ionicons name="add-circle-outline" size={20} color={colors.pink} />
-          <Text style={styles.createBtnText}>Tạo album mới</Text>
         </TouchableOpacity>
       </View>
 
