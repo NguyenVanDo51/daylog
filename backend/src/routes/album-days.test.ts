@@ -8,7 +8,7 @@ import { photos, albumPhotos } from '../db/schema';
 import { createTestUser, createTestAlbum, authHeader } from '../../tests/setup';
 const app = require('../app');
 
-async function insertPhoto(userId: string, albumId: string, opts: { takenAt?: string; mediaType?: string } = {}) {
+async function insertPhoto(userId: string, albumId: string, opts: { takenAt?: string; mediaType?: string; caption?: string | null } = {}) {
   const [p] = await db.insert(photos).values({
     albumId,
     uploadedBy: userId,
@@ -17,6 +17,7 @@ async function insertPhoto(userId: string, albumId: string, opts: { takenAt?: st
     takenAt: new Date(opts.takenAt ?? '2026-05-21T10:00:00Z'),
     mediaType: opts.mediaType ?? 'photo',
     source: 'capture',
+    caption: opts.caption ?? null,
   }).returning();
   await db.insert(albumPhotos).values({ photoId: p.id, albumId });
   return p;
@@ -113,6 +114,25 @@ describe('GET /albums/:id/days/:date/photos', () => {
     expect(res.body[0].id).toBe(p1.id);
     expect(res.body[1].id).toBe(p2.id);
     expect(res.body[0]).toMatchObject({ id: p1.id, media_type: 'photo' });
+  });
+
+  it('returns caption field for each photo', async () => {
+    await insertPhoto(user.id, album.id, {
+      takenAt: '2026-05-21T08:00:00Z',
+      caption: 'Bữa sáng gia đình',
+    });
+    await insertPhoto(user.id, album.id, {
+      takenAt: '2026-05-21T09:00:00Z',
+      caption: null,
+    });
+
+    const res = await request(app)
+      .get(`/albums/${album.id}/days/2026-05-21/photos`)
+      .set(headers);
+
+    expect(res.status).toBe(200);
+    expect(res.body[0].caption).toBe('Bữa sáng gia đình');
+    expect(res.body[1].caption).toBeNull();
   });
 
   it('returns 400 for invalid date format', async () => {
