@@ -9,6 +9,8 @@ export default function MainScreen() {
   const pagerRef = useRef<PagerView>(null);
   const [activePage, setActivePage] = useState(1);
 
+  const handleTabPress = (i: number) => pagerRef.current?.setPage(i);
+
   return (
     <View style={styles.root}>
       <PagerView
@@ -18,13 +20,15 @@ export default function MainScreen() {
         onPageSelected={(e) => setActivePage(e.nativeEvent.position)}
       >
         <View key="0" style={styles.page}>
-          <CameraPage />
+          <CameraPage onTabPress={handleTabPress} />
         </View>
         <View key="1" style={styles.page}>
           <AlbumsPage />
         </View>
       </PagerView>
-      <CustomTabBar activePage={activePage} onTabPress={(i) => pagerRef.current?.setPage(i)} />
+      {activePage !== 0 && (
+        <CustomTabBar activePage={activePage} onTabPress={handleTabPress} />
+      )}
     </View>
   );
 }
