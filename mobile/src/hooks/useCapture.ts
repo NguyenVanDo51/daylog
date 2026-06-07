@@ -58,7 +58,7 @@ export function useCapture() {
     });
   }
 
-  async function finishCapture(result: UploadResult, asset: ReviewAsset, albumIds: string[]): Promise<void> {
+  async function finishCapture(result: UploadResult, asset: ReviewAsset, albumIds: string[], caption?: string | null): Promise<void> {
     await api.post('/photos', {
       album_ids: albumIds,
       r2_key: result.r2Key,
@@ -67,6 +67,7 @@ export function useCapture() {
       media_type: asset.type === 'video' ? 'video' : 'photo',
       ...(result.thumbnailR2Key ? { thumbnail_r2_key: result.thumbnailR2Key } : {}),
       ...(asset.durationMs ? { duration_ms: asset.durationMs } : {}),
+      ...(caption ? { caption } : {}),
     });
     albumIds.forEach((id) => qc.invalidateQueries({ queryKey: ['album-days', id] }));
   }

@@ -89,7 +89,7 @@ describe('PhotoReview', () => {
     expect(isDisabled).toBeTruthy();
   });
 
-  it('pressing save calls finishCapture with selected album ids', async () => {
+  it('pressing save calls finishCapture with selected album ids and null caption', async () => {
     const { getByTestId } = render(<PhotoReviewScreen />);
     fireEvent.press(getByTestId('album-checkbox-album-1'));
     fireEvent.press(getByTestId('album-checkbox-album-2'));
@@ -98,6 +98,33 @@ describe('PhotoReview', () => {
       { r2Key: 'photos/abc.webp' },
       photoAsset,
       expect.arrayContaining(['album-1', 'album-2']),
+      null,
+    );
+  });
+
+  it('passes caption to finishCapture when note is entered', async () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.changeText(getByTestId('review-note-input'), 'Bữa sáng gia đình');
+    fireEvent.press(getByTestId('album-checkbox-album-1'));
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(mockFinishCapture).toHaveBeenCalledWith(
+      { r2Key: 'photos/abc.webp' },
+      photoAsset,
+      expect.arrayContaining(['album-1']),
+      'Bữa sáng gia đình',
+    );
+  });
+
+  it('passes null caption when note is only whitespace', async () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.changeText(getByTestId('review-note-input'), '   ');
+    fireEvent.press(getByTestId('album-checkbox-album-1'));
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(mockFinishCapture).toHaveBeenCalledWith(
+      { r2Key: 'photos/abc.webp' },
+      photoAsset,
+      expect.arrayContaining(['album-1']),
+      null,
     );
   });
 

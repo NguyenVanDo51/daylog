@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, Image, ScrollView, TouchableOpacity,
   StyleSheet, StatusBar, useWindowDimensions, Alert,
+  TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
@@ -29,6 +30,7 @@ export default function PhotoReviewScreen() {
   const { data: albums = [] } = useAlbums();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [caption, setCaption] = useState('');
   const [saving, setSaving] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
 
@@ -57,7 +59,7 @@ export default function PhotoReviewScreen() {
     setSaving(true);
     try {
       const result = await uploadPromiseRef.current!;
-      await finishCapture(result, asset, albumIds);
+      await finishCapture(result, asset, albumIds, caption.trim() || null);
       success();
       setCelebrate(true);
       setTimeout(() => { setCelebrate(false); clear(); router.dismissAll(); }, 1300);
@@ -69,6 +71,7 @@ export default function PhotoReviewScreen() {
   }
 
   return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar hidden />
 
@@ -93,6 +96,17 @@ export default function PhotoReviewScreen() {
             />
           )}
         </View>
+
+        <TextInput
+          style={styles.noteInput}
+          placeholder="Thêm ghi chú..."
+          placeholderTextColor={colors.inkMuted}
+          value={caption}
+          onChangeText={setCaption}
+          multiline
+          maxLength={200}
+          testID="review-note-input"
+        />
 
         <Text style={styles.sectionLabel}>Thêm vào album:</Text>
         {albums.map((album) => {
@@ -127,6 +141,7 @@ export default function PhotoReviewScreen() {
 
       <Confetti visible={celebrate} />
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -137,6 +152,7 @@ const styles = StyleSheet.create({
   scroll:           { paddingHorizontal: spacing['2xl'], paddingBottom: spacing['2xl'], gap: spacing.lg },
   preview:          { borderRadius: 12, overflow: 'hidden', backgroundColor: colors.borderSoft, alignSelf: 'center' },
   previewImg:       { borderRadius: 12 },
+  noteInput:        { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.borderSoft, borderRadius: 10, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: 64, ...typography.body, color: colors.ink, textAlignVertical: 'top' },
   sectionLabel:     { ...typography.body, color: colors.inkSoft, fontWeight: '600' },
   albumRow:         { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
   checkbox:         { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: colors.borderSoft, alignItems: 'center', justifyContent: 'center' },
