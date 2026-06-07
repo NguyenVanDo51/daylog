@@ -114,6 +114,8 @@ describe('GET /albums/:id/days/:date/photos', () => {
     expect(res.body[0].id).toBe(p1.id);
     expect(res.body[1].id).toBe(p2.id);
     expect(res.body[0]).toMatchObject({ id: p1.id, media_type: 'photo' });
+    // taken_at must be ISO 8601 so React Native can parse it with new Date()
+    expect(res.body[0].taken_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   });
 
   it('returns caption field for each photo', async () => {

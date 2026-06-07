@@ -70,7 +70,9 @@ router.get('/:date/photos', async (req: Request, res: Response, next: NextFuncti
     if (!(await isMember(albumId, req.user!.id))) return res.status(403).json({ error: 'Forbidden' });
 
     const rows = await db.execute(sql`
-      SELECT p.id, p.media_type, p.duration_ms, p.taken_at, p.caption
+      SELECT p.id, p.media_type, p.duration_ms,
+             to_char(p.taken_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS taken_at,
+             p.caption
       FROM photos p
       JOIN album_photos ap ON ap.photo_id = p.id
       WHERE ap.album_id = ${albumId}::uuid
