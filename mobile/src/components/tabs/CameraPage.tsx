@@ -143,7 +143,7 @@ export function CameraPage({ onTabPress }: Props) {
       {/* Top bar: close (left) + flip (right) */}
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}>
         <TouchableOpacity testID="close-btn" style={styles.closeBtn} onPress={() => onTabPress(1)}>
-          <Text style={styles.closeBtnText}>✕</Text>
+          <Ionicons name="close" size={28} color={colors.white} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconBtn} onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}>
           <Ionicons name="camera-reverse-outline" size={24} color={colors.white} />
@@ -177,8 +177,7 @@ export function CameraPage({ onTabPress }: Props) {
 const styles = StyleSheet.create({
   container:    { flex: 1, backgroundColor: '#000' },
   topBar:       { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, zIndex: 10 },
-  closeBtn:     { width: 40, height: 40, borderRadius: 14, backgroundColor: colors.pink, borderWidth: 1.5, borderColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { fontSize: 16, color: colors.white, fontWeight: '700' },
+  closeBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   iconBtn:      { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   clockOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
   clockTime:    { fontFamily: 'Caveat_700Bold', fontSize: 52, color: colors.white, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 10 },
