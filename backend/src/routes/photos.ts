@@ -47,15 +47,16 @@ function toSnakePhoto(p: typeof photos.$inferSelect) {
 router.post('/presign', presignLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { album_id, content_type = 'image/webp' } = req.body ?? {};
-    if (!album_id) return res.status(400).json({ error: 'album_id required' });
-    if (!isValidUUID(album_id)) {
-      return res.status(400).json({ error: 'album_id must be a valid UUID' });
+    if (album_id) {
+      if (!isValidUUID(album_id)) {
+        return res.status(400).json({ error: 'album_id must be a valid UUID' });
+      }
+      if (!(await requireMember(album_id, req.user!.id))) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
     }
     if (!(ALLOWED_CONTENT_TYPES as readonly string[]).includes(content_type)) {
       return res.status(400).json({ error: `content_type must be one of: ${ALLOWED_CONTENT_TYPES.join(', ')}` });
-    }
-    if (!(await requireMember(album_id, req.user!.id))) {
-      return res.status(403).json({ error: 'Forbidden' });
     }
 
     const { url, key } = await getPresignedPutUrl(content_type as AllowedContentType);

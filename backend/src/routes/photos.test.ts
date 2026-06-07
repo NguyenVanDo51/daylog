@@ -50,14 +50,15 @@ describe('POST /photos/presign', () => {
     expect(res.status).toBe(403);
   });
 
-  it('returns 400 when album_id is missing', async () => {
+  it('returns presigned URL when album_id is omitted', async () => {
     const res = await request(app)
       .post('/photos/presign')
       .set(headers)
       .send({});
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/album_id required/);
+    expect(res.status).toBe(200);
+    expect(res.body.url).toBe('https://r2.example.com/presigned');
+    expect(res.body.key).toBe('photos/abc.webp');
   });
 
   it('returns 400 when album_id is not a valid UUID', async () => {
