@@ -6,6 +6,7 @@ export interface DayPhoto {
   media_type: 'photo' | 'video';
   duration_ms: number | null;
   taken_at: string;
+  caption: string | null;
 }
 
 export function useDayPhotos(albumId: string | null, date: string | null) {
