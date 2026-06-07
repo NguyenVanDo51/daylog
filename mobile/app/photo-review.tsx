@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, Image, ScrollView, TouchableOpacity,
-  StyleSheet, StatusBar, useWindowDimensions, ActivityIndicator, Alert,
+  StyleSheet, StatusBar, useWindowDimensions, Alert,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
-import { useCapture } from '@/hooks/useCapture';
+import { useCapture, type UploadResult } from '@/hooks/useCapture';
 import { useAlbums } from '@/hooks/useAlbums';
 import { Button } from '@/components/ui/Button';
 import { Confetti } from '@/components/ui/Confetti';
@@ -25,17 +25,21 @@ export default function PhotoReviewScreen() {
   const insets = useSafeAreaInsets();
   const assets = usePhotoReviewStore((s) => s.assets);
   const clear = usePhotoReviewStore((s) => s.clear);
-  const { capture, capturing } = useCapture();
+  const { startBackgroundUpload, finishCapture } = useCapture();
   const { data: albums = [] } = useAlbums();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
+
+  const uploadPromiseRef = useRef<Promise<UploadResult>>();
 
   const asset = assets[0];
   const previewSize = width - spacing['2xl'] * 2;
 
-  React.useEffect(() => {
-    if (assets.length === 0) router.back();
+  useEffect(() => {
+    if (assets.length === 0) { router.back(); return; }
+    uploadPromiseRef.current = startBackgroundUpload(asset);
   }, []);
 
   if (assets.length === 0 || !asset) return null;
@@ -50,13 +54,17 @@ export default function PhotoReviewScreen() {
 
   async function handleSave() {
     const albumIds = Array.from(selectedIds);
+    setSaving(true);
     try {
-      await capture(asset, albumIds);
+      const result = await uploadPromiseRef.current!;
+      await finishCapture(result, asset, albumIds);
       success();
       setCelebrate(true);
       setTimeout(() => { setCelebrate(false); clear(); router.dismissAll(); }, 1300);
     } catch {
       Alert.alert('Lỗi', 'Không thể lưu ảnh. Thử lại nhé.');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -109,11 +117,11 @@ export default function PhotoReviewScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Button
           testID="review-save"
-          label={capturing ? '' : 'Lưu lại'}
+          label={saving ? '' : 'Lưu lại'}
           onPress={handleSave}
           fullWidth
-          loading={capturing}
-          disabled={selectedIds.size === 0 || capturing}
+          loading={saving}
+          disabled={selectedIds.size === 0 || saving}
         />
       </View>
 

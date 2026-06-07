@@ -12,13 +12,13 @@ jest.mock('@expo/vector-icons', () => {
   return { Ionicons: makeIcon('Ionicons') };
 });
 
-const mockCapture = jest.fn().mockResolvedValue({});
+const mockStartBackgroundUpload = jest.fn();
+const mockFinishCapture = jest.fn().mockResolvedValue(undefined);
 
 jest.mock('@/hooks/useCapture', () => ({
   useCapture: jest.fn(() => ({
-    capture: mockCapture,
-    canCapture: true,
-    capturing: false,
+    startBackgroundUpload: mockStartBackgroundUpload,
+    finishCapture: mockFinishCapture,
   })),
 }));
 
@@ -53,7 +53,6 @@ jest.mock('expo-video', () => ({
   useVideoPlayer: jest.fn(() => ({ loop: false, muted: false, play: jest.fn() })),
 }));
 
-import { useCapture } from '@/hooks/useCapture';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { router } from 'expo-router';
 import PhotoReviewScreen from '../photo-review';
@@ -68,9 +67,15 @@ const photoAsset = {
 beforeEach(() => {
   jest.clearAllMocks();
   usePhotoReviewStore.setState({ assets: [photoAsset] });
+  mockStartBackgroundUpload.mockResolvedValue({ r2Key: 'photos/abc.webp' });
 });
 
 describe('PhotoReview', () => {
+  it('starts background upload on mount', () => {
+    render(<PhotoReviewScreen />);
+    expect(mockStartBackgroundUpload).toHaveBeenCalledWith(photoAsset);
+  });
+
   it('shows album checkboxes', () => {
     const { getByTestId } = render(<PhotoReviewScreen />);
     expect(getByTestId('album-checkbox-album-1')).toBeTruthy();
@@ -80,23 +85,39 @@ describe('PhotoReview', () => {
   it('save button disabled until album selected', () => {
     const { getByTestId } = render(<PhotoReviewScreen />);
     const saveBtn = getByTestId('review-save');
-    // disabled prop may surface as accessibilityState.disabled in RNTL
     const isDisabled = saveBtn.props.disabled ?? saveBtn.props.accessibilityState?.disabled;
     expect(isDisabled).toBeTruthy();
   });
 
-  it('pressing save without album selected does not call capture', async () => {
-    const { getByTestId } = render(<PhotoReviewScreen />);
-    await act(async () => { fireEvent.press(getByTestId('review-save')); });
-    expect(mockCapture).not.toHaveBeenCalled();
-  });
-
-  it('pressing save calls capture with selected album ids', async () => {
+  it('pressing save calls finishCapture with selected album ids', async () => {
     const { getByTestId } = render(<PhotoReviewScreen />);
     fireEvent.press(getByTestId('album-checkbox-album-1'));
     fireEvent.press(getByTestId('album-checkbox-album-2'));
     await act(async () => { fireEvent.press(getByTestId('review-save')); });
-    expect(mockCapture).toHaveBeenCalledWith(photoAsset, expect.arrayContaining(['album-1', 'album-2']));
+    expect(mockFinishCapture).toHaveBeenCalledWith(
+      { r2Key: 'photos/abc.webp' },
+      photoAsset,
+      expect.arrayContaining(['album-1', 'album-2']),
+    );
+  });
+
+  it('shows error alert when background upload failed after retries', async () => {
+    mockStartBackgroundUpload.mockRejectedValue(new Error('upload failed'));
+    const alertSpy = jest.spyOn(Alert, 'alert');
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.press(getByTestId('album-checkbox-album-1'));
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(alertSpy).toHaveBeenCalledWith('Lỗi', expect.any(String));
+    expect(mockFinishCapture).not.toHaveBeenCalled();
+  });
+
+  it('shows error alert when finishCapture throws', async () => {
+    mockFinishCapture.mockRejectedValueOnce(new Error('server error'));
+    const alertSpy = jest.spyOn(Alert, 'alert');
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.press(getByTestId('album-checkbox-album-1'));
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(alertSpy).toHaveBeenCalledWith('Lỗi', expect.any(String));
   });
 
   it('close button discards and navigates back', () => {
