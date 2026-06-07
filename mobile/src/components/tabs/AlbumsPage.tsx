@@ -17,7 +17,11 @@ import { t } from '@/lib/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-export function AlbumsPage() {
+interface Props {
+  onCameraPress: () => void;
+}
+
+export function AlbumsPage({ onCameraPress }: Props) {
   const insets = useSafeAreaInsets();
   const { data: albums, isLoading } = useAlbums();
   const setAlbum = useAlbumStore((s) => s.setAlbum);
@@ -123,14 +127,25 @@ export function AlbumsPage() {
         />
       )}
 
-      <TouchableOpacity
-        style={[styles.createBtn, { marginBottom: insets.bottom + spacing.xl }]}
-        onPress={() => { setNewName(''); setShowInput(true); }}
-        testID="create-album-btn"
-      >
-        <Ionicons name="add-circle-outline" size={20} color={colors.pink} />
-        <Text style={styles.createBtnText}>Tạo album mới</Text>
-      </TouchableOpacity>
+      <View style={[styles.bottomArea, { paddingBottom: insets.bottom + spacing.lg }]}>
+        <TouchableOpacity
+          testID="camera-pill-btn"
+          style={styles.cameraPill}
+          onPress={onCameraPress}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="camera" size={18} color={colors.white} />
+          <Text style={styles.cameraPillText}>Chụp ảnh</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={() => { setNewName(''); setShowInput(true); }}
+          testID="create-album-btn"
+        >
+          <Ionicons name="add-circle-outline" size={20} color={colors.pink} />
+          <Text style={styles.createBtnText}>Tạo album mới</Text>
+        </TouchableOpacity>
+      </View>
 
       <SettingsSheet visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </View>
@@ -150,7 +165,10 @@ const styles = StyleSheet.create({
   thumbPlaceholder:{ backgroundColor: colors.borderSoft, alignItems: 'center', justifyContent: 'center' },
   rowInfo:         { flex: 1 },
   albumName:       { ...typography.body, color: colors.ink, fontWeight: '600' },
-  createBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
+  bottomArea:      { alignItems: 'center', paddingTop: spacing.md },
+  cameraPill:      { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.pink, borderRadius: 9999, borderWidth: 2, borderColor: colors.ink, shadowColor: colors.ink, shadowOffset: { width: 3, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4, paddingVertical: spacing.md, paddingHorizontal: spacing['2xl'] },
+  cameraPillText:  { fontFamily: 'Caveat_600SemiBold', fontSize: 18, color: colors.white },
+  createBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md },
   createBtnText:   { ...typography.body, color: colors.pink },
   modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   modalCard:       { backgroundColor: colors.white, borderRadius: 16, padding: spacing['2xl'], width: '80%', gap: spacing.lg },
