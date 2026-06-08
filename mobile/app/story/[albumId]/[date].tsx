@@ -121,7 +121,6 @@ export default function StoryScreen() {
     });
 
   const parts = (date ?? '').split('-');
-  const dateLabel = parts.length === 3 ? `${parts[2]}/${parts[1]}` : '';
   const dateChip  = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : '';
 
   if (isLoading || !photos) {
