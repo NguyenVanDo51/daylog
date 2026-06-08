@@ -121,4 +121,11 @@ describe('StoryScreen navigation', () => {
     fireEvent.press(getByTestId('story-menu-export'));
     expect(exportStoryMock).toHaveBeenCalledTimes(1);
   });
+
+  it('backdrop tap closes the menu', () => {
+    const { getByTestId, queryByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-menu-btn'));
+    fireEvent.press(getByTestId('story-menu-backdrop'));
+    expect(queryByTestId('story-menu-dropdown')).toBeNull();
+  });
 });

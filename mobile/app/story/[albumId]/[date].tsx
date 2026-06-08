@@ -198,8 +198,8 @@ export default function StoryScreen() {
                   Alert.alert('Xoá ảnh', 'Tính năng này sẽ có sớm.');
                 }}
               >
-                <Ionicons name="trash-outline" size={16} color="#ff6b6b" />
-                <Text style={[styles.menuItemText, { color: '#ff6b6b' }]}>Xoá ảnh</Text>
+                <Ionicons name="trash-outline" size={16} color={colors.error} />
+                <Text style={[styles.menuItemText, { color: colors.error }]}>Xoá ảnh</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
