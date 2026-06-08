@@ -269,5 +269,40 @@ router.get('/:id/full', async (req: Request, res: Response, next: NextFunction) 
   }
 });
 
+router.get('/:id/thumb', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const photoId = req.params.id as string;
+    if (!isValidUUID(photoId)) return res.status(404).json({ error: 'Not found' });
+
+    const [photo] = await db
+      .select({ thumbnailKey: photos.thumbnailKey })
+      .from(photos)
+      .where(eq(photos.id, photoId))
+      .limit(1);
+    if (!photo || !photo.thumbnailKey) return res.status(404).json({ error: 'Not found' });
+
+    const [member] = await db
+      .select({ x: sql<number>`1` })
+      .from(albumPhotos)
+      .innerJoin(
+        albumMembers,
+        and(
+          eq(albumMembers.albumId, albumPhotos.albumId),
+          eq(albumMembers.userId, req.user!.id),
+        ),
+      )
+      .where(eq(albumPhotos.photoId, photoId))
+      .limit(1);
+    if (!member) return res.status(403).json({ error: 'Forbidden' });
+
+    const buffer = await getObjectBuffer(photo.thumbnailKey);
+    res.setHeader('Content-Type', 'image/webp');
+    res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export = router;
+
 
