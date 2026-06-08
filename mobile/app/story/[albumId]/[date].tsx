@@ -68,11 +68,13 @@ function VlogOverlay({
   dayLabel,
   currentIndex,
   total,
+  bottomInset = 0,
 }: {
   photo: DayPhoto;
   dayLabel: string;
   currentIndex: number;
   total: number;
+  bottomInset?: number;
 }) {
   const dt = new Date(photo.taken_at);
   const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -81,7 +83,7 @@ function VlogOverlay({
   return (
     <LinearGradient
       colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.92)']}
-      style={vlog.container}
+      style={[vlog.container, { paddingBottom: spacing.xl + bottomInset }]}
       pointerEvents="none"
     >
       <Text style={vlog.dayHero} testID="story-day-hero">{dayLabel}</Text>
@@ -236,6 +238,7 @@ export default function StoryScreen() {
           dayLabel={dateLabel}
           currentIndex={currentIndex}
           total={photos.length}
+          bottomInset={insets.bottom}
         />
       </View>
     </GestureDetector>
@@ -282,7 +285,7 @@ const vlog = StyleSheet.create({
     fontWeight: '200',
     color: 'rgba(255,255,255,0.92)',
     letterSpacing: 3,
-    fontFamily: 'Georgia',
+    fontFamily: 'serif',
     marginBottom: 4,
   },
   date: {
@@ -328,6 +331,7 @@ const vlog = StyleSheet.create({
   },
   dotActive: {
     width: 18,
+    height: 5,
     borderRadius: 3,
     backgroundColor: colors.white,
   },
