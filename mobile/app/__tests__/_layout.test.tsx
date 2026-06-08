@@ -162,7 +162,7 @@ beforeEach(() => {
 });
 
 describe('RootLayout', () => {
-  it('renders the provider tree and registers seven Stack.Screen entries after the auth bootstrap settles', async () => {
+  it('renders the provider tree and registers eight Stack.Screen entries after the auth bootstrap settles', async () => {
     mockedGetItemAsync.mockResolvedValueOnce(null);
 
     const utils = render(<RootLayout />);
@@ -176,8 +176,8 @@ describe('RootLayout', () => {
     // QueryClientProvider should have wrapped the Stack tree.
     expect(utils.getByTestId('query-client-provider')).toBeTruthy();
 
-    // Seven routes are declared by the layout: (auth), (tabs), albums/[id],
-    // photo/[id], photo-review, story/[albumId]/[date], join/[token].
+    // Eight routes are declared by the layout: (auth), (tabs), albums/[id],
+    // photo/[id], photo-review, story/[albumId]/[date], story/[albumId]/[date]/manage, join/[token].
     const names = __recordedStackScreens.map((s: any) => s.name);
     expect(names).toEqual([
       '(auth)',
@@ -186,6 +186,7 @@ describe('RootLayout', () => {
       'photo/[id]',
       'photo-review',
       'story/[albumId]/[date]',
+      'story/[albumId]/[date]/manage',
       'join/[token]',
     ]);
 
