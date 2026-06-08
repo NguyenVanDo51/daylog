@@ -19,19 +19,40 @@ import { colors, spacing, typography } from '@/constants/theme';
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const PHOTO_DURATION_MS = 3000;
 
-function PhotoItem({ photo, onEnd }: { photo: DayPhoto; onEnd: () => void }) {
+function PhotoItem({
+  photo,
+  onEnd,
+  isPaused,
+  onProgress,
+}: {
+  photo: DayPhoto;
+  onEnd: () => void;
+  isPaused: boolean;
+  onProgress: (f: number) => void;
+}) {
+  const elapsedRef = useRef(0);
+
   useEffect(() => {
+    elapsedRef.current = 0;
+  }, [photo.id]);
+
+  useEffect(() => {
+    if (isPaused) return;
     let cancelled = false;
-    const start = Date.now();
+    const startTime = Date.now() - elapsedRef.current;
     const tick = () => {
       if (cancelled) return;
-      const frac = Math.min((Date.now() - start) / PHOTO_DURATION_MS, 1);
+      const frac = Math.min((Date.now() - startTime) / PHOTO_DURATION_MS, 1);
+      onProgress(frac);
       if (frac < 1) requestAnimationFrame(tick);
-      else onEnd();
+      else { elapsedRef.current = 0; onEnd(); }
     };
     requestAnimationFrame(tick);
-    return () => { cancelled = true; };
-  }, [photo.id]);
+    return () => {
+      elapsedRef.current = Date.now() - startTime;
+      cancelled = true;
+    };
+  }, [photo.id, isPaused]);
 
   return (
     <Image
