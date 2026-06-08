@@ -72,7 +72,8 @@ router.get('/:date/photos', async (req: Request, res: Response, next: NextFuncti
     const rows = await db.execute(sql`
       SELECT p.id, p.media_type, p.duration_ms,
              to_char(p.taken_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS taken_at,
-             p.caption
+             p.caption,
+             p.uploaded_by
       FROM photos p
       JOIN album_photos ap ON ap.photo_id = p.id
       WHERE ap.album_id = ${albumId}::uuid

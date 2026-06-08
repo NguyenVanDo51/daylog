@@ -137,6 +137,17 @@ describe('GET /albums/:id/days/:date/photos', () => {
     expect(res.body[1].caption).toBeNull();
   });
 
+  it('returns uploaded_by for each photo', async () => {
+    await insertPhoto(user.id, album.id, { takenAt: '2026-05-21T08:00:00Z' });
+
+    const res = await request(app)
+      .get(`/albums/${album.id}/days/2026-05-21/photos`)
+      .set(headers);
+
+    expect(res.status).toBe(200);
+    expect(res.body[0].uploaded_by).toBe(user.id);
+  });
+
   it('returns 400 for invalid date format', async () => {
     const res = await request(app).get(`/albums/${album.id}/days/21-05-2026/photos`).set(headers);
     expect(res.status).toBe(400);
