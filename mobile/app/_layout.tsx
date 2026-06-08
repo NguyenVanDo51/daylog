@@ -65,6 +65,7 @@ export default function RootLayout() {
             <Stack.Screen name="photo/[id]" options={{ presentation: 'fullScreenModal' }} />
 <Stack.Screen name="photo-review" options={{ headerShown: false }} />
             <Stack.Screen name="story/[albumId]/[date]" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+            <Stack.Screen name="story/[albumId]/[date]/manage" options={{ headerShown: false, presentation: 'modal' }} />
             <Stack.Screen name="join/[token]" />
           </Stack>
         </QueryClientProvider>

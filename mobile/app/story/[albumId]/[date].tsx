@@ -183,6 +183,12 @@ export default function StoryScreen() {
             <Text style={styles.dateText}>{dateLabel}</Text>
           </View>
           <View style={styles.topActions}>
+            <TouchableOpacity
+              onPress={() => router.push(`/story/${albumId}/${date}/manage` as any)}
+              testID="story-manage"
+            >
+              <Ionicons name="create-outline" size={26} color={colors.white} />
+            </TouchableOpacity>
             {exporting ? (
               <ActivityIndicator color={colors.white} size="small" style={{ width: 32 }} />
             ) : (
