@@ -63,20 +63,40 @@ function VideoItem({ photo, onEnd }: { photo: DayPhoto; onEnd: () => void }) {
   );
 }
 
-function VlogOverlay({ photo }: { photo: DayPhoto }) {
+function VlogOverlay({
+  photo,
+  dayLabel,
+  currentIndex,
+  total,
+}: {
+  photo: DayPhoto;
+  dayLabel: string;
+  currentIndex: number;
+  total: number;
+}) {
   const dt = new Date(photo.taken_at);
   const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
   const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
 
   return (
     <LinearGradient
-      colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.85)']}
+      colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.92)']}
       style={vlog.container}
       pointerEvents="none"
     >
+      <Text style={vlog.dayHero} testID="story-day-hero">{dayLabel}</Text>
       <Text style={vlog.date} testID="vlog-date">{dateStr}</Text>
       <Text style={vlog.time} testID="vlog-time">▶ {timeStr}</Text>
       {photo.caption?.trim() ? <Text style={vlog.caption} testID="vlog-caption">{photo.caption}</Text> : null}
+      <View style={vlog.dots}>
+        {Array.from({ length: total }).map((_, i) => (
+          <View
+            key={i}
+            testID={i === currentIndex ? 'story-dot-active' : 'story-dot'}
+            style={[vlog.dot, i === currentIndex && vlog.dotActive]}
+          />
+        ))}
+      </View>
     </LinearGradient>
   );
 }
@@ -122,6 +142,7 @@ export default function StoryScreen() {
 
   const parts = (date ?? '').split('-');
   const dateChip  = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : '';
+  const dateLabel = parts.length === 3 ? `${parts[2]} / ${parts[1]}` : '';
 
   if (isLoading || !photos) {
     return (
@@ -210,7 +231,12 @@ export default function StoryScreen() {
           <TouchableOpacity style={styles.tapRight} onPress={goNext} testID="story-next" />
         </View>
 
-        <VlogOverlay photo={current} />
+        <VlogOverlay
+          photo={current}
+          dayLabel={dateLabel}
+          currentIndex={currentIndex}
+          total={photos.length}
+        />
       </View>
     </GestureDetector>
   );
@@ -245,13 +271,19 @@ const styles = StyleSheet.create({
 const vlog = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
     paddingTop: spacing.xl * 2,
     zIndex: 10,
+  },
+  dayHero: {
+    fontSize: 26,
+    fontWeight: '200',
+    color: 'rgba(255,255,255,0.92)',
+    letterSpacing: 3,
+    fontFamily: 'Georgia',
+    marginBottom: 4,
   },
   date: {
     fontFamily: 'Courier New',
@@ -282,5 +314,21 @@ const vlog = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.9)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'center',
+    marginTop: spacing.md,
+  },
+  dot: {
+    width: 5, height: 5,
+    borderRadius: 2.5,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  dotActive: {
+    width: 18,
+    borderRadius: 3,
+    backgroundColor: colors.white,
   },
 });

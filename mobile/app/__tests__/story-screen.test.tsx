@@ -128,4 +128,27 @@ describe('StoryScreen navigation', () => {
     fireEvent.press(getByTestId('story-menu-backdrop'));
     expect(queryByTestId('story-menu-dropdown')).toBeNull();
   });
+
+  it('renders day hero with DD / MM format', () => {
+    const { getByTestId } = render(<StoryScreen />);
+    // date param is '2026-05-01' → day hero should show '01 / 05'
+    expect(getByTestId('story-day-hero').props.children).toBe('01 / 05');
+  });
+
+  it('renders correct number of progress dots', () => {
+    const { getAllByTestId, getByTestId } = render(<StoryScreen />);
+    // 2 photos in the mock → 1 active + 1 inactive = 2 total
+    const inactive = getAllByTestId('story-dot');
+    const active = getByTestId('story-dot-active');
+    expect(inactive.length + 1).toBe(2); // 1 inactive + 1 active
+    expect(active).toBeTruthy();
+  });
+
+  it('first dot is marked active by testID at initial index 0', () => {
+    const { getByTestId, queryByTestId } = render(<StoryScreen />);
+    // dot index 0 is active at start
+    expect(getByTestId('story-dot-active')).toBeTruthy();
+    // only one active dot
+    expect(queryByTestId('story-dot-active')).not.toBeNull();
+  });
 });
