@@ -19,43 +19,13 @@ import { colors, spacing, typography } from '@/constants/theme';
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const PHOTO_DURATION_MS = 3000;
 
-function StoryProgress({ total, current, progress }: { total: number; current: number; progress: number }) {
-  return (
-    <View style={pg.bar} testID="story-progress">
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={pg.seg}>
-          <View
-            style={[
-              pg.fill,
-              i < current
-                ? pg.done
-                : i === current
-                ? { width: `${progress * 100}%` }
-                : pg.empty,
-            ]}
-          />
-        </View>
-      ))}
-    </View>
-  );
-}
-
-const pg = StyleSheet.create({
-  bar:   { flexDirection: 'row', gap: 3, flex: 1 },
-  seg:   { flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 2, overflow: 'hidden' },
-  fill:  { height: '100%', backgroundColor: colors.white, borderRadius: 2 },
-  done:  { width: '100%' },
-  empty: { width: '0%' },
-});
-
-function PhotoItem({ photo, onEnd, onProgress }: { photo: DayPhoto; onEnd: () => void; onProgress: (p: number) => void }) {
+function PhotoItem({ photo, onEnd }: { photo: DayPhoto; onEnd: () => void }) {
   useEffect(() => {
     let cancelled = false;
     const start = Date.now();
     const tick = () => {
       if (cancelled) return;
       const frac = Math.min((Date.now() - start) / PHOTO_DURATION_MS, 1);
-      onProgress(frac);
       if (frac < 1) requestAnimationFrame(tick);
       else onEnd();
     };
@@ -119,7 +89,7 @@ export default function StoryScreen() {
   const { data: days } = useAlbumDays(albumId);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [photoProgress, setPhotoProgress] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { exporting, exportStory } = useStoryExport(photos ?? [], date);
 
@@ -127,16 +97,14 @@ export default function StoryScreen() {
     if (!photos) return;
     if (currentIndex < photos.length - 1) {
       setCurrentIndex((i) => i + 1);
-      setPhotoProgress(0);
     } else {
-      router.back();
+      setCurrentIndex(0);
     }
   }, [photos, currentIndex]);
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
-      setPhotoProgress(0);
     }
   }, [currentIndex]);
 
@@ -154,6 +122,7 @@ export default function StoryScreen() {
 
   const parts = (date ?? '').split('-');
   const dateLabel = parts.length === 3 ? `${parts[2]}/${parts[1]}` : '';
+  const dateChip  = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : '';
 
   if (isLoading || !photos) {
     return (
@@ -174,32 +143,17 @@ export default function StoryScreen() {
         {current.media_type === 'video' ? (
           <VideoItem photo={current} onEnd={goNext} />
         ) : (
-          <PhotoItem photo={current} onEnd={goNext} onProgress={setPhotoProgress} />
+          <PhotoItem photo={current} onEnd={goNext} />
         )}
 
-        <View style={[styles.headerOverlay, { paddingTop: insets.top + spacing.sm }]}>
-          <View style={styles.progressRow}>
-            <StoryProgress total={photos.length} current={currentIndex} progress={photoProgress} />
-            <Text style={styles.dateText}>{dateLabel}</Text>
-          </View>
-          <View style={styles.topActions}>
-            <TouchableOpacity
-              onPress={() => router.push(`/story/${albumId}/${date}/manage` as any)}
-              testID="story-manage"
-            >
-              <Ionicons name="create-outline" size={26} color={colors.white} />
-            </TouchableOpacity>
-            {exporting ? (
-              <ActivityIndicator color={colors.white} size="small" style={{ width: 32 }} />
-            ) : (
-              <TouchableOpacity onPress={exportStory} testID="story-export" disabled={exporting}>
-                <Ionicons name="arrow-down-circle-outline" size={26} color={colors.white} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={() => router.back()} testID="story-close">
-              <Ionicons name="close" size={26} color={colors.white} />
-            </TouchableOpacity>
-          </View>
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+          <TouchableOpacity onPress={() => router.back()} testID="story-back" style={styles.circleBtn}>
+            <Ionicons name="chevron-back" size={18} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.dateChip} testID="story-date-chip">{dateChip}</Text>
+          <TouchableOpacity onPress={() => setMenuOpen(true)} testID="story-menu-btn" style={styles.circleBtn}>
+            <Text style={styles.menuDots}>•••</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.tapAreas}>
@@ -214,14 +168,18 @@ export default function StoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:     { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
-  headerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, paddingHorizontal: spacing.lg, gap: spacing.sm },
-  progressRow:   { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  dateText:      { ...typography.caption, color: colors.white, fontWeight: '700', fontSize: 12, minWidth: 36, textAlign: 'right' },
-  topActions:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  tapAreas:      { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
-  tapLeft:       { flex: 1 },
-  tapRight:      { flex: 1 },
+  container:  { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
+  topBar:     { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+                paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  circleBtn:  { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.35)',
+                alignItems: 'center', justifyContent: 'center' },
+  dateChip:   { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 7,
+                paddingVertical: 3, paddingHorizontal: 8, ...typography.caption,
+                color: 'rgba(255,255,255,0.75)', fontFamily: 'Courier New', letterSpacing: 0.5 },
+  menuDots:   { color: colors.white, fontSize: 12, letterSpacing: 1, lineHeight: 14 },
+  tapAreas:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
+  tapLeft:    { flex: 1 },
+  tapRight:   { flex: 1 },
 });
 
 const vlog = StyleSheet.create({
