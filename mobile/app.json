@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Family Guy",
-    "slug": "family-guy",
+    "name": "Logbook",
+    "slug": "logbook",
     "version": "1.0.0",
-    "scheme": "familyguy",
+    "scheme": "logbook",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,11 +14,12 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.familyguy.app",
+      "bundleIdentifier": "com.logbook.app",
+      "buildNumber": "1",
       "infoPlist": {
+        "NSCameraUsageDescription": "Cho phép chụp ảnh và quay video kỷ niệm của bé",
         "NSPhotoLibraryUsageDescription": "Cho phép xóa ảnh đã được lưu an toàn trên ứng dụng",
-        "NSPhotoLibraryAddUsageDescription": "Cho phép lưu ảnh vào thư viện",
-        "NSCameraUsageDescription": "We need camera access for QR scanning."
+        "NSPhotoLibraryAddUsageDescription": "Cho phép lưu ảnh vào thư viện"
       }
     },
     "plugins": [
@@ -34,13 +35,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Family Guy to use the camera to scan QR codes."
+          "cameraPermission": "Cho phép chụp ảnh và quay video kỷ niệm của bé"
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Family Guy to access your photos."
+          "photosPermission": "Cho phép truy cập thư viện ảnh để thêm vào nhật ký"
         }
       ],
       [
@@ -59,7 +60,8 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.familyguy.app"
+      "package": "com.logbook.app",
+      "versionCode": 1
     }
   }
 }

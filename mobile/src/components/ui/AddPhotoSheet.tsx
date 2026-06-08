@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
-import { Ionicons } from '@expo/vector-icons';
+import { Camera, Images, CaretRight } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { useUpload } from '@/hooks/useUpload';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
@@ -65,18 +65,18 @@ export function AddPhotoSheet({ visible, onClose }: AddPhotoSheetProps) {
       <View style={styles.sheet}>
         <TouchableOpacity style={styles.row} onPress={handleCamera} activeOpacity={0.7}>
           <View style={styles.iconWrap}>
-            <Ionicons name="camera-outline" size={22} color={colors.pink} />
+            <Camera size={22} color={colors.pink} />
           </View>
           <Text style={styles.label}>{t('add_photo.camera')}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+          <CaretRight size={18} color={colors.inkMuted} />
         </TouchableOpacity>
         <View style={styles.divider} />
         <TouchableOpacity style={styles.row} onPress={handleUpload} activeOpacity={0.7}>
           <View style={styles.iconWrap}>
-            <Ionicons name="images-outline" size={22} color={colors.pink} />
+            <Images size={22} color={colors.pink} />
           </View>
           <Text style={styles.label}>{t('add_photo.upload')}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+          <CaretRight size={18} color={colors.inkMuted} />
         </TouchableOpacity>
       </View>
     </TrueSheet>

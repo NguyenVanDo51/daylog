@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Switch, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Switch, Alert, TouchableOpacity } from 'react-native';
+import { CaretLeft } from 'phosphor-react-native';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -45,7 +46,13 @@ export default function SettingsTab() {
   return (
     <View style={styles.container}>
       <QuietHeader>
-        <Text style={styles.heading}>{t('settings.title')}</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.backBtn} testID="settings-back">
+            <CaretLeft size={24} color={colors.ink} />
+          </TouchableOpacity>
+          <Text style={styles.heading}>{t('settings.title')}</Text>
+          <View style={styles.backBtn} />
+        </View>
       </QuietHeader>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -80,7 +87,9 @@ export default function SettingsTab() {
 
 const styles = StyleSheet.create({
   container:   { flex: 1, backgroundColor: colors.cream },
-  heading:     { ...typography.heading, color: colors.ink },
+  headerRow:   { flexDirection: 'row', alignItems: 'center' },
+  backBtn:     { width: 32 },
+  heading:     { ...typography.heading, color: colors.ink, flex: 1, textAlign: 'center' },
   content:     { padding: spacing['2xl'], gap: spacing.md },
   profileCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   profileInfo: { flex: 1 },

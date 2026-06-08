@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Check } from 'phosphor-react-native';
 import { colors, radii, shadows, spacing } from '@/constants/theme';
 import type { UploadAsset } from '@/hooks/useUpload';
 import { tap } from '@/lib/haptics';
@@ -29,7 +29,7 @@ export function PhotoThumbnailGrid({ assets, selected, onToggle }: PhotoThumbnai
             }} />
             {selected.has(a.uri) && (
               <View style={styles.check}>
-                <Ionicons name="checkmark" size={14} color={colors.ink} />
+                <Check size={14} color={colors.ink} weight="bold" />
               </View>
             )}
           </TouchableOpacity>

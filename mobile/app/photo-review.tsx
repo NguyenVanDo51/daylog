@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { X, Check } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { useCapture, type UploadResult } from '@/hooks/useCapture';
@@ -77,7 +77,7 @@ export default function PhotoReviewScreen() {
 
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => { clear(); router.back(); }} testID="review-close">
-          <Ionicons name="close" size={26} color={colors.ink} />
+          <X size={26} color={colors.ink} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.back()} testID="review-retake">
           <Text style={styles.retakeText}>Chụp lại</Text>
@@ -120,7 +120,7 @@ export default function PhotoReviewScreen() {
               activeOpacity={0.7}
             >
               <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-                {selected && <Ionicons name="checkmark" size={14} color={colors.white} />}
+                {selected && <Check size={14} color={colors.white} weight="bold" />}
               </View>
               <Text style={styles.albumName}>{album.name}</Text>
             </TouchableOpacity>

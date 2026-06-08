@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { Ionicons } from '@expo/vector-icons';
+import { Video } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { colors } from '@/constants/theme';
 import { ReactionPicker } from '@/components/ui/ReactionPicker';
@@ -60,7 +60,7 @@ export function PhotoTile({ photo, tileWidth, tileHeight }: PhotoTileProps) {
 
           {photo.media_type === 'video' && (
             <View style={styles.videoBadge} testID="video-badge">
-              <Ionicons name="videocam" size={10} color={colors.white} />
+              <Video size={10} color={colors.white} weight="fill" />
             </View>
           )}
 

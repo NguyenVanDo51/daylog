@@ -10,7 +10,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { CaretLeft, PencilSimple, ArrowCircleDown, Trash } from 'phosphor-react-native';
 import { useDayPhotos, DayPhoto } from '@/hooks/useDayPhotos';
 import { useAlbumDays } from '@/hooks/useAlbumDays';
 import { useStoryExport } from '@/hooks/useStoryExport';
@@ -234,7 +234,7 @@ export default function StoryScreen() {
 
         <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
           <TouchableOpacity onPress={() => router.back()} testID="story-back" style={styles.circleBtn}>
-            <Ionicons name="chevron-back" size={18} color={colors.white} />
+            <CaretLeft size={18} color={colors.white} />
           </TouchableOpacity>
           <Text style={styles.dateChip} testID="story-date-chip">{dateChip}</Text>
           <TouchableOpacity onPress={() => setMenuOpen(true)} testID="story-menu-btn" style={styles.circleBtn}>
@@ -258,7 +258,7 @@ export default function StoryScreen() {
                   router.push(`/story/${albumId}/${date}/manage` as any);
                 }}
               >
-                <Ionicons name="create-outline" size={16} color={colors.white} />
+                <PencilSimple size={16} color={colors.white} />
                 <Text style={styles.menuItemText}>Sửa ghi chú</Text>
               </TouchableOpacity>
 
@@ -273,7 +273,7 @@ export default function StoryScreen() {
               >
                 {exporting
                   ? <ActivityIndicator color={colors.white} size="small" />
-                  : <Ionicons name="arrow-down-circle-outline" size={16} color={colors.white} />}
+                  : <ArrowCircleDown size={16} color={colors.white} />}
                 <Text style={styles.menuItemText}>Lưu về máy</Text>
               </TouchableOpacity>
 
@@ -285,7 +285,7 @@ export default function StoryScreen() {
                   Alert.alert('Xoá ảnh', 'Tính năng này sẽ có sớm.');
                 }}
               >
-                <Ionicons name="trash-outline" size={16} color={colors.error} />
+                <Trash size={16} color={colors.error} />
                 <Text style={[styles.menuItemText, { color: colors.error }]}>Xoá ảnh</Text>
               </TouchableOpacity>
             </View>

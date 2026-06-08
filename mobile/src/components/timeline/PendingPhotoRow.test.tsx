@@ -1,4 +1,4 @@
-jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('phosphor-react-native', () => new Proxy({}, { get: (_, name) => String(name) }));
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => ({ width: 375, height: 812 }),
 }));

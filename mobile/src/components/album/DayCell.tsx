@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Images, Play } from 'phosphor-react-native';
 import { colors, spacing, typography } from '@/constants/theme';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -37,7 +37,7 @@ export function DayCell({ date, thumbnailPhotoId, hasVideo, tall, onPress }: Pro
         />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
-          <Ionicons name="images-outline" size={28} color={colors.inkMuted} />
+          <Images size={28} color={colors.inkMuted} />
         </View>
       )}
       <View style={styles.overlay}>
@@ -45,7 +45,7 @@ export function DayCell({ date, thumbnailPhotoId, hasVideo, tall, onPress }: Pro
       </View>
       {hasVideo && (
         <View style={styles.videoBadge} testID="video-badge">
-          <Ionicons name="play" size={10} color={colors.white} />
+          <Play size={10} color={colors.white} weight="fill" />
         </View>
       )}
     </TouchableOpacity>

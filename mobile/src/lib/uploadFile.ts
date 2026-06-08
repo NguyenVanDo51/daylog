@@ -1,34 +1,24 @@
 import { File } from 'expo-file-system';
 
-type ReactNativeFileBody = {
-  uri: string;
-  type: string;
-  name: string;
-};
-
-function toFileBody(uri: string, contentType: string): ReactNativeFileBody {
-  const ext = contentType.split('/')[1]?.split(';')[0] ?? 'bin';
-  return { uri, type: contentType, name: `upload.${ext}` };
-}
-
 export function getLocalFileSize(uri: string): number {
   const file = new File(uri);
   return file.exists ? file.size : 0;
 }
 
-/** PUT a local file to a presigned URL (React Native — no Blob). */
+/** PUT a local file to a presigned URL via expo-file-system (RN fetch rejects file URIs). */
 export async function putLocalFile(
   url: string,
   localUri: string,
   contentType: string,
 ): Promise<number> {
-  const res = await fetch(url, {
-    method: 'PUT',
-    body: toFileBody(localUri, contentType) as unknown as BodyInit,
+  const file = new File(localUri);
+  const result = await file.upload(url, {
+    httpMethod: 'PUT',
     headers: { 'Content-Type': contentType },
+    mimeType: contentType,
   });
-  if (!res.ok) {
-    throw new Error(`Upload failed: ${res.status}`);
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`Upload failed: ${result.status}`);
   }
-  return getLocalFileSize(localUri);
+  return file.exists ? file.size : 0;
 }

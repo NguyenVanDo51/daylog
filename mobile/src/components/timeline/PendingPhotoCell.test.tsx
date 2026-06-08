@@ -1,4 +1,4 @@
-jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('phosphor-react-native', () => new Proxy({}, { get: (_, name) => String(name) }));
 
 import React from 'react';
 import { Animated } from 'react-native';

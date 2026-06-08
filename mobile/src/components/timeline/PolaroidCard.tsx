@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'r
 import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Video } from 'phosphor-react-native';
 import { colors, spacing, typography, shadows } from '@/constants/theme';
 import { ReactionBadge } from '@/components/ui/ReactionBadge';
 import { ReactionPicker } from '@/components/ui/ReactionPicker';
@@ -63,7 +63,7 @@ export function PolaroidCard({ photo }: PolaroidCardProps) {
 
         {photo.media_type === 'video' && (
           <View style={styles.videoBadge} testID="polaroid-video-badge">
-            <Ionicons name="videocam" size={12} color={colors.white} />
+            <Video size={12} color={colors.white} weight="fill" />
           </View>
         )}
 

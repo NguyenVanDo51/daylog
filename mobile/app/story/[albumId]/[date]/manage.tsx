@@ -4,7 +4,7 @@ import {
   StyleSheet, Alert, Image,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { CaretLeft, Trash } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDayPhotos, DayPhoto } from '@/hooks/useDayPhotos';
 import { useDeletePhoto, useUpdateCaption } from '@/hooks/usePhotoActions';
@@ -78,7 +78,7 @@ export default function ManageScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={colors.ink} />
+          <CaretLeft size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.title}>{t('manage.title', { date: dateLabel })}</Text>
         <View style={styles.backBtn} />
@@ -124,7 +124,7 @@ export default function ManageScreen() {
                   hitSlop={8}
                   style={styles.deleteBtn}
                 >
-                  <Ionicons name="trash-outline" size={22} color={colors.inkMuted} />
+                  <Trash size={22} color={colors.inkMuted} />
                 </TouchableOpacity>
               )}
             </View>

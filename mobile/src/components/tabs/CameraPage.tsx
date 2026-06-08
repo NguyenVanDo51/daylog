@@ -5,7 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { X, CameraRotate } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { colors, spacing, typography } from '@/constants/theme';
@@ -143,10 +143,10 @@ export function CameraPage({ onTabPress }: Props) {
       {/* Top bar: close (left) + flip (right) */}
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}>
         <TouchableOpacity testID="close-btn" style={styles.closeBtn} onPress={() => onTabPress(1)}>
-          <Ionicons name="close" size={28} color={colors.white} />
+          <X size={28} color={colors.white} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconBtn} onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}>
-          <Ionicons name="camera-reverse-outline" size={24} color={colors.white} />
+          <CameraRotate size={24} color={colors.white} />
         </TouchableOpacity>
       </View>
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, useWindowDimensions, StatusBar } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { X } from 'phosphor-react-native';
 import { BlurView } from 'expo-blur';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useTimeline } from '@/hooks/useTimeline';
@@ -59,7 +59,7 @@ export default function PhotoViewer() {
 
       <BlurView intensity={30} tint="dark" style={styles.topBar}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-          <Ionicons name="close" size={22} color={colors.white} />
+          <X size={22} color={colors.white} />
         </TouchableOpacity>
         <Text style={styles.meta}>{counter} · {formatVnDate(new Date(taken))}</Text>
         <View style={styles.iconBtn} />

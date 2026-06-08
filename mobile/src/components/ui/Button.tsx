@@ -11,9 +11,10 @@ interface ButtonProps {
   fullWidth?: boolean;
   loading?: boolean;
   disabled?: boolean;
+  testID?: string;
 }
 
-export function Button({ label, onPress, variant = 'primary', tier = 'joyful', fullWidth, loading, disabled }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', tier = 'joyful', fullWidth, loading, disabled, testID }: ButtonProps) {
   function handlePress() {
     tap();
     onPress();
@@ -31,7 +32,7 @@ export function Button({ label, onPress, variant = 'primary', tier = 'joyful', f
   ].filter(Boolean) as ViewStyle[];
 
   return (
-    <TouchableOpacity style={containerStyle} onPress={handlePress} disabled={disabled || loading} activeOpacity={0.85}>
+    <TouchableOpacity testID={testID} style={containerStyle} onPress={handlePress} disabled={disabled || loading} activeOpacity={0.85}>
       {loading
         ? <ActivityIndicator color={variant === 'ghost' ? colors.pink : colors.white} />
         : <Text style={[styles.label, variant === 'ghost' && styles.ghostLabel, variant === 'danger' && styles.dangerLabel]}>{label}</Text>

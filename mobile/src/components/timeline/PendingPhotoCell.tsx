@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { WarningCircle } from 'phosphor-react-native';
 import { colors, radii, shadows } from '@/constants/theme';
 
 interface PendingPhotoCellProps {
@@ -54,7 +54,7 @@ export function PendingPhotoCell({ localUri, status, size, index = 0 }: PendingP
       )}
       {status === 'error' && (
         <View testID="error-badge" style={styles.errorBadge}>
-          <Ionicons name="alert-circle" size={16} color={colors.white} />
+          <WarningCircle size={16} color={colors.white} weight="fill" />
         </View>
       )}
     </View>

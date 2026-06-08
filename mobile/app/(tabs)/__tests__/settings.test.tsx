@@ -50,7 +50,7 @@ import { registerPushToken, hasPushPermission } from '@/lib/notifications';
 const mockRegisterPushToken = registerPushToken as jest.Mock;
 const mockHasPushPermission = hasPushPermission as jest.Mock;
 const mockSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
-const mockRouter = router as unknown as { replace: jest.Mock };
+const mockRouter = router as unknown as { replace: jest.Mock; back: jest.Mock };
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -162,6 +162,14 @@ describe('SettingsTab', () => {
       'Có lỗi xảy ra',
       'Không thể đăng ký thông báo.',
     );
+  });
+
+  it('calls router.back when the back button is pressed', async () => {
+    const { getByTestId } = render(<Screen />);
+    await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
+
+    fireEvent.press(getByTestId('settings-back'));
+    expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });
 
   it('Sign Out deletes the secure-store token, clears auth + album, and navigates to /(auth)', async () => {

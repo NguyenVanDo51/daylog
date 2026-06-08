@@ -2,26 +2,14 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Image, TouchableOpacity } from 'react-native';
 
-// @expo/vector-icons pulls in expo-font/expo-asset transitively which is not
-// installed for jest. Replace the Ionicons set with a lightweight host
-// component that simply forwards its `name` prop so we can assert on it.
-jest.mock('@expo/vector-icons', () => {
+jest.mock('phosphor-react-native', () => {
   const ReactLib = require('react');
   const ViewComp = require('react-native').View;
   const makeIcon = (label: string) =>
     ReactLib.forwardRef((props: any, ref: any) =>
       ReactLib.createElement(ViewComp, { ...props, ref, testID: props.testID ?? label }),
     );
-  return {
-    Ionicons: makeIcon('Ionicons'),
-    MaterialIcons: makeIcon('MaterialIcons'),
-    MaterialCommunityIcons: makeIcon('MaterialCommunityIcons'),
-    FontAwesome: makeIcon('FontAwesome'),
-    FontAwesome5: makeIcon('FontAwesome5'),
-    Feather: makeIcon('Feather'),
-    AntDesign: makeIcon('AntDesign'),
-    Entypo: makeIcon('Entypo'),
-  };
+  return new Proxy({}, { get: (_, name) => makeIcon(String(name)) });
 });
 
 import { PhotoThumbnailGrid } from '@/components/upload/PhotoThumbnailGrid';
@@ -74,8 +62,8 @@ describe('PhotoThumbnailGrid', () => {
     const { queryAllByTestId } = render(
       <PhotoThumbnailGrid assets={assets} selected={selected} onToggle={jest.fn()} />,
     );
-    // Mocked Ionicons render as a View with testID="Ionicons". One per selected asset.
-    expect(queryAllByTestId('Ionicons')).toHaveLength(2);
+    // Mocked Check renders as a View with testID="Check". One per selected asset.
+    expect(queryAllByTestId('Check')).toHaveLength(2);
   });
 
   it('renders no check overlays when nothing is selected', () => {
@@ -83,7 +71,7 @@ describe('PhotoThumbnailGrid', () => {
     const { queryAllByTestId } = render(
       <PhotoThumbnailGrid assets={assets} selected={new Set()} onToggle={jest.fn()} />,
     );
-    expect(queryAllByTestId('Ionicons')).toHaveLength(0);
+    expect(queryAllByTestId('Check')).toHaveLength(0);
   });
 
   it('renders a check overlay for every selected asset', () => {
@@ -92,7 +80,7 @@ describe('PhotoThumbnailGrid', () => {
     const { queryAllByTestId } = render(
       <PhotoThumbnailGrid assets={assets} selected={selected} onToggle={jest.fn()} />,
     );
-    expect(queryAllByTestId('Ionicons')).toHaveLength(4);
+    expect(queryAllByTestId('Check')).toHaveLength(4);
   });
 
   it('passes the uri verbatim to onToggle even with multiple assets', () => {

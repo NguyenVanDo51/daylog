@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -16,7 +16,8 @@ export const authLimiter = rateLimit({
 export const presignLimiter = rateLimit({
   windowMs: 60_000,
   max: 30,
-  keyGenerator: (req) => (req as Express.Request).user?.id ?? req.ip ?? 'anonymous',
+  keyGenerator: (req) =>
+    (req as Express.Request).user?.id ?? (req.ip ? ipKeyGenerator(req.ip) : 'anonymous'),
   standardHeaders: true,
   legacyHeaders: false,
   skip: () => isTest,

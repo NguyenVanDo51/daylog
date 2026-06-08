@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { DotsThree, PlusCircle, Images, CaretRight, Camera } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAlbums, Album } from '@/hooks/useAlbums';
@@ -86,7 +86,7 @@ export function AlbumsPage({ onCameraPress }: Props) {
       <View style={styles.header}>
         <Text style={styles.heading}>Nhật ký</Text>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuBtn} testID="menu-btn">
-          <Ionicons name="ellipsis-horizontal" size={22} color={colors.ink} />
+          <DotsThree size={22} color={colors.ink} />
         </TouchableOpacity>
       </View>
 
@@ -107,7 +107,7 @@ export function AlbumsPage({ onCameraPress }: Props) {
               onPress={() => { setNewName(''); setShowInput(true); }}
               testID="create-album-btn"
             >
-              <Ionicons name="add-circle-outline" size={20} color={colors.pink} />
+              <PlusCircle size={20} color={colors.pink} />
               <Text style={styles.createBtnText}>Tạo album mới</Text>
             </TouchableOpacity>
           }
@@ -125,13 +125,13 @@ export function AlbumsPage({ onCameraPress }: Props) {
                 />
               ) : (
                 <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                  <Ionicons name="images-outline" size={22} color={colors.inkMuted} />
+                  <Images size={22} color={colors.inkMuted} />
                 </View>
               )}
               <View style={styles.rowInfo}>
                 <Text style={styles.albumName} numberOfLines={1}>{item.name}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+              <CaretRight size={18} color={colors.inkMuted} />
             </TouchableOpacity>
           )}
         />
@@ -144,7 +144,7 @@ export function AlbumsPage({ onCameraPress }: Props) {
           onPress={onCameraPress}
           activeOpacity={0.85}
         >
-          <Ionicons name="camera" size={18} color={colors.white} />
+          <Camera size={18} color={colors.white} weight="fill" />
           <Text style={styles.cameraPillText}>Chụp ảnh</Text>
         </TouchableOpacity>
       </View>

@@ -1,6 +1,4 @@
-jest.mock('@expo/vector-icons', () => ({
-  Ionicons: 'Ionicons',
-}));
+jest.mock('phosphor-react-native', () => new Proxy({}, { get: (_, name) => String(name) }));
 
 jest.mock('@/hooks/useTimeline', () => ({
   useTimeline: jest.fn(),

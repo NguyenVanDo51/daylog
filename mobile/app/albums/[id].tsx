@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { CaretLeft } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { DayCell } from '@/components/album/DayCell';
 import { useAlbumDays, AlbumDay } from '@/hooks/useAlbumDays';
@@ -27,7 +27,7 @@ export default function AlbumScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={colors.ink} />
+          <CaretLeft size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{albumName ?? ''}</Text>
         <View style={styles.backBtn} />
