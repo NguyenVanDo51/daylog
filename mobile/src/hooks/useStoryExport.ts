@@ -14,6 +14,10 @@ export function useStoryExport(photos: DayPhoto[], date: string) {
 
   async function exportStory() {
     setExporting(true);
+    if (photos.length === 0) {
+      setExporting(false);
+      return;
+    }
     const tempDir = `${FileSystem.cacheDirectory}export_${date}/`;
     const outputPath = `${FileSystem.cacheDirectory}story_${date}.mp4`;
 
@@ -47,25 +51,33 @@ export function useStoryExport(photos: DayPhoto[], date: string) {
         localPaths.push({ path: localPath, mediaType: photo.media_type });
       }
 
-      const concatLines: string[] = [];
-      for (const { path, mediaType } of localPaths) {
-        concatLines.push(`file '${path}'`);
-        if (mediaType === 'photo') concatLines.push('duration 3');
+      // Build filter_complex: scale/pad each input, then concat
+      const filterParts: string[] = [];
+      const ffArgs: string[] = [];
+
+      for (let i = 0; i < localPaths.length; i++) {
+        const { path, mediaType } = localPaths[i];
+        if (mediaType === 'photo') {
+          ffArgs.push('-loop', '1', '-t', '3', '-i', path);
+        } else {
+          ffArgs.push('-i', path);
+        }
+        filterParts.push(
+          `[${i}:v]scale=1080:1920:force_original_aspect_ratio=decrease,` +
+          `pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1[v${i}]`,
+        );
       }
-      // Concat demuxer requires the last entry to have a duration to avoid a frozen final frame
-      const last = localPaths[localPaths.length - 1];
-      if (last.mediaType === 'video') {
-        concatLines.push(`file '${last.path}'`);
-        concatLines.push('duration 0.001');
-      }
-      const concatListPath = `${tempDir}concat.txt`;
-      await FileSystem.writeAsStringAsync(concatListPath, concatLines.join('\n'));
+
+      const concatInputs = localPaths.map((_, i) => `[v${i}]`).join('');
+      const filterComplex = [
+        ...filterParts,
+        `${concatInputs}concat=n=${localPaths.length}:v=1:a=0[out]`,
+      ].join('; ');
 
       const session = await FFmpegKit.executeWithArguments([
-        '-f', 'concat',
-        '-safe', '0',
-        '-i', concatListPath,
-        '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black',
+        ...ffArgs,
+        '-filter_complex', filterComplex,
+        '-map', '[out]',
         '-c:v', 'libx264',
         '-preset', 'fast',
         '-crf', '23',

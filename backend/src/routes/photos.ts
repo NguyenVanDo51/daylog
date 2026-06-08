@@ -296,7 +296,9 @@ router.get('/:id/thumb', async (req: Request, res: Response, next: NextFunction)
     if (!member) return res.status(403).json({ error: 'Forbidden' });
 
     const buffer = await getObjectBuffer(photo.thumbnailKey);
-    res.setHeader('Content-Type', 'image/webp');
+    const thumbExt = photo.thumbnailKey.split('.').pop()?.toLowerCase();
+    const thumbContentType = thumbExt === 'jpg' ? 'image/jpeg' : 'image/webp';
+    res.setHeader('Content-Type', thumbContentType);
     res.send(buffer);
   } catch (err) {
     next(err);
