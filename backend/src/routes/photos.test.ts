@@ -1,19 +1,51 @@
-jest.mock('../services/r2', () => ({ getPresignedPutUrl: jest.fn() }));
+jest.mock('../services/r2', () => ({
+  getPresignedPutUrl: jest.fn(),
+  getObjectBuffer: jest.fn(),
+  deleteObject: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('../services/thumbnail', () => ({ generateThumbnail: jest.fn().mockResolvedValue({ key: 'thumb_key', width: 800, height: 600 }) }));
 jest.mock('../services/apns', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
 
 import request from 'supertest';
+import { eq } from 'drizzle-orm';
 import { pool } from '../db';
-import { createTestUser, createTestAlbum, createPresignToken, authHeader } from '../../tests/setup';
+import { db } from '../db';
+import { photos, albumPhotos, albums } from '../db/schema';
+import { createTestUser, createTestAlbum, createPresignToken, authHeader, createTestAlbumMember } from '../../tests/setup';
 const app = require('../app');
 
 import { getPresignedPutUrl } from '../services/r2';
+import { getObjectBuffer } from '../services/r2';
+import { deleteObject } from '../services/r2';
+const mockGetObjectBuffer = getObjectBuffer as jest.Mock;
+const mockDeleteObject = deleteObject as jest.Mock;
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/apns';
 
 const mockPresign = getPresignedPutUrl as jest.Mock;
 const mockGenThumb = generateThumbnail as jest.Mock;
 const mockSendPush = sendPush as jest.Mock;
+
+async function insertPhoto(
+  userId: string,
+  albumId: string,
+  opts: { takenAt?: string; thumbnailKey?: string } = {}
+) {
+  const [p] = await db
+    .insert(photos)
+    .values({
+      albumId,
+      uploadedBy: userId,
+      r2Key: `photos/${Math.random()}.webp`,
+      thumbnailKey: opts.thumbnailKey ?? `thumbnails/${Math.random()}.webp`,
+      takenAt: new Date(opts.takenAt ?? '2026-05-21T10:00:00Z'),
+      mediaType: 'photo',
+      source: 'upload',
+    })
+    .returning();
+  await db.insert(albumPhotos).values({ photoId: p.id, albumId });
+  return p;
+}
 
 describe('POST /photos/presign', () => {
   let user: Awaited<ReturnType<typeof createTestUser>>;
@@ -560,5 +592,159 @@ describe('POST /photos — multi-album', () => {
         });
       expect(res.status).toBe(201);
     }
+  });
+});
+
+describe('GET /photos/:id/full', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+  let album: Awaited<ReturnType<typeof createTestAlbum>>;
+  let headers: ReturnType<typeof authHeader>;
+  let photoId: string;
+
+  beforeEach(async () => {
+    user = await createTestUser({ apple_sub: 'full-user' });
+    album = await createTestAlbum(user.id);
+    headers = authHeader(user);
+    mockGenThumb.mockResolvedValue({ key: 'thumbnails/t.webp', width: 800, height: 600 });
+    mockSendPush.mockResolvedValue(undefined);
+    await createPresignToken(user.id, 'photos/img.webp');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({ album_ids: [album.id], r2_key: 'photos/img.webp', taken_at: '2024-06-01T10:00:00Z' });
+    photoId = res.body.id;
+    mockGetObjectBuffer.mockResolvedValue(Buffer.from('fake-image-bytes'));
+  });
+
+  it('returns 200 and streams the r2 object for a member', async () => {
+    const res = await request(app).get(`/photos/${photoId}/full`).set(headers);
+    expect(res.status).toBe(200);
+    expect(mockGetObjectBuffer).toHaveBeenCalledWith('photos/img.webp');
+  });
+
+  it('returns 403 when user is not a member of any album containing the photo', async () => {
+    const other = await createTestUser({ apple_sub: 'full-other' });
+    const res = await request(app).get(`/photos/${photoId}/full`).set(authHeader(other));
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for a photo id that does not exist', async () => {
+    const res = await request(app)
+      .get('/photos/00000000-0000-0000-0000-000000000099/full')
+      .set(headers);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 401 when no auth token is provided', async () => {
+    const res = await request(app).get(`/photos/${photoId}/full`);
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /photos/:id/thumb', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+  let album: Awaited<ReturnType<typeof createTestAlbum>>;
+  let headers: ReturnType<typeof authHeader>;
+  let photoId: string;
+
+  beforeEach(async () => {
+    user = await createTestUser({ apple_sub: 'thumb-user' });
+    album = await createTestAlbum(user.id);
+    headers = authHeader(user);
+    mockGenThumb.mockResolvedValue({ key: 'thumbnails/t.webp', width: 800, height: 600 });
+    mockSendPush.mockResolvedValue(undefined);
+    await createPresignToken(user.id, 'photos/img.webp');
+    const res = await request(app)
+      .post('/photos')
+      .set(headers)
+      .send({ album_ids: [album.id], r2_key: 'photos/img.webp', taken_at: '2024-06-01T10:00:00Z' });
+    photoId = res.body.id;
+    mockGetObjectBuffer.mockResolvedValue(Buffer.from('fake-thumb-bytes'));
+  });
+
+  it('returns 200 and streams the thumbnail r2 object for a member', async () => {
+    const res = await request(app).get(`/photos/${photoId}/thumb`).set(headers);
+    expect(res.status).toBe(200);
+    expect(mockGetObjectBuffer).toHaveBeenCalledWith('thumbnails/t.webp');
+  });
+
+  it('returns 403 when user is not a member', async () => {
+    const other = await createTestUser({ apple_sub: 'thumb-other' });
+    const res = await request(app).get(`/photos/${photoId}/thumb`).set(authHeader(other));
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for a photo id that does not exist', async () => {
+    const res = await request(app)
+      .get('/photos/00000000-0000-0000-0000-000000000099/thumb')
+      .set(headers);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 401 when no auth token is provided', async () => {
+    const res = await request(app).get(`/photos/${photoId}/thumb`);
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('DELETE /photos/:id', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+  let album: Awaited<ReturnType<typeof createTestAlbum>>;
+  let headers: ReturnType<typeof authHeader>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    album = await createTestAlbum(user.id);
+    headers = authHeader(user);
+    mockDeleteObject.mockClear();
+    mockDeleteObject.mockResolvedValue(undefined);
+  });
+
+  it('returns 204 and deletes R2 objects', async () => {
+    const photo = await insertPhoto(user.id, album.id, {
+      thumbnailKey: 'thumbnails/thumb.webp',
+    });
+
+    const res = await request(app).delete(`/photos/${photo.id}`).set(headers);
+
+    expect(res.status).toBe(204);
+    expect(mockDeleteObject).toHaveBeenCalledWith(photo.r2Key);
+    expect(mockDeleteObject).toHaveBeenCalledWith('thumbnails/thumb.webp');
+  });
+
+  it('returns 403 when user is not the uploader', async () => {
+    const other = await createTestUser({ apple_sub: 'other-delete' });
+    await createTestAlbumMember(album.id, other.id);
+    const photo = await insertPhoto(user.id, album.id);
+
+    const res = await request(app)
+      .delete(`/photos/${photo.id}`)
+      .set(authHeader(other));
+
+    expect(res.status).toBe(403);
+    expect(mockDeleteObject).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when photo does not exist', async () => {
+    const fakeId = '00000000-0000-0000-0000-000000000001';
+    const res = await request(app).delete(`/photos/${fakeId}`).set(headers);
+    expect(res.status).toBe(404);
+  });
+
+  it('clears albums.cover_photo_id when deleted photo is the album cover', async () => {
+    const photo = await insertPhoto(user.id, album.id);
+    await db
+      .update(albums)
+      .set({ coverPhotoId: photo.id })
+      .where(eq(albums.id, album.id));
+
+    const res = await request(app).delete(`/photos/${photo.id}`).set(headers);
+    expect(res.status).toBe(204);
+
+    const [updated] = await db
+      .select({ coverPhotoId: albums.coverPhotoId })
+      .from(albums)
+      .where(eq(albums.id, album.id));
+    expect(updated.coverPhotoId).toBeNull();
   });
 });

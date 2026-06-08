@@ -2,8 +2,8 @@ import express, { Request, Response, NextFunction } from 'express';
 import { and, eq, isNotNull, ne, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
-import { users, albumMembers, photos, presignTokens, albumPhotos } from '../db/schema';
-import { getPresignedPutUrl, getObjectBuffer } from '../services/r2';
+import { users, albumMembers, photos, presignTokens, albumPhotos, albums } from '../db/schema';
+import { getPresignedPutUrl, getObjectBuffer, deleteObject } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/apns';
 import { isValidUUID, isValidDate } from '../lib/validation';
@@ -300,6 +300,38 @@ router.get('/:id/thumb', async (req: Request, res: Response, next: NextFunction)
     const thumbContentType = thumbExt === 'jpg' ? 'image/jpeg' : 'image/webp';
     res.setHeader('Content-Type', thumbContentType);
     res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const photoId = req.params.id as string;
+    if (!isValidUUID(photoId)) return res.status(404).json({ error: 'Not found' });
+
+    const [photo] = await db
+      .select()
+      .from(photos)
+      .where(eq(photos.id, photoId))
+      .limit(1);
+    if (!photo) return res.status(404).json({ error: 'Not found' });
+    if (photo.uploadedBy !== req.user!.id) return res.status(403).json({ error: 'Forbidden' });
+
+    // Clear album cover reference before deleting — avoids FK orphan
+    await db
+      .update(albums)
+      .set({ coverPhotoId: null })
+      .where(eq(albums.coverPhotoId, photoId));
+
+    // Delete DB record — cascades album_photos and reactions
+    await db.delete(photos).where(eq(photos.id, photoId));
+
+    // Delete R2 objects after DB delete succeeds
+    await deleteObject(photo.r2Key);
+    if (photo.thumbnailKey) await deleteObject(photo.thumbnailKey);
+
+    return res.status(204).send();
   } catch (err) {
     next(err);
   }
