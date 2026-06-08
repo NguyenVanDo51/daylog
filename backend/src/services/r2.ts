@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const r2 = new S3Client({
@@ -46,4 +46,8 @@ export async function putObject(
   await r2.send(
     new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType })
   );
+}
+
+export async function deleteObject(key: string): Promise<void> {
+  await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
