@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, StatusBar,
-  useWindowDimensions, ActivityIndicator,
+  useWindowDimensions, ActivityIndicator, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -155,6 +155,56 @@ export default function StoryScreen() {
           </TouchableOpacity>
         </View>
 
+        {menuOpen && (
+          <TouchableOpacity
+            style={styles.menuBackdrop}
+            activeOpacity={1}
+            onPress={() => setMenuOpen(false)}
+            testID="story-menu-backdrop"
+          >
+            <View style={styles.menuDropdown} testID="story-menu-dropdown">
+              <TouchableOpacity
+                style={styles.menuItem}
+                testID="story-menu-edit"
+                onPress={() => {
+                  setMenuOpen(false);
+                  router.push(`/story/${albumId}/${date}/manage` as any);
+                }}
+              >
+                <Ionicons name="create-outline" size={16} color={colors.white} />
+                <Text style={styles.menuItemText}>Sửa ghi chú</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.menuItem}
+                testID="story-menu-export"
+                onPress={() => {
+                  setMenuOpen(false);
+                  exportStory();
+                }}
+                disabled={exporting}
+              >
+                {exporting
+                  ? <ActivityIndicator color={colors.white} size="small" />
+                  : <Ionicons name="arrow-down-circle-outline" size={16} color={colors.white} />}
+                <Text style={styles.menuItemText}>Lưu về máy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.menuItem, styles.menuItemDanger]}
+                testID="story-menu-delete"
+                onPress={() => {
+                  setMenuOpen(false);
+                  Alert.alert('Xoá ảnh', 'Tính năng này sẽ có sớm.');
+                }}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ff6b6b" />
+                <Text style={[styles.menuItemText, { color: '#ff6b6b' }]}>Xoá ảnh</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.tapAreas}>
           <TouchableOpacity style={styles.tapLeft} onPress={goPrev} testID="story-prev" />
           <TouchableOpacity style={styles.tapRight} onPress={goNext} testID="story-next" />
@@ -179,6 +229,17 @@ const styles = StyleSheet.create({
   tapAreas:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
   tapLeft:    { flex: 1 },
   tapRight:   { flex: 1 },
+  menuBackdrop:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
+  menuDropdown:   { position: 'absolute', top: 48, right: spacing.lg,
+                    backgroundColor: 'rgba(20,20,20,0.92)', borderRadius: 12,
+                    overflow: 'hidden', minWidth: 160,
+                    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  menuItem:       { flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+                    paddingVertical: 12, paddingHorizontal: spacing.lg,
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: 'rgba(255,255,255,0.1)' },
+  menuItemDanger: { borderBottomWidth: 0 },
+  menuItemText:   { ...typography.body, color: colors.white, fontSize: 13 },
 });
 
 const vlog = StyleSheet.create({

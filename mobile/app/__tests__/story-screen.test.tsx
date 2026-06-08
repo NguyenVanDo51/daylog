@@ -93,4 +93,32 @@ describe('StoryScreen navigation', () => {
     // route param date is '2026-05-01', chip should show '01.05.2026'
     expect(getByTestId('story-date-chip').props.children).toBe('01.05.2026');
   });
+
+  it('menu is hidden by default', () => {
+    const { queryByTestId } = render(<StoryScreen />);
+    expect(queryByTestId('story-menu-dropdown')).toBeNull();
+  });
+
+  it('menu opens when menu button is pressed', () => {
+    const { getByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-menu-btn'));
+    expect(getByTestId('story-menu-dropdown')).toBeTruthy();
+  });
+
+  it('Sửa ghi chú navigates to manage screen', () => {
+    const { getByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-menu-btn'));
+    fireEvent.press(getByTestId('story-menu-edit'));
+    expect(router.push).toHaveBeenCalledWith('/story/test-album/2026-05-01/manage');
+  });
+
+  it('Lưu về máy calls exportStory', () => {
+    const exportStoryMock = jest.fn();
+    const { useStoryExport } = require('@/hooks/useStoryExport');
+    useStoryExport.mockReturnValue({ exporting: false, exportStory: exportStoryMock });
+    const { getByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-menu-btn'));
+    fireEvent.press(getByTestId('story-menu-export'));
+    expect(exportStoryMock).toHaveBeenCalledTimes(1);
+  });
 });
