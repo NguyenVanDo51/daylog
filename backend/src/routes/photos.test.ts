@@ -748,3 +748,74 @@ describe('DELETE /photos/:id', () => {
     expect(updated.coverPhotoId).toBeNull();
   });
 });
+
+describe('PATCH /photos/:id', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+  let album: Awaited<ReturnType<typeof createTestAlbum>>;
+  let headers: ReturnType<typeof authHeader>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    album = await createTestAlbum(user.id);
+    headers = authHeader(user);
+  });
+
+  it('updates caption and returns the photo', async () => {
+    const photo = await insertPhoto(user.id, album.id);
+
+    const res = await request(app)
+      .patch(`/photos/${photo.id}`)
+      .set(headers)
+      .send({ caption: 'Bữa sáng gia đình' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(photo.id);
+    expect(res.body.caption).toBe('Bữa sáng gia đình');
+  });
+
+  it('normalises empty string caption to null', async () => {
+    const photo = await insertPhoto(user.id, album.id);
+
+    const res = await request(app)
+      .patch(`/photos/${photo.id}`)
+      .set(headers)
+      .send({ caption: '' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.caption).toBeNull();
+  });
+
+  it('sets caption to null when caption is null', async () => {
+    const photo = await insertPhoto(user.id, album.id);
+
+    const res = await request(app)
+      .patch(`/photos/${photo.id}`)
+      .set(headers)
+      .send({ caption: null });
+
+    expect(res.status).toBe(200);
+    expect(res.body.caption).toBeNull();
+  });
+
+  it('returns 403 when user is not the uploader', async () => {
+    const other = await createTestUser({ apple_sub: 'other-patch' });
+    await createTestAlbumMember(album.id, other.id);
+    const photo = await insertPhoto(user.id, album.id);
+
+    const res = await request(app)
+      .patch(`/photos/${photo.id}`)
+      .set(authHeader(other))
+      .send({ caption: 'should fail' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 when photo does not exist', async () => {
+    const fakeId = '00000000-0000-0000-0000-000000000002';
+    const res = await request(app)
+      .patch(`/photos/${fakeId}`)
+      .set(headers)
+      .send({ caption: 'test' });
+    expect(res.status).toBe(404);
+  });
+});

@@ -305,6 +305,34 @@ router.get('/:id/thumb', async (req: Request, res: Response, next: NextFunction)
   }
 });
 
+router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const photoId = req.params.id as string;
+    if (!isValidUUID(photoId)) return res.status(404).json({ error: 'Not found' });
+
+    const [photo] = await db
+      .select()
+      .from(photos)
+      .where(eq(photos.id, photoId))
+      .limit(1);
+    if (!photo) return res.status(404).json({ error: 'Not found' });
+    if (photo.uploadedBy !== req.user!.id) return res.status(403).json({ error: 'Forbidden' });
+
+    const { caption } = req.body ?? {};
+    const newCaption = (typeof caption === 'string' && caption.length > 0) ? caption : null;
+
+    const [updated] = await db
+      .update(photos)
+      .set({ caption: newCaption })
+      .where(eq(photos.id, photoId))
+      .returning();
+
+    return res.json(toSnakePhoto(updated));
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const photoId = req.params.id as string;
