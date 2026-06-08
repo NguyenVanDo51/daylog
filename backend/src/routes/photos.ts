@@ -3,7 +3,7 @@ import { and, eq, isNotNull, ne, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { users, albumMembers, photos, presignTokens, albumPhotos } from '../db/schema';
-import { getPresignedPutUrl } from '../services/r2';
+import { getPresignedPutUrl, getObjectBuffer } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/apns';
 import { isValidUUID, isValidDate } from '../lib/validation';
@@ -231,4 +231,43 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+router.get('/:id/full', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const photoId = req.params.id as string;
+    if (!isValidUUID(photoId)) return res.status(404).json({ error: 'Not found' });
+
+    const [photo] = await db
+      .select({ r2Key: photos.r2Key, mediaType: photos.mediaType })
+      .from(photos)
+      .where(eq(photos.id, photoId))
+      .limit(1);
+    if (!photo) return res.status(404).json({ error: 'Not found' });
+
+    const [member] = await db
+      .select({ x: sql<number>`1` })
+      .from(albumPhotos)
+      .innerJoin(
+        albumMembers,
+        and(
+          eq(albumMembers.albumId, albumPhotos.albumId),
+          eq(albumMembers.userId, req.user!.id),
+        ),
+      )
+      .where(eq(albumPhotos.photoId, photoId))
+      .limit(1);
+    if (!member) return res.status(403).json({ error: 'Forbidden' });
+
+    const ext = photo.r2Key.split('.').pop()?.toLowerCase();
+    const contentType =
+      ext === 'mp4' ? 'video/mp4' : ext === 'jpg' ? 'image/jpeg' : 'image/webp';
+
+    const buffer = await getObjectBuffer(photo.r2Key);
+    res.setHeader('Content-Type', contentType);
+    res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export = router;
+
