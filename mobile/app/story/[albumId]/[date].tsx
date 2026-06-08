@@ -13,6 +13,7 @@ import { runOnJS } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useDayPhotos, DayPhoto } from '@/hooks/useDayPhotos';
 import { useAlbumDays } from '@/hooks/useAlbumDays';
+import { useStoryExport } from '@/hooks/useStoryExport';
 import { colors, spacing, typography } from '@/constants/theme';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -120,6 +121,8 @@ export default function StoryScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoProgress, setPhotoProgress] = useState(0);
 
+  const { exporting, exportStory } = useStoryExport(photos ?? [], date);
+
   const goNext = useCallback(() => {
     if (!photos) return;
     if (currentIndex < photos.length - 1) {
@@ -180,7 +183,13 @@ export default function StoryScreen() {
             <Text style={styles.dateText}>{dateLabel}</Text>
           </View>
           <View style={styles.topActions}>
-            <View style={{ width: 32 }} />
+            {exporting ? (
+              <ActivityIndicator color={colors.white} size="small" style={{ width: 32 }} />
+            ) : (
+              <TouchableOpacity onPress={exportStory} testID="story-export" disabled={exporting}>
+                <Ionicons name="arrow-down-circle-outline" size={26} color={colors.white} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={() => router.back()} testID="story-close">
               <Ionicons name="close" size={26} color={colors.white} />
             </TouchableOpacity>
