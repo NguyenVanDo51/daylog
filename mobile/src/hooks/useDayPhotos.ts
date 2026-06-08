@@ -7,6 +7,7 @@ export interface DayPhoto {
   duration_ms: number | null;
   taken_at: string;
   caption: string | null;
+  uploaded_by: string;
 }
 
 export function useDayPhotos(albumId: string | null, date: string | null) {

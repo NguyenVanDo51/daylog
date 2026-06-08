@@ -47,4 +47,14 @@ export const en = {
     upload_one: 'Upload',
     upload_n:   'Upload {{n}} photos',
   },
+  manage: {
+    title:                'Manage day {{date}}',
+    note_ph:              'Add a note...',
+    delete_confirm_title: 'Delete photo?',
+    delete_confirm_body:  'This photo will be permanently deleted.',
+    delete:               'Delete',
+    cancel:               'Cancel',
+    save_error:           'Could not save note',
+    delete_error:         'Could not delete photo',
+  },
 };

@@ -137,4 +137,14 @@ export const vi = {
     upload_one: 'Tải lên',
     upload_n:   'Tải lên {{n}} ảnh',
   },
+  manage: {
+    title:                'Quản lý ngày {{date}}',
+    note_ph:              'Thêm ghi chú...',
+    delete_confirm_title: 'Xoá ảnh?',
+    delete_confirm_body:  'Ảnh sẽ bị xoá vĩnh viễn.',
+    delete:               'Xoá',
+    cancel:               'Huỷ',
+    save_error:           'Không thể lưu ghi chú',
+    delete_error:         'Không thể xoá ảnh',
+  },
 };
