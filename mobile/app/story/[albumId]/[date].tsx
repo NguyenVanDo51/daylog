@@ -87,7 +87,6 @@ function VlogOverlay({
       pointerEvents="none"
     >
       <Text style={vlog.dayHero} testID="story-day-hero">{dayLabel}</Text>
-      <Text style={vlog.date} testID="vlog-date">{dateStr}</Text>
       <Text style={vlog.time} testID="vlog-time">▶ {timeStr}</Text>
       {photo.caption?.trim() ? <Text style={vlog.caption} testID="vlog-caption">{photo.caption}</Text> : null}
       <View style={vlog.dots}>
@@ -301,7 +300,7 @@ const vlog = StyleSheet.create({
   },
   time: {
     fontFamily: 'Courier New',
-    fontSize: 11,
+    fontSize: 18,
     color: '#ffcc44',
     fontWeight: '700',
     letterSpacing: 1,
