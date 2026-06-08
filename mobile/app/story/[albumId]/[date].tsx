@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, StatusBar,
-  useWindowDimensions, ActivityIndicator, Alert,
+  ActivityIndicator, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -253,7 +253,8 @@ const styles = StyleSheet.create({
                 alignItems: 'center', justifyContent: 'center' },
   dateChip:   { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 7,
                 paddingVertical: 3, paddingHorizontal: 8, ...typography.caption,
-                color: 'rgba(255,255,255,0.75)', fontFamily: 'Courier New', letterSpacing: 0.5 },
+                color: 'rgba(255,255,255,0.75)', fontFamily: 'Courier New', letterSpacing: 0.5,
+                textAlign: 'center' },
   menuDots:   { color: colors.white, fontSize: 12, letterSpacing: 1, lineHeight: 14 },
   tapAreas:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
   tapLeft:    { flex: 1 },

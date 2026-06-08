@@ -151,4 +151,13 @@ describe('StoryScreen navigation', () => {
     // only one active dot
     expect(queryByTestId('story-dot-active')).not.toBeNull();
   });
+
+  it('Xoá ảnh shows alert placeholder', () => {
+    const alertSpy = jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(() => {});
+    const { getByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-menu-btn'));
+    fireEvent.press(getByTestId('story-menu-delete'));
+    expect(alertSpy).toHaveBeenCalledWith('Xoá ảnh', expect.any(String));
+    alertSpy.mockRestore();
+  });
 });
