@@ -152,6 +152,49 @@ describe('StoryScreen navigation', () => {
     expect(queryByTestId('story-dot-active')).not.toBeNull();
   });
 
+  it('renders a centre pause button', () => {
+    const { getByTestId } = render(<StoryScreen />);
+    expect(getByTestId('story-pause-btn')).toBeTruthy();
+  });
+
+  it('pause icon is hidden by default', () => {
+    const { queryByTestId } = render(<StoryScreen />);
+    expect(queryByTestId('story-pause-icon')).toBeNull();
+  });
+
+  it('tapping centre shows the pause icon', () => {
+    const { getByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-pause-btn'));
+    expect(getByTestId('story-pause-icon')).toBeTruthy();
+  });
+
+  it('tapping centre twice resumes — hides pause icon', () => {
+    const { getByTestId, queryByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-pause-btn'));
+    fireEvent.press(getByTestId('story-pause-btn'));
+    expect(queryByTestId('story-pause-icon')).toBeNull();
+  });
+
+  it('tapping next while paused resumes playback', () => {
+    const { getByTestId, queryByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-pause-btn'));
+    fireEvent.press(getByTestId('story-next'));
+    expect(queryByTestId('story-pause-icon')).toBeNull();
+  });
+
+  it('tapping prev while paused resumes playback', () => {
+    const { getByTestId, queryByTestId } = render(<StoryScreen />);
+    fireEvent.press(getByTestId('story-next')); // go to index 1 first
+    fireEvent.press(getByTestId('story-pause-btn')); // pause at index 1
+    fireEvent.press(getByTestId('story-prev'));
+    expect(queryByTestId('story-pause-icon')).toBeNull();
+  });
+
+  it('renders progress line', () => {
+    const { getByTestId } = render(<StoryScreen />);
+    expect(getByTestId('story-progress-line')).toBeTruthy();
+  });
+
   it('Xoá ảnh shows alert placeholder', () => {
     const alertSpy = jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(() => {});
     const { getByTestId } = render(<StoryScreen />);

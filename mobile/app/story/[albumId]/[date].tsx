@@ -114,12 +114,14 @@ function VlogOverlay({
   currentIndex,
   total,
   bottomInset = 0,
+  isPaused = false,
 }: {
   photo: DayPhoto;
   dayLabel: string;
   currentIndex: number;
   total: number;
   bottomInset?: number;
+  isPaused?: boolean;
 }) {
   const dt = new Date(photo.taken_at);
   const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -132,7 +134,7 @@ function VlogOverlay({
       pointerEvents="none"
     >
       <Text style={vlog.dayHero} testID="story-day-hero">{dayLabel}</Text>
-      <Text style={vlog.time} testID="vlog-time">▶ {timeStr}</Text>
+      <Text style={vlog.time} testID="vlog-time">{isPaused ? '⏸' : '▶'} {timeStr}</Text>
       {photo.caption?.trim() ? <Text style={vlog.caption} testID="vlog-caption">{photo.caption}</Text> : null}
       <View style={vlog.dots}>
         {Array.from({ length: total }).map((_, i) => (
@@ -156,6 +158,8 @@ export default function StoryScreen() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [photoProgress, setPhotoProgress] = useState(0);
 
   const { exporting, exportStory } = useStoryExport(photos ?? [], date);
 
@@ -166,13 +170,19 @@ export default function StoryScreen() {
     } else {
       setCurrentIndex(0);
     }
+    setIsPaused(false);
+    setPhotoProgress(0);
   }, [photos, currentIndex]);
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
+      setIsPaused(false);
+      setPhotoProgress(0);
     }
   }, [currentIndex]);
+
+  const togglePause = useCallback(() => setIsPaused((p) => !p), []);
 
   const swipeGesture = Gesture.Pan()
     .activeOffsetX([-30, 30])
@@ -207,9 +217,19 @@ export default function StoryScreen() {
         <StatusBar hidden />
 
         {current.media_type === 'video' ? (
-          <VideoItem photo={current} onEnd={goNext} />
+          <VideoItem
+            photo={current}
+            onEnd={goNext}
+            isPaused={isPaused}
+            onProgress={setPhotoProgress}
+          />
         ) : (
-          <PhotoItem photo={current} onEnd={goNext} />
+          <PhotoItem
+            photo={current}
+            onEnd={goNext}
+            isPaused={isPaused}
+            onProgress={setPhotoProgress}
+          />
         )}
 
         <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
@@ -274,7 +294,24 @@ export default function StoryScreen() {
 
         <View style={styles.tapAreas}>
           <TouchableOpacity style={styles.tapLeft} onPress={goPrev} testID="story-prev" />
+          <TouchableOpacity style={styles.tapCenter} onPress={togglePause} testID="story-pause-btn" />
           <TouchableOpacity style={styles.tapRight} onPress={goNext} testID="story-next" />
+        </View>
+
+        {isPaused && (
+          <View style={styles.pauseIcon} testID="story-pause-icon" pointerEvents="none">
+            <Text style={styles.pauseIconText}>⏸</Text>
+          </View>
+        )}
+
+        <View style={styles.progressLine} pointerEvents="none" testID="story-progress-line">
+          <View
+            style={[
+              styles.progressFill,
+              isPaused ? styles.progressFillPaused : styles.progressFillPlaying,
+              { width: `${photoProgress * 100}%` },
+            ]}
+          />
         </View>
 
         <VlogOverlay
@@ -283,6 +320,7 @@ export default function StoryScreen() {
           currentIndex={currentIndex}
           total={photos.length}
           bottomInset={insets.bottom}
+          isPaused={isPaused}
         />
       </View>
     </GestureDetector>
@@ -301,8 +339,28 @@ const styles = StyleSheet.create({
                 textAlign: 'center' },
   menuDots:   { color: colors.white, fontSize: 12, letterSpacing: 1, lineHeight: 14 },
   tapAreas:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
-  tapLeft:    { flex: 1 },
-  tapRight:   { flex: 1 },
+  tapLeft:    { flex: 3 },
+  tapCenter:  { flex: 4 },
+  tapRight:   { flex: 3 },
+  pauseIcon: {
+    position: 'absolute',
+    top: '50%', left: '50%',
+    width: 52, height: 52,
+    marginTop: -26, marginLeft: -26,
+    borderRadius: 26,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center', justifyContent: 'center',
+    zIndex: 15,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)',
+  },
+  pauseIconText: { fontSize: 20, color: colors.white },
+  progressLine: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    height: 3, backgroundColor: 'rgba(255,255,255,0.12)', zIndex: 20,
+  },
+  progressFill:        { height: '100%', borderRadius: 2 },
+  progressFillPlaying: { backgroundColor: 'rgba(255,255,255,0.75)' },
+  progressFillPaused:  { backgroundColor: 'rgba(255,200,68,0.85)' },
   menuBackdrop:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
   menuDropdown:   { position: 'absolute', top: 48, right: spacing.lg,
                     backgroundColor: 'rgba(20,20,20,0.92)', borderRadius: 12,
