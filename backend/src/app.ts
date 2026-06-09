@@ -28,6 +28,12 @@ app.use('/auth', authLimiter);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/debug-sentry', (_req, _res) => {
+    throw new Error('Sentry debug — intentional test error');
+  });
+}
+
 app.use('/auth', authRoutes);
 app.use('/albums', albumsRoutes);
 app.use('/photos', photosRoutes);
