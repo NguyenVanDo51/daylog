@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
@@ -52,5 +53,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 
   req.user = found[0];
+  Sentry.setUser({ id: found[0].id });
   next();
 }

@@ -1,3 +1,8 @@
+import * as Sentry from '@sentry/node';
+jest.mock('@sentry/node', () => ({
+  setUser: jest.fn(),
+}));
+
 import express from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
@@ -69,6 +74,18 @@ describe('requireAuth middleware', () => {
       .set('Authorization', `Bearer ${ghostToken}`);
     expect(res.status).toBe(401);
     expect(res.body).toEqual({ error: 'Unauthorized' });
+  });
+
+  it('calls Sentry.setUser with the authenticated user id', async () => {
+    const user = await createTestUser({ display_name: 'Sentry Test User' });
+    const secret = process.env.JWT_SECRET || 'test-secret';
+    const token = jwt.sign({ userId: user.id }, secret);
+
+    await request(buildApp())
+      .get('/probe')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(Sentry.setUser).toHaveBeenCalledWith({ id: user.id });
   });
 
   it('calls next() and exposes the user on req when given a valid token for an existing user', async () => {
