@@ -11,7 +11,7 @@ export interface TestUser {
   google_sub: string | null;
   display_name: string;
   avatar_url: string | null;
-  apns_token: string | null;
+  push_token: string | null;
   created_at: Date | null;
 }
 
@@ -32,7 +32,7 @@ function toSnakeUser(u: typeof users.$inferSelect): TestUser {
     google_sub: u.googleSub,
     display_name: u.displayName,
     avatar_url: u.avatarUrl,
-    apns_token: u.apnsToken,
+    push_token: u.pushToken,
     created_at: u.createdAt,
   };
 }
