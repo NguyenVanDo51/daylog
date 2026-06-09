@@ -72,5 +72,12 @@
       "tag": "0009_unique_private_album",
       "breakpoints": true
     }
+    ,{
+      "idx": 10,
+      "version": "7",
+      "when": 1749427200000,
+      "tag": "0012_rename_push_token",
+      "breakpoints": true
+    }
   ]
 }
