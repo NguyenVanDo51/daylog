@@ -23,10 +23,11 @@ export async function submitWaitlist(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.trim().toLowerCase() }),
     })
-  } catch {
+  } catch (error) {
+    console.error('Error submitting waitlist:', error)
     return { success: false, error: 'server_error' }
   }
-
+  console.log('Response status:', res.status)
   if (res.status === 201) return { success: true }
   if (res.status === 409) return { success: false, error: 'already_registered' }
   if (res.status === 400) return { success: false, error: 'invalid_email' }

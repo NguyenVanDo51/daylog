@@ -55,7 +55,7 @@ services:
       postgres:
         condition: service_healthy
     profiles:
-      - migrate                # chỉ chạy khi gọi: docker compose --profile migrate run migrate
+      - migrate                # Only run when: docker compose --profile migrate run migrate
 
 volumes:
-  pgdata:
+  pgdata: # Declare volumn: /var/lib/postgresql/data 
