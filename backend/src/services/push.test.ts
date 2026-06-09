@@ -21,7 +21,7 @@ jest.mock('../db', () => {
   return { db: { update: mockUpdate }, __mockUpdate: mockUpdate, __mockWhere: mockWhere };
 });
 
-jest.mock('../db/schema', () => ({ users: {} }));
+jest.mock('../db/schema', () => ({ users: { pushToken: 'pushToken' } }));
 jest.mock('drizzle-orm', () => ({ eq: jest.fn() }));
 
 type ExpoMock = {
@@ -88,8 +88,10 @@ describe('services/push sendPush', () => {
 
     await sendPush(['ExponentPushToken[stale]'], 'T', 'B');
 
+    const { eq } = require('drizzle-orm') as { eq: jest.Mock };
     expect(dbMock.__mockUpdate).toHaveBeenCalled();
     expect(dbMock.__mockWhere).toHaveBeenCalled();
+    expect(eq).toHaveBeenCalledWith(expect.anything(), 'ExponentPushToken[stale]');
   });
 
   it('does not update DB when ticket status is ok', async () => {

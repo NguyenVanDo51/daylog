@@ -18,7 +18,12 @@ export async function sendPush(
   const chunks = expo.chunkPushNotifications(messages);
 
   for (const chunk of chunks) {
-    const tickets = await expo.sendPushNotificationsAsync(chunk);
+    let tickets: Awaited<ReturnType<typeof expo.sendPushNotificationsAsync>>;
+    try {
+      tickets = await expo.sendPushNotificationsAsync(chunk);
+    } catch {
+      continue;
+    }
     for (let i = 0; i < tickets.length; i++) {
       const ticket = tickets[i];
       if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
