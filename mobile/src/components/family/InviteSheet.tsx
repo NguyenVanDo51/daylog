@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { SheetModal } from '@/components/ui/SheetModal';
 import { api } from '@/lib/api';
 import { useAlbumStore } from '@/stores/albumStore';
-import { colors, spacing, typography } from '@/constants/theme';
+import { colors, fonts, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { success } from '@/lib/haptics';
 
@@ -64,6 +64,6 @@ const styles = StyleSheet.create({
   heading:   { ...typography.heading, color: colors.ink, marginBottom: spacing.md },
   linkCard:  { gap: 4 },
   linkLabel: { ...typography.caption },
-  linkValue: { fontFamily: 'Fredoka_500Medium', fontSize: 14, color: colors.inkSoft },
-  expires:   { fontFamily: 'Caveat_500Medium', fontSize: 14, color: colors.inkMuted, textAlign: 'center', marginTop: spacing.sm },
+  linkValue: { fontFamily: fonts.medium, fontSize: 14, color: colors.inkSoft },
+  expires:   { fontFamily: fonts.medium, fontSize: 14, color: colors.inkMuted, textAlign: 'center', marginTop: spacing.sm },
 });

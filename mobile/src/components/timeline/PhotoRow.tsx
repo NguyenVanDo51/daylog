@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { PhotoCell } from '@/components/ui/PhotoCell';
+import { API_URL } from '@/constants/api';
 import { spacing } from '@/constants/theme';
 import type { TimelinePhoto } from '@/hooks/useTimeline';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 interface PhotoRowProps {
   photos: TimelinePhoto[];

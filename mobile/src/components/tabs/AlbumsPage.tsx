@@ -12,10 +12,9 @@ import { useAlbums, Album } from '@/hooks/useAlbums';
 import { useAlbumStore } from '@/stores/albumStore';
 import { SettingsSheet } from './SettingsSheet';
 import { api } from '@/lib/api';
-import { colors, spacing, typography } from '@/constants/theme';
+import { API_URL } from '@/constants/api';
+import { colors, fonts, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 interface Props {
   onCameraPress: () => void;
@@ -169,7 +168,7 @@ const styles = StyleSheet.create({
   albumName:       { ...typography.body, color: colors.ink, fontWeight: '600' },
   bottomArea:      { alignItems: 'center', paddingTop: spacing.md },
   cameraPill:      { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.pink, borderRadius: 9999, borderWidth: 2, borderColor: colors.ink, shadowColor: colors.ink, shadowOffset: { width: 3, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4, paddingVertical: spacing.md, paddingHorizontal: spacing['2xl'] },
-  cameraPillText:  { fontFamily: 'Caveat_600SemiBold', fontSize: 18, color: colors.white },
+  cameraPillText:  { fontFamily: fonts.semiBold, fontSize: 18, color: colors.white },
   createBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md },
   createBtnText:   { ...typography.body, color: colors.pink },
   modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },

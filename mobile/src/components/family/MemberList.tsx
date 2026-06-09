@@ -3,7 +3,7 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import type { Member } from '@/hooks/useMembers';
-import { colors, radii, shadows, spacing, typography } from '@/constants/theme';
+import { colors, fonts, radii, shadows, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { formatVnDate, formatVnMonth } from '@/lib/format';
 
@@ -41,5 +41,5 @@ const styles = StyleSheet.create({
   },
   info:   { flex: 1 },
   name:   { ...typography.title, color: colors.ink },
-  joined: { fontFamily: 'Caveat_500Medium', fontSize: 14, color: colors.inkMuted },
+  joined: { fontFamily: fonts.medium, fontSize: 14, color: colors.inkMuted },
 });

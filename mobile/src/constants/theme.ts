@@ -71,16 +71,23 @@ export const shadows = {
   },
 } as const;
 
+export const fonts = {
+  regular:  'Fredoka_400Regular',
+  medium:   'Fredoka_500Medium',
+  semiBold: 'Fredoka_600SemiBold',
+  bold:     'Fredoka_700Bold',
+} as const;
+
 export const typography = {
-  display:     { fontFamily: 'Fredoka_700Bold',     fontSize: 28, color: colors.ink },
-  heading:     { fontFamily: 'Fredoka_600SemiBold', fontSize: 22, color: colors.ink },
-  title:       { fontFamily: 'Fredoka_600SemiBold', fontSize: 18, color: colors.ink },
-  body:        { fontFamily: 'Fredoka_500Medium',   fontSize: 14, color: colors.ink },
-  bodySmall:   { fontFamily: 'Fredoka_500Medium',   fontSize: 12, color: colors.inkSoft },
-  pill:        { fontFamily: 'Fredoka_600SemiBold', fontSize: 11, color: colors.ink, letterSpacing: 0.3 },
-  caption:     { fontFamily: 'Fredoka_500Medium',   fontSize: 10, color: colors.inkMuted },
-  handAccent:  { fontFamily: 'Caveat_600SemiBold',  fontSize: 18, color: colors.pink },
-  handLarge:   { fontFamily: 'Caveat_700Bold',      fontSize: 28, color: colors.pink },
+  display:     { fontFamily: fonts.bold,     fontSize: 28, color: colors.ink },
+  heading:     { fontFamily: fonts.semiBold, fontSize: 22, color: colors.ink },
+  title:       { fontFamily: fonts.semiBold, fontSize: 18, color: colors.ink },
+  body:        { fontFamily: fonts.medium,   fontSize: 14, color: colors.ink },
+  bodySmall:   { fontFamily: fonts.medium,   fontSize: 12, color: colors.inkSoft },
+  pill:        { fontFamily: fonts.semiBold, fontSize: 11, color: colors.ink, letterSpacing: 0.3 },
+  caption:     { fontFamily: fonts.medium,   fontSize: 10, color: colors.inkMuted },
+  handAccent:  { fontFamily: fonts.semiBold, fontSize: 18, color: colors.pink },
+  handLarge:   { fontFamily: fonts.bold,     fontSize: 28, color: colors.pink },
 } as const;
 
 export type ColorKey = keyof typeof colors;

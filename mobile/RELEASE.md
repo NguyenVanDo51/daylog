@@ -9,6 +9,10 @@
 - [ ] Upload an app icon (1024×1024 PNG, no alpha) to App Store Connect
 - [ ] Add at least one screenshot per device size (iPhone 6.7" required)
 - [ ] Fill in App Store listing: name, description, keywords, category, age rating
+- [ ] **Login with Apple** — enable capability:
+  - [developer.apple.com](https://developer.apple.com/account) → Certificates, Identifiers & Profiles → Identifiers → chọn App ID → enable **Sign In with Apple**
+  - App Store Connect → your app → App Information → enable **Sign In with Apple**
+  - Đảm bảo `app.json` có entitlement `com.apple.developer.applesignin` (EAS tự thêm nếu dùng `expo-apple-authentication`)
 
 ---
 

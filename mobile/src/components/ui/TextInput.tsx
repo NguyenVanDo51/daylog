@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput as RNTextInput, Text, StyleSheet, TextInputProps } from 'react-native';
-import { colors, radii, spacing, typography } from '@/constants/theme';
+import { colors, fonts, radii, spacing, typography } from '@/constants/theme';
 
 interface LabeledTextInputProps extends TextInputProps {
   label?: string;
@@ -15,7 +15,7 @@ export function TextInput({ label, style, caveatPlaceholder, ...props }: Labeled
       <RNTextInput
         style={[
           styles.input,
-          caveatPlaceholder && !props.value ? styles.caveatStyle : null,
+          caveatPlaceholder && !props.value ? styles.accentStyle : null,
           focused && styles.focused,
           style,
         ]}
@@ -43,5 +43,5 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   focused:     { borderColor: colors.pink, borderStyle: 'solid' },
-  caveatStyle: { fontFamily: 'Caveat_500Medium', fontSize: 16 },
+  accentStyle: { fontFamily: fonts.medium, fontSize: 16 },
 });

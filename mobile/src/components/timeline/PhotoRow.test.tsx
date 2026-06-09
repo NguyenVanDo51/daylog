@@ -7,6 +7,7 @@ jest.mock('@/lib/haptics', () => ({ tap: jest.fn() }));
 
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { API_URL } from '@/constants/api';
 import { PhotoRow } from '@/components/timeline/PhotoRow';
 import { PhotoCell } from '@/components/ui/PhotoCell';
 import type { TimelinePhoto } from '@/hooks/useTimeline';
@@ -80,7 +81,7 @@ describe('PhotoRow', () => {
     const photos = [makePhoto({ id: 'xyz' })];
     const { UNSAFE_getByType } = render(<PhotoRow photos={photos} />);
     const cell = UNSAFE_getByType(PhotoCell);
-    const expectedBase = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+    const expectedBase = API_URL;
     expect(cell.props.uri).toBe(`${expectedBase}/photos/xyz/thumb`);
   });
 

@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
 import { Video } from 'phosphor-react-native';
+import { API_URL } from '@/constants/api';
 import { colors, spacing, typography, shadows } from '@/constants/theme';
 import { ReactionBadge } from '@/components/ui/ReactionBadge';
 import { ReactionPicker } from '@/components/ui/ReactionPicker';
@@ -11,8 +12,6 @@ import { useReactions, useReact } from '@/hooks/useReactions';
 import { tap } from '@/lib/haptics';
 import { formatVnDate } from '@/lib/format';
 import type { TimelinePhoto } from '@/hooks/useTimeline';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 interface PolaroidCardProps {
   photo: TimelinePhoto;

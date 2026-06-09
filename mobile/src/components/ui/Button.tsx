@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
-import { colors, radii, spacing, shadows, typography } from '@/constants/theme';
+import { colors, fonts, radii, spacing, shadows, typography } from '@/constants/theme';
 import { tap } from '@/lib/haptics';
 
 interface ButtonProps {
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   danger:      { backgroundColor: colors.pinkDeep },
   fullWidth:   { width: '100%' },
   disabled:    { opacity: 0.5 },
-  label:       { ...typography.body, fontFamily: 'Fredoka_600SemiBold', color: colors.white },
+  label:       { ...typography.body, fontFamily: fonts.semiBold, color: colors.white },
   ghostLabel:  { color: colors.ink },
   dangerLabel: { color: colors.white },
 });

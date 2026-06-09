@@ -2,9 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Images, Play } from 'phosphor-react-native';
+import { API_URL } from '@/constants/api';
 import { colors, spacing, typography } from '@/constants/theme';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 interface Props {
   date: string;

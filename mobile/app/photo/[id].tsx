@@ -6,12 +6,11 @@ import { X } from 'phosphor-react-native';
 import { BlurView } from 'expo-blur';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useTimeline } from '@/hooks/useTimeline';
+import { API_URL } from '@/constants/api';
 import { colors, spacing, typography } from '@/constants/theme';
 import { useSharedTransition } from '@/lib/sharedElement';
 import { t } from '@/lib/i18n';
 import { formatVnDate } from '@/lib/format';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export default function PhotoViewer() {
   const params = useLocalSearchParams<{ id: string; srcX?: string; srcY?: string; srcW?: string; srcH?: string }>();

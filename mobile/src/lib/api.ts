@@ -1,9 +1,10 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { API_URL } from '@/constants/api';
 import { useAuthStore } from '@/stores/authStore';
 
 export const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 

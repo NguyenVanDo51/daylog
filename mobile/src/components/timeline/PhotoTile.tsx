@@ -4,13 +4,12 @@ import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Video } from 'phosphor-react-native';
 import { router } from 'expo-router';
+import { API_URL } from '@/constants/api';
 import { colors } from '@/constants/theme';
-import { ReactionPicker } from '@/components/ui/ReactionPicker';
 import { useReactions, useReact } from '@/hooks/useReactions';
+import { TimelinePhoto } from '@/hooks/useTimeline';
 import { tap } from '@/lib/haptics';
-import type { TimelinePhoto } from '@/hooks/useTimeline';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+import { ReactionPicker } from '../ui/ReactionPicker';
 
 interface PhotoTileProps {
   photo: TimelinePhoto;

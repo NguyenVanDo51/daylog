@@ -1,80 +1,70 @@
-# Tab Bar Redesign — Floating Pill
+# Tab Bar — CustomTabBar Component
 
 **Date:** 2026-06-07  
-**Status:** Approved
+**Updated:** 2026-06-09 (reflect actual implementation)  
+**Status:** Component built, not rendered
 
-## Summary
+## Current State
 
-Replace the current flat icon-only tab bar with a floating pill-shaped bar. The active tab fills pink with a hard sticker-shadow; inactive tab is muted text. Uses `Caveat_600SemiBold` (already loaded) for a handwritten diary feel. Two tabs: "Chụp ảnh" (camera) and "Nhật ký" (albums).
+`CustomTabBar` component is fully implemented at `mobile/src/components/tabs/CustomTabBar.tsx` but is **not rendered** in `app/(tabs)/index.tsx`. Navigation between camera and albums is swipe-only via PagerView.
 
-## Component: `CustomTabBar`
+`(tabs)/index.tsx` structure:
+```tsx
+<View style={styles.root}>
+  <PagerView initialPage={1} onPageSelected={...}>
+    <View key="0"><CameraPage onTabPress={goToPage} /></View>
+    <View key="1"><AlbumsPage onCameraPress={() => goToPage(0)} /></View>
+  </PagerView>
+  {/* No CustomTabBar rendered */}
+</View>
+```
+
+## Component Spec (implemented, matches code)
 
 File: `mobile/src/components/tabs/CustomTabBar.tsx`
 
 ### Container
-
 | Property | Value |
 |---|---|
 | Shape | `borderRadius: 9999` (pill) |
 | Background | `colors.white` |
-| Border | `2px solid colors.ink` (`#3D2A1F`) |
-| Shadow | `shadowOffset: {width:3, height:3}`, `shadowColor: colors.ink`, `shadowOpacity: 1`, `shadowRadius: 0`, `elevation: 4` |
-| Horizontal margin | `marginHorizontal: spacing.lg` (16px each side) |
+| Border | `2px solid colors.ink` |
+| Shadow | `shadowOffset: {3,3}`, `shadowColor: colors.ink`, `shadowOpacity: 1`, `shadowRadius: 0` |
+| Horizontal margin | `marginHorizontal: spacing.lg` |
 | Bottom offset | `bottom: insets.bottom + 12` |
-| Position | `absolute`, sits above the screen's bottom edge |
-| Inner padding | `padding: 5` |
-| Gap between tabs | `gap: 4` |
+| Position | `absolute` |
+| Inner padding | `PADDING = 5` |
+| Gap between tabs | `GAP = 4` |
 
-The bar is positioned absolutely over the screen content. Scrollable content (masonry grid) naturally scrolls under the pill — no `paddingBottom` adjustment needed on the PagerView.
-
-### Active tab
-
+### Active tab (sliding pill)
 | Property | Value |
 |---|---|
-| Background | `colors.pink` (`#FF7AA8`) |
-| Shadow | `shadowOffset: {width:2, height:2}`, `shadowColor: colors.pinkDeep`, `shadowOpacity: 1`, `shadowRadius: 0` |
+| Background | `colors.pink` |
+| Shadow | `shadowOffset: {2,2}`, `shadowColor: colors.pinkDeep`, `shadowOpacity: 1`, `shadowRadius: 0` |
 | Text color | `colors.white` |
 | Border radius | `9999` |
 
 ### Inactive tab
-
 | Property | Value |
 |---|---|
 | Background | `transparent` |
-| Text color | `colors.inkMuted` (`#B5A89C`) |
+| Text color | `colors.inkMuted` |
 
 ### Typography
-
 | Property | Value |
 |---|---|
-| Font family | `Caveat_600SemiBold` |
+| Font family | `fonts.semiBold` (Caveat_600SemiBold) |
 | Font size | `17` |
 | Tab 0 label | `"Chụp ảnh"` |
 | Tab 1 label | `"Nhật ký"` |
 
-### Touch target
-
-Each tab `paddingVertical: 10`. Total pill height ~46px, satisfying the 44pt minimum.
-
 ### Animation
+Single `Animated.View` sliding pill using `Animated.spring()` with `stiffness: 200, damping: 20, useNativeDriver: true`. Position snaps immediately on first layout.
 
-Render a single `Animated.View` as the sliding pill background, positioned absolutely inside the container. Tab labels sit above it in a `flexDirection: row` layout.
-
-- **Mechanism:** `Animated.spring()` on a `translateX` value — runs on the native thread via `useNativeDriver: true`  
-- **Spring config:** `stiffness: 200, damping: 20` — slight bounce  
-- **Offset math:** measure container width via `onLayout`; tab 0 offset = `0`, tab 1 offset = `(containerWidth - padding*2 - gap) / 2 + gap`  
-- Text colors swap immediately on press (no cross-fade — the moving background communicates the change)
-
-## Parent screen changes (`app/(tabs)/index.tsx`)
-
-The floating pill overlaps the bottom of the PagerView. The screen root needs no `paddingBottom` on the PagerView itself — instead `CustomTabBar` is rendered as a sibling with `position: absolute` at the bottom. The `PagerView` already fills `flex: 1`; the pill visually overlaps the last ~58px of content, which is acceptable (masonry grid scrolls under it).
-
-## No new dependencies
-
-`Caveat_600SemiBold` is already loaded via the app's font config. No packages to add.
-
-## Out of scope
-
-- Icon variants (dropped in favor of text-only)
-- Dark mode (app is cream/light only)
-- Three or more tabs
+## Props
+```ts
+interface Props {
+  activePage: number;
+  onTabPress: (index: number) => void;
+}
+```

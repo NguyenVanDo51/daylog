@@ -1,155 +1,70 @@
-# Camera Screen Redesign
+# Camera Screen — Actual Implementation
 
 **Date:** 2026-06-07  
-**Status:** Approved
+**Updated:** 2026-06-09 (reflect actual implementation — inset/cream surround not built)  
+**Status:** Implemented
 
 ## Summary
 
-Upgrade `CameraPage` to feel like a diary viewfinder: inset bordered frame, live clock overlay, pink close button inside the frame. Remove orientation toggle. Hide the floating pill tab bar while on the camera tab.
+Full-bleed black camera viewfinder with live clock overlay, close button, and portrait lock. No cream surround or bordered inset frame.
 
-## Changes
+## Layout
 
-### 1. Tab bar — hidden on camera tab
+`CameraPage` receives `onTabPress: (index: number) => void` from `(tabs)/index.tsx`.
 
-**File:** `mobile/app/(tabs)/index.tsx`
+### Container
+`backgroundColor: '#000'`, `flex: 1`
 
-Conditionally render `CustomTabBar` only when `activePage !== 0`:
+### Camera
+`CameraView` with `StyleSheet.absoluteFill` — full bleed, black background.
 
-```tsx
-{activePage !== 0 && (
-  <CustomTabBar activePage={activePage} onTabPress={...} />
-)}
-```
+### Top bar
+`position: absolute`, `top: 0`, `paddingTop: insets.top + spacing.md`, `paddingHorizontal: spacing.xl`, `flexDirection: row`, `justifyContent: space-between`, `zIndex: 10`
 
-When the user swipes PagerView to page 0 (camera), the pill disappears. When they swipe to page 1 (albums) or press the close button, it reappears.
-
-### 2. Remove orientation toggle
-
-**File:** `mobile/src/components/tabs/CameraPage.tsx`
-
-- Delete the `toggleOrientation` function, `isLandscape` state, and `ScreenOrientation.lockAsync` call.
-- On mount, lock to portrait permanently:
-
-```ts
-React.useEffect(() => {
-  ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
-  return () => { ScreenOrientation.unlockAsync().catch(() => {}); };
-}, []);
-```
-
-- Remove the orientation `TouchableOpacity` from `topBar`.
-
-### 3. Layout — inset viewfinder with cream surround
-
-**File:** `mobile/src/components/tabs/CameraPage.tsx`
-
-Replace the current full-bleed `CameraView` with an inset layout:
-
-#### Container
-- `backgroundColor: colors.cream` (shows above and below viewfinder)
-- `flex: 1`
-
-#### Viewfinder wrapper (`styles.viewfinder`)
-| Property | Value |
+| Element | Spec |
 |---|---|
-| `position` | `absolute` |
-| `top` | `insets.top + spacing.sm` |
-| `bottom` | `insets.bottom + spacing['3xl'] + 60` (leaves room for shutter) |
-| `left` | `spacing.lg` (16) |
-| `right` | `spacing.lg` (16) |
-| `borderRadius` | `18` |
-| `borderWidth` | `2` |
-| `borderColor` | `colors.ink` |
-| `shadowColor` | `colors.ink` |
-| `shadowOffset` | `{ width: 3, height: 3 }` |
-| `shadowOpacity` | `1` |
-| `shadowRadius` | `0` |
-| `elevation` | `4` |
-| `overflow` | `hidden` |
+| Close button | 40×40, transparent bg, white X icon (Phosphor `X`, size 28). On press: `onTabPress(1)` |
+| Flip button | 40×40, `borderRadius: 20`, `rgba(0,0,0,0.4)` bg, `CameraRotate` icon (Phosphor, size 24, white) |
 
-`CameraView` moves inside this wrapper with `StyleSheet.absoluteFill`.
+### Clock overlay
+`position: absolute`, fills screen, `alignItems: center`, `justifyContent: center`, `zIndex: 5`, `pointerEvents="none"`
 
-#### Top bar (inside viewfinder, absolutely positioned)
-```
-position: absolute, top: 10, left: 10, right: 10
-flexDirection: row, justifyContent: space-between
-zIndex: 10
-```
-
-**Left — Close button:**
-| Property | Value |
+| Element | Value |
 |---|---|
-| `width / height` | `32` |
-| `borderRadius` | `10` |
-| `backgroundColor` | `colors.pink` |
-| `borderWidth` | `1.5` |
-| `borderColor` | `colors.ink` |
-| `shadowOffset` | `{ width: 1, height: 1 }` |
-| `shadowColor` | `colors.ink` |
-| `shadowOpacity` | `1` |
-| `shadowRadius` | `0` |
+| Time | `fonts.bold`, 52px, `colors.white`, `letterSpacing: 2`, soft black text shadow |
+| Date | `fonts.semiBold`, 18px, `rgba(255,255,255,0.75)`, `marginTop: 4` |
+| Time format | `HH:mm` (24h) |
+| Date format | `thứ X, D tháng M` (Vietnamese day names array) |
+| Update interval | `setInterval` every 1000ms, cleared on unmount |
 
-Icon: `✕` (Text, 14px, white, fontWeight 700). On press: calls `onTabPress(1)` prop (navigates to Albums tab).
+### Shutter area
+`position: absolute`, `bottom: 0`, `paddingBottom: insets.bottom + spacing['2xl']`, centered
 
-**Right — Flip camera button:**  
-Same dimensions (32×32, borderRadius 10) but `backgroundColor: rgba(0,0,0,0.4)`, no border. Keeps existing flip logic.
+- Outer ring: 76×76, `borderRadius: 38`, `borderWidth: 4`, white
+- Progress arc: `Animated.View`, same dimensions, pink border rotating
+- Inner button: 60×60, `borderRadius: 30`, white fill
 
-#### Shutter area
-Unchanged logic. Positioned absolutely at `bottom: insets.bottom + spacing.lg`, centered. The cream background shows below the viewfinder.
+### Gestures (`react-native-gesture-handler`)
+- Tap → `takePhoto()`
+- LongPress (minDuration 250ms) → `startRecord()` / `stopRecord()`
+- Composed: `Gesture.Exclusive(longPress, tap)`
 
-### 4. Live clock overlay (inside viewfinder)
+## Behavior
 
-A `View` with `position: absolute, inset: 0` centered (flexDirection column, alignItems center, justifyContent center), `zIndex: 5`. Pass `pointerEvents="none"` as a JSX prop (not in StyleSheet) so touches pass through to the shutter gesture.
+### Portrait lock
+On mount: `ScreenOrientation.lockAsync(PORTRAIT_UP)`. Cleaned up on unmount.
 
-#### Time line
-| Property | Value |
-|---|---|
-| `fontFamily` | `Caveat_700Bold` |
-| `fontSize` | `42` |
-| `color` | `colors.white` |
-| `letterSpacing` | `1` |
-| `textShadow` | via `shadowColor/Opacity/Radius` — soft black 0.5 opacity |
+### Video recording
+`maxDuration: 2` seconds. Progress arc animates via `Animated.Value` with `withTiming(1, {duration: 2000})`. Cancelled on stop.
 
-#### Date line (below time)
-| Property | Value |
-|---|---|
-| `fontFamily` | `Caveat_600SemiBold` |
-| `fontSize` | `15` |
-| `color` | `rgba(255,255,255,0.6)` |
-| `marginTop` | `4` |
+### On capture
+Sets `usePhotoReviewStore` assets and `router.push('/photo-review')`.
 
-#### Format
-- Time: `HH:mm` (24h, zero-padded)  
-- Date: `thứ X, D tháng M` — using Vietnamese day names array `['chủ nhật','thứ hai','thứ ba','thứ tư','thứ năm','thứ sáu','thứ bảy']`
+### Hint toast
+First launch: shows Vietnamese hint for 3s (stored in `SecureStore` key `capture.hint_seen`).
 
-#### Timer
-`setInterval` every 1000ms, stored in a `useRef`, cleared in `useEffect` cleanup.
+### AppState
+If app backgrounds during recording, `stopRecording()` is called automatically.
 
-### 5. Props change — `CameraPage` receives `onTabPress`
-
-`CameraPage` needs to navigate to tab 1 when close is pressed. Add prop:
-
-```ts
-interface CameraPageProps {
-  onTabPress: (index: number) => void;
-}
-```
-
-Pass it from `index.tsx`:
-
-```tsx
-<CameraPage onTabPress={(i) => pagerRef.current?.setPage(i)} />
-```
-
-## Files changed
-
-| File | Change |
-|---|---|
-| `mobile/app/(tabs)/index.tsx` | Conditionally render tab bar; pass `onTabPress` to `CameraPage` |
-| `mobile/src/components/tabs/CameraPage.tsx` | Inset viewfinder, close btn, clock, remove orientation toggle |
-
-## Out of scope
-
-- Landscape mode (removed entirely — always portrait)
-- Grid overlay / rule-of-thirds lines
-- Clock in Albums tab
+## Files
+`mobile/src/components/tabs/CameraPage.tsx`

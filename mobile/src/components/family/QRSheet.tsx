@@ -6,7 +6,7 @@ import { SheetModal } from '@/components/ui/SheetModal';
 import { api } from '@/lib/api';
 import { useAlbumStore } from '@/stores/albumStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { colors, radii, shadows, spacing, typography } from '@/constants/theme';
+import { colors, fonts, radii, shadows, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { success } from '@/lib/haptics';
 
@@ -75,5 +75,5 @@ const styles = StyleSheet.create({
   body:         { ...typography.body },
   scannerFrame: { flex: 1, borderRadius: radii.md, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.ink, overflow: 'hidden', ...shadows.sticker },
   scanner:      { flex: 1 },
-  validity:     { fontFamily: 'Caveat_500Medium', fontSize: 14, color: colors.inkMuted, textAlign: 'center' },
+  validity:     { fontFamily: fonts.medium, fontSize: 14, color: colors.inkMuted, textAlign: 'center' },
 });

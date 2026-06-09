@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Logbook",
-    "slug": "logbook",
+    "name": "Daylog",
+    "slug": "daylog",
     "version": "1.0.0",
-    "scheme": "logbook",
+    "scheme": "daylog",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.logbook.app",
+      "bundleIdentifier": "com.daylog.app",
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Cho phép chụp ảnh và quay video kỷ niệm của bé",
@@ -70,7 +70,7 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.logbook.app",
+      "package": "com.daylog.app",
       "versionCode": 1
     }
   }

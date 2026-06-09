@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { colors, shadows } from '@/constants/theme';
+import { colors, fonts, shadows } from '@/constants/theme';
 
 interface AvatarProps {
   uri?: string | null;
@@ -29,5 +29,5 @@ export function Avatar({ uri, name, size = 36, ring = false, shadow = false }: A
 const styles = StyleSheet.create({
   image:    { backgroundColor: colors.yellow },
   fallback: { backgroundColor: colors.yellow, alignItems: 'center', justifyContent: 'center' },
-  initials: { color: colors.ink, fontFamily: 'Fredoka_700Bold' },
+  initials: { color: colors.ink, fontFamily: fonts.bold },
 });

@@ -1,7 +1,10 @@
 # Parallel Upload + Optimistic Placeholder UI
 
-**Date:** 2026-06-04
-**Status:** Approved
+**Date:** 2026-06-04  
+**Updated:** 2026-06-09  
+**Status:** Partially implemented — parallel upload ✅, optimistic placeholder ❌ not integrated
+
+> **Note:** `PendingPhotoCell` component exists but is not rendered in the timeline. Timeline does not show optimistic placeholders; it only shows confirmed photos from the server after upload completes.
 
 ## Mục tiêu
 

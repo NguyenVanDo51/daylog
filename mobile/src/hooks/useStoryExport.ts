@@ -2,11 +2,8 @@ import { useState } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import { Alert } from 'react-native';
+import { API_URL } from '@/constants/api';
 import { useAuthStore } from '@/stores/authStore';
-import { success } from '@/lib/haptics';
-import { DayPhoto } from './useDayPhotos';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function useStoryExport(photos: DayPhoto[], date: string) {
   const [exporting, setExporting] = useState(false);

@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { X, CameraRotate } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
-import { colors, spacing, typography } from '@/constants/theme';
+import { colors, fonts, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import * as SecureStore from 'expo-secure-store';
 
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
   closeBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   iconBtn:      { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   clockOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  clockTime:    { fontFamily: 'Caveat_700Bold', fontSize: 52, color: colors.white, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 10 },
-  clockDate:    { fontFamily: 'Caveat_600SemiBold', fontSize: 18, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
+  clockTime:    { fontFamily: fonts.bold, fontSize: 52, color: colors.white, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 10 },
+  clockDate:    { fontFamily: fonts.semiBold, fontSize: 18, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   shutterArea:  { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' },
   shutterOuter: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   progressArc:  { position: 'absolute', width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: colors.pink, borderTopColor: 'transparent', borderRightColor: 'transparent' },

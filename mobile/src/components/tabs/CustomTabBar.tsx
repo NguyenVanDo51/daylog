@@ -8,7 +8,7 @@ import {
   LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 
 const PADDING = 5;
 const GAP = 4;
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   label: {
-    fontFamily: 'Caveat_600SemiBold',
+    fontFamily: fonts.semiBold,
     fontSize: 17,
     lineHeight: 20,
   },
