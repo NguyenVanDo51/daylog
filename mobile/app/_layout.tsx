@@ -13,6 +13,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
 import { API_URL } from '@/constants/api';
 import { registerPushToken } from '@/lib/notifications';
+import { useAppUpdate } from '@/lib/useAppUpdate';
+import { ForceUpdateScreen } from '@/components/ui/ForceUpdateScreen';
 import '@/lib/i18n'; // initialize default locale
 
 Sentry.init({
@@ -29,6 +31,7 @@ const USER_KEY = 'auth_user';
 function RootLayout() {
   const { setAuth, clearAuth } = useAuthStore();
   const [ready, setReady] = useState(false);
+  const updateStatus = useAppUpdate();
   const [fontsLoaded] = useFonts({
     Fredoka_400Regular,
     Fredoka_500Medium,
@@ -61,7 +64,15 @@ function RootLayout() {
     })();
   }, []);
 
-  if (!ready || !fontsLoaded) return null;
+  if (!fontsLoaded || updateStatus === 'checking') return null;
+  if (updateStatus === 'force-update') {
+    return (
+      <SafeAreaProvider>
+        <ForceUpdateScreen />
+      </SafeAreaProvider>
+    );
+  }
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
