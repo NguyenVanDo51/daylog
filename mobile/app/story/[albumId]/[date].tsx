@@ -1,153 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, StatusBar,
   ActivityIndicator, Alert,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
-import { CaretLeft, PencilSimple, ArrowCircleDown, Trash } from 'phosphor-react-native';
-import { useDayPhotos, DayPhoto } from '@/hooks/useDayPhotos';
+import { CaretLeftIcon, PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon } from 'phosphor-react-native';
+import { useDayPhotos } from '@/hooks/useDayPhotos';
 import { useAlbumDays } from '@/hooks/useAlbumDays';
 import { useStoryExport } from '@/hooks/useStoryExport';
-import { colors, spacing, typography } from '@/constants/theme';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
-const PHOTO_DURATION_MS = 3000;
-
-function PhotoItem({
-  photo,
-  onEnd,
-  isPaused,
-  onProgress,
-}: {
-  photo: DayPhoto;
-  onEnd: () => void;
-  isPaused: boolean;
-  onProgress: (f: number) => void;
-}) {
-  const elapsedRef = useRef(0);
-
-  useEffect(() => {
-    elapsedRef.current = 0;
-  }, [photo.id]);
-
-  useEffect(() => {
-    if (isPaused) return;
-    let cancelled = false;
-    const startTime = Date.now() - elapsedRef.current;
-    const tick = () => {
-      if (cancelled) return;
-      const frac = Math.min((Date.now() - startTime) / PHOTO_DURATION_MS, 1);
-      onProgress(frac);
-      if (frac < 1) requestAnimationFrame(tick);
-      else { elapsedRef.current = 0; onEnd(); }
-    };
-    requestAnimationFrame(tick);
-    return () => {
-      elapsedRef.current = Date.now() - startTime;
-      cancelled = true;
-    };
-  }, [photo.id, isPaused]);
-
-  return (
-    <Image
-      source={{ uri: `${API_URL}/photos/${photo.id}/thumb` }}
-      style={StyleSheet.absoluteFill}
-      contentFit="contain"
-    />
-  );
-}
-
-function VideoItem({
-  photo,
-  onEnd,
-  isPaused,
-  onProgress,
-}: {
-  photo: DayPhoto;
-  onEnd: () => void;
-  isPaused: boolean;
-  onProgress: (f: number) => void;
-}) {
-  const player = useVideoPlayer(`${API_URL}/photos/${photo.id}/full`, (p) => {
-    p.muted = true;
-    p.play();
-  });
-
-  useEffect(() => {
-    const sub = player.addListener('playToEnd', onEnd);
-    return () => sub.remove();
-  }, [player]);
-
-  useEffect(() => {
-    if (isPaused) player.pause();
-    else player.play();
-  }, [isPaused, player]);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      const dur = player.duration;
-      if (!dur || isNaN(dur) || dur === 0) { onProgress(0); return; }
-      onProgress(Math.min(player.currentTime / dur, 1));
-    }, 200);
-    return () => clearInterval(id);
-  }, [player]);
-
-  return (
-    <VideoView
-      player={player}
-      style={StyleSheet.absoluteFill}
-      contentFit="contain"
-      nativeControls={false}
-    />
-  );
-}
-
-function VlogOverlay({
-  photo,
-  dayLabel,
-  currentIndex,
-  total,
-  bottomInset = 0,
-  isPaused = false,
-}: {
-  photo: DayPhoto;
-  dayLabel: string;
-  currentIndex: number;
-  total: number;
-  bottomInset?: number;
-  isPaused?: boolean;
-}) {
-  const dt = new Date(photo.taken_at);
-  const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-  const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
-
-  return (
-    <LinearGradient
-      colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.92)']}
-      style={[vlog.container, { paddingBottom: spacing.xl + bottomInset }]}
-      pointerEvents="none"
-    >
-      <Text style={vlog.dayHero} testID="story-day-hero">{dayLabel}</Text>
-      <Text style={vlog.time} testID="vlog-time">{isPaused ? '⏸' : '▶'} {timeStr}</Text>
-      {photo.caption?.trim() ? <Text style={vlog.caption} testID="vlog-caption">{photo.caption}</Text> : null}
-      <View style={vlog.dots}>
-        {Array.from({ length: total }).map((_, i) => (
-          <View
-            key={i}
-            testID={i === currentIndex ? 'story-dot-active' : 'story-dot'}
-            style={[vlog.dot, i === currentIndex && vlog.dotActive]}
-          />
-        ))}
-      </View>
-    </LinearGradient>
-  );
-}
+import { colors, fonts, spacing, typography } from '@/constants/theme';
+import { PhotoItem, VideoItem, VlogOverlay } from './_components';
 
 export default function StoryScreen() {
   const { albumId, date } = useLocalSearchParams<{ albumId: string; date: string }>();
@@ -184,23 +48,37 @@ export default function StoryScreen() {
 
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);
 
+  const goToDay = useCallback(
+    (targetDate: string) => {
+      router.replace(`/story/${albumId}/${targetDate}` as any);
+    },
+    [albumId],
+  );
+
   const swipeGesture = Gesture.Pan()
     .activeOffsetX([-30, 30])
+    .runOnJS(true)
     .onEnd((e) => {
       if (!days || !date) return;
       const currentDayIdx = days.findIndex((d) => d.date === date);
       if (e.translationX < -60 && currentDayIdx > 0) {
-        runOnJS(router.replace as any)(`/story/${albumId}/${days[currentDayIdx - 1].date}`);
+        goToDay(days[currentDayIdx - 1].date);
       } else if (e.translationX > 60 && currentDayIdx < days.length - 1) {
-        runOnJS(router.replace as any)(`/story/${albumId}/${days[currentDayIdx + 1].date}`);
+        goToDay(days[currentDayIdx + 1].date);
       }
     });
 
   const parts = (date ?? '').split('-');
-  const dateChip  = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : '';
+  const dateChip = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : '';
   const dateLabel = parts.length === 3 ? `${parts[2]} / ${parts[1]}` : '';
 
-  if (isLoading || !photos) {
+  useEffect(() => {
+    if (photos && photos.length === 0) {
+      router.back();
+    }
+  }, [photos]);
+
+  if (isLoading || !photos || photos.length === 0) {
     return (
       <View style={styles.container}>
         <StatusBar hidden />
@@ -209,7 +87,7 @@ export default function StoryScreen() {
     );
   }
 
-  const current = photos[currentIndex];
+  const current = photos[Math.min(currentIndex, photos.length - 1)];
 
   return (
     <GestureDetector gesture={swipeGesture}>
@@ -234,7 +112,7 @@ export default function StoryScreen() {
 
         <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
           <TouchableOpacity onPress={() => router.back()} testID="story-back" style={styles.circleBtn}>
-            <CaretLeft size={18} color={colors.white} />
+            <CaretLeftIcon size={18} color={colors.white} />
           </TouchableOpacity>
           <Text style={styles.dateChip} testID="story-date-chip">{dateChip}</Text>
           <TouchableOpacity onPress={() => setMenuOpen(true)} testID="story-menu-btn" style={styles.circleBtn}>
@@ -258,7 +136,7 @@ export default function StoryScreen() {
                   router.push(`/story/${albumId}/${date}/manage` as any);
                 }}
               >
-                <PencilSimple size={16} color={colors.white} />
+                <PencilSimpleIcon size={16} color={colors.white} />
                 <Text style={styles.menuItemText}>Sửa ghi chú</Text>
               </TouchableOpacity>
 
@@ -273,7 +151,7 @@ export default function StoryScreen() {
               >
                 {exporting
                   ? <ActivityIndicator color={colors.white} size="small" />
-                  : <ArrowCircleDown size={16} color={colors.white} />}
+                  : <ArrowCircleDownIcon size={16} color={colors.white} />}
                 <Text style={styles.menuItemText}>Lưu về máy</Text>
               </TouchableOpacity>
 
@@ -285,7 +163,7 @@ export default function StoryScreen() {
                   Alert.alert('Xoá ảnh', 'Tính năng này sẽ có sớm.');
                 }}
               >
-                <Trash size={16} color={colors.error} />
+                <TrashIcon size={16} color={colors.error} />
                 <Text style={[styles.menuItemText, { color: colors.error }]}>Xoá ảnh</Text>
               </TouchableOpacity>
             </View>
@@ -328,20 +206,26 @@ export default function StoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
-  topBar:     { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
-                paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  circleBtn:  { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.35)',
-                alignItems: 'center', justifyContent: 'center' },
-  dateChip:   { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 7,
-                paddingVertical: 3, paddingHorizontal: 8, ...typography.caption,
-                color: 'rgba(255,255,255,0.75)', fontFamily: 'Courier New', letterSpacing: 0.5,
-                textAlign: 'center' },
-  menuDots:   { color: colors.white, fontSize: 12, letterSpacing: 1, lineHeight: 14 },
-  tapAreas:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
-  tapLeft:    { flex: 3 },
-  tapCenter:  { flex: 4 },
-  tapRight:   { flex: 3 },
+  container: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
+  topBar: {
+    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+    paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm
+  },
+  circleBtn: {
+    width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center', justifyContent: 'center'
+  },
+  dateChip: {
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 7,
+    paddingVertical: 3, paddingHorizontal: 8, ...typography.caption,
+    color: 'rgba(255,255,255,0.75)', fontFamily: fonts.medium, letterSpacing: 0.5,
+    textAlign: 'center'
+  },
+  menuDots: { color: colors.white, fontSize: 12, letterSpacing: 1, lineHeight: 14 },
+  tapAreas: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
+  tapLeft: { flex: 3 },
+  tapCenter: { flex: 4 },
+  tapRight: { flex: 3 },
   pauseIcon: {
     position: 'absolute',
     top: '50%', left: '50%',
@@ -358,84 +242,22 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0,
     height: 3, backgroundColor: 'rgba(255,255,255,0.12)', zIndex: 20,
   },
-  progressFill:        { height: '100%', borderRadius: 2 },
+  progressFill: { height: '100%', borderRadius: 2 },
   progressFillPlaying: { backgroundColor: 'rgba(255,255,255,0.75)' },
-  progressFillPaused:  { backgroundColor: 'rgba(255,200,68,0.85)' },
-  menuBackdrop:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
-  menuDropdown:   { position: 'absolute', top: 48, right: spacing.lg,
-                    backgroundColor: 'rgba(20,20,20,0.92)', borderRadius: 12,
-                    overflow: 'hidden', minWidth: 160,
-                    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  menuItem:       { flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-                    paddingVertical: 12, paddingHorizontal: spacing.lg,
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: 'rgba(255,255,255,0.1)' },
+  progressFillPaused: { backgroundColor: 'rgba(255,200,68,0.85)' },
+  menuBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
+  menuDropdown: {
+    position: 'absolute', top: 48, right: spacing.lg,
+    backgroundColor: 'rgba(20,20,20,0.92)', borderRadius: 12,
+    overflow: 'hidden', minWidth: 160,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+  },
+  menuItem: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    paddingVertical: 12, paddingHorizontal: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.1)'
+  },
   menuItemDanger: { borderBottomWidth: 0 },
-  menuItemText:   { ...typography.body, color: colors.white, fontSize: 13 },
-});
-
-const vlog = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-    paddingTop: spacing.xl * 2,
-    zIndex: 10,
-  },
-  dayHero: {
-    fontSize: 26,
-    fontWeight: '200',
-    color: 'rgba(255,255,255,0.92)',
-    letterSpacing: 3,
-    fontFamily: 'serif',
-    marginBottom: 4,
-  },
-  date: {
-    fontFamily: 'Courier New',
-    fontSize: 8,
-    color: 'rgba(255,180,0,0.7)',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  time: {
-    fontFamily: 'Courier New',
-    fontSize: 18,
-    color: '#ffcc44',
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 4,
-    textShadowColor: 'rgba(255,180,0,0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
-  },
-  caption: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.92)',
-    fontStyle: 'italic',
-    lineHeight: 17,
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  dots: {
-    flexDirection: 'row',
-    gap: 4,
-    justifyContent: 'center',
-    marginTop: spacing.md,
-  },
-  dot: {
-    width: 5, height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  dotActive: {
-    width: 18,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.white,
-  },
+  menuItemText: { ...typography.body, color: colors.white, fontSize: 13 },
 });

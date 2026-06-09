@@ -20,12 +20,6 @@ jest.mock('@expo-google-fonts/fredoka', () => ({
   Fredoka_700Bold: 'Fredoka_700Bold',
 }));
 
-jest.mock('@expo-google-fonts/caveat', () => ({
-  useFonts: jest.fn(() => [true, null]),
-  Caveat_500Medium: 'Caveat_500Medium',
-  Caveat_600SemiBold: 'Caveat_600SemiBold',
-  Caveat_700Bold: 'Caveat_700Bold',
-}));
 
 import React from 'react';
 import { act, render, waitFor } from '@testing-library/react-native';
@@ -123,6 +117,12 @@ jest.mock('expo-router', () => {
     Redirect: () => null,
   };
 });
+
+// Mock useAppUpdate so it never calls the API — layout tests focus on auth bootstrap only.
+jest.mock('@/lib/useAppUpdate', () => ({
+  useAppUpdate: () => 'ok',
+  checkOta: jest.fn(),
+}));
 
 // Mock the API client so the layout's GET /users/me call is fully controlled.
 jest.mock('@/lib/api', () => ({

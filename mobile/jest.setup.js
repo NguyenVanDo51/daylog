@@ -315,6 +315,34 @@ jest.mock('expo-video-thumbnails', () => ({
   getThumbnailAsync: jest.fn().mockResolvedValue({ uri: 'file://mock-thumb.jpg', width: 320, height: 240 }),
 }));
 
+// react-native-svg — peer dep of phosphor-react-native; native rendering not available in Jest.
+// __esModule:true prevents _interopRequireWildcard from wrapping the module, so .default stays a fn.
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const stub = (props) => React.createElement(View, props);
+  return {
+    __esModule: true,
+    default: stub,
+    Svg: stub, Circle: stub, Ellipse: stub, G: stub, Text: stub, TSpan: stub,
+    TextPath: stub, Path: stub, Polygon: stub, Polyline: stub, Line: stub,
+    Rect: stub, Use: stub, Image: stub, Symbol: stub, Defs: stub,
+    LinearGradient: stub, RadialGradient: stub, Stop: stub,
+    ClipPath: stub, Pattern: stub, Mask: stub,
+  };
+});
+
+// @sentry/react-native — uses ESM export syntax incompatible with Jest's CommonJS transform.
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  wrap: (component) => component,
+  setUser: jest.fn(),
+  reactNativeTracingIntegration: jest.fn(() => ({})),
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+}));
+
 // expo-media-library — used by StorageFreedomModal.
 jest.mock('expo-media-library', () => ({
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted', granted: true }),
