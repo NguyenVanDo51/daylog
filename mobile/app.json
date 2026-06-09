@@ -22,7 +22,17 @@
         "NSPhotoLibraryAddUsageDescription": "Cho phép lưu ảnh vào thư viện"
       }
     },
+    "extra": {
+      "sentryDsn": ""
+    },
     "plugins": [
+      [
+        "@sentry/react-native",
+        {
+          "organization": "",
+          "project": ""
+        }
+      ],
       "expo-router",
       "expo-secure-store",
       [

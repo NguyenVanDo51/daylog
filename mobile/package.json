@@ -9,6 +9,7 @@
     "@lodev09/react-native-true-sheet": "^3.10.1",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@react-native-google-signin/google-signin": "^16.1.2",
+    "@sentry/react-native": "~7.11.0",
     "@tanstack/react-query": "^5.101.0",
     "axios": "^1.16.1",
     "expo": "~56.0.8",
