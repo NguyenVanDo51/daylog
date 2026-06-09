@@ -1,3 +1,9 @@
+jest.mock('@sentry/node', () => ({
+  setupExpressErrorHandler: jest.fn(),
+  init: jest.fn(),
+  setUser: jest.fn(),
+}));
+
 import request from 'supertest';
 
 // Mock the albums route to expose endpoints that trigger the global error handler.

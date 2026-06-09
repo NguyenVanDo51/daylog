@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -38,6 +39,8 @@ app.use('/photos/:photoId/reactions', reactionsRoutes);
 app.use('/albums/:id/day-labels', dayLabelsRoutes);
 app.use('/albums/:id/days', albumDaysRoutes);
 app.use('/stories', storiesRoutes);
+
+Sentry.setupExpressErrorHandler(app);
 
 interface HttpError extends Error {
   status?: number;
