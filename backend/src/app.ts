@@ -15,6 +15,7 @@ import dayLabelsRoutes from './routes/day-labels';
 import albumDaysRoutes from './routes/album-days';
 import storiesRoutes from './routes/stories';
 import versionRoutes from './routes/version';
+import waitlistRoutes from './routes/waitlist';
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/albums/:id/day-labels', dayLabelsRoutes);
 app.use('/albums/:id/days', albumDaysRoutes);
 app.use('/stories', storiesRoutes);
 app.use('/version', versionRoutes);
+app.use('/waitlist', waitlistRoutes);
 
 Sentry.setupExpressErrorHandler(app);
 
