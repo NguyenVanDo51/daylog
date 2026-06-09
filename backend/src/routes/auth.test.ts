@@ -88,7 +88,7 @@ describe('POST /auth/apple', () => {
     expect(res.body.error).toBe('idToken required');
   });
 
-  it('persists apns_token when provided in the request body', async () => {
+  it('persists push_token when provided in the request body', async () => {
     mockVerifyApple.mockResolvedValueOnce({ sub: 'apple-sub-apns', name: 'Apns User', email: null });
 
     const res = await request(app)
@@ -132,7 +132,7 @@ describe('POST /auth/google', () => {
     expect(res.body.error).toBe('idToken required');
   });
 
-  it('stores apns_token as null when not provided in the request body', async () => {
+  it('stores push_token as null when not provided in the request body', async () => {
     mockVerifyGoogle.mockResolvedValueOnce({ sub: 'google-sub-no-apns', name: 'No Apns', picture: null });
 
     const res = await request(app)
