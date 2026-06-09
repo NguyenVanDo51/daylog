@@ -29,13 +29,33 @@ Nhật ký video gia đình — quay dọc, lưu mãi, chỉ dành cho bạn.
 
 ## Quy trình cập nhật app
 
-| Loại thay đổi | Làm gì |
-|---|---|
-| Fix bug, UI, logic, đổi base URL | `eas update` — OTA, tự push tới user |
-| Breaking API / cần user bắt buộc update | Build mới lên store + tăng `version` trong `app.json` + đổi `MIN_APP_VERSION` trên backend |
-| Thêm native permission hoặc Expo plugin | Build mới lên store (OTA không đủ) |
+| Loại thay đổi | Làm gì | Version |
+|---|---|---|
+| Fix bug, UI, logic, đổi base URL | `eas update` — OTA, tự push tới user | Không đổi (`1.0.0` → `1.0.0`) |
+| Tính năng mới, không breaking | Build mới lên store | `1.0.0` → `1.1.0`, `MIN_APP_VERSION` giữ nguyên `1.0.0` |
+| Breaking API / bắt buộc update | Build mới lên store + đổi `MIN_APP_VERSION` trên backend | `1.0.0` → `2.0.0`, set `MIN_APP_VERSION=2.0.0` |
+| Thêm native permission hoặc Expo plugin | Build mới lên store (OTA không đủ) | `1.0.0` → `1.1.0` |
 
-Sau mỗi store release: tăng `version` (VD `1.1.0`) và `ios.buildNumber` / `android.versionCode` trong `app.json`.
+**Ví dụ cụ thể từ `1.0.0`:**
+
+```
+OTA: sửa lỗi hiển thị ảnh
+  → eas update
+  → app.json version vẫn 1.0.0
+  → user tự nhận bundle mới lần mở app tiếp theo
+
+Store release (không breaking): thêm tính năng react, filter ảnh
+  → app.json: version "1.1.0", buildNumber "2" / versionCode 2
+  → eas build + submit lên store
+  → MIN_APP_VERSION backend giữ "1.0.0" (user cũ vẫn dùng được)
+
+Store release (breaking): đổi backend URL hoặc API breaking change
+  → app.json: version "2.0.0", buildNumber "3" / versionCode 3
+  → eas build + submit lên store
+  → set MIN_APP_VERSION=2.0.0 trên backend → user cũ bị chặn, thấy màn hình bắt update
+```
+
+Sau mỗi store release: tăng `version` và `ios.buildNumber` / `android.versionCode` trong `app.json`.
 
 ## Links
 
