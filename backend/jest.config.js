@@ -9,7 +9,7 @@ module.exports = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
-  transformIgnorePatterns: ['/node_modules/(?!(uuid)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(uuid|expo-server-sdk)/)'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/index.ts',

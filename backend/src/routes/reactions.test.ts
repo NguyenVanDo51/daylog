@@ -1,11 +1,11 @@
-jest.mock('../services/apns', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../services/push', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
 
 import request from 'supertest';
 import { pool } from '../db';
 import { createTestUser, createTestAlbum, createTestAlbumMember, authHeader } from '../../tests/setup';
 const app = require('../app');
 
-import { sendPush } from '../services/apns';
+import { sendPush } from '../services/push';
 
 const mockSendPush = sendPush as jest.Mock;
 

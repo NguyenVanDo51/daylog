@@ -5,7 +5,7 @@ import { db } from '../db';
 import { users, albumMembers, photos, presignTokens, albumPhotos, albums } from '../db/schema';
 import { getPresignedPutUrl, getObjectBuffer, deleteObject } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
-import { sendPush } from '../services/apns';
+import { sendPush } from '../services/push';
 import { isValidUUID, isValidDate } from '../lib/validation';
 import { presignLimiter } from '../lib/rateLimit';
 
@@ -210,12 +210,12 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     // Push notification (send to primary album members)
     const recipients = await db
-      .select({ token: users.apnsToken })
+      .select({ token: users.pushToken })
       .from(users)
       .innerJoin(albumMembers, eq(albumMembers.userId, users.id))
       .where(and(
         eq(albumMembers.albumId, primaryAlbumId),
-        isNotNull(users.apnsToken),
+        isNotNull(users.pushToken),
         ne(users.id, req.user!.id)
       ));
     const tokens = recipients.map((r) => r.token!).filter(Boolean);

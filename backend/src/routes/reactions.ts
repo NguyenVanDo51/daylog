@@ -3,7 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { reactions, photos, users, albumMembers } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
-import { sendPush } from '../services/apns';
+import { sendPush } from '../services/push';
 import { isValidUUID } from '../lib/validation';
 
 const router = Router({ mergeParams: true });
@@ -67,13 +67,13 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 
     if (photo && photo.uploadedBy && photo.uploadedBy !== userId) {
       const [uploader] = await db
-        .select({ apnsToken: users.apnsToken })
+        .select({ pushToken: users.pushToken })
         .from(users)
         .where(eq(users.id, photo.uploadedBy));
 
-      if (uploader?.apnsToken) {
+      if (uploader?.pushToken) {
         sendPush(
-          [uploader.apnsToken],
+          [uploader.pushToken],
           'Có reaction mới!',
           `Ai đó đã gửi ${emoji} cho ảnh của bé`,
           { photoId }

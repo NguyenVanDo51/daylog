@@ -34,14 +34,14 @@ function toSnakeUser(u: typeof users.$inferSelect) {
     google_sub: u.googleSub,
     display_name: u.displayName,
     avatar_url: u.avatarUrl,
-    apns_token: u.apnsToken,
+    push_token: u.pushToken,
     created_at: u.createdAt,
   };
 }
 
 router.post('/apple', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { idToken, apnsToken } = req.body ?? {};
+    const { idToken, pushToken } = req.body ?? {};
     if (!idToken) return res.status(400).json({ error: 'idToken required' });
 
     const { sub, name } = await verifyAppleToken(idToken);
@@ -53,14 +53,14 @@ router.post('/apple', async (req: Request, res: Response, next: NextFunction) =>
         appleSub: sub,
         displayName,
         avatarUrl: null,
-        apnsToken: apnsToken ?? null,
+        pushToken: pushToken ?? null,
       })
       .onConflictDoUpdate({
         target: users.appleSub,
         set: {
           displayName: sql`COALESCE(EXCLUDED.display_name, ${users.displayName})`,
           avatarUrl: sql`COALESCE(EXCLUDED.avatar_url, ${users.avatarUrl})`,
-          apnsToken: sql`COALESCE(EXCLUDED.apns_token, ${users.apnsToken})`,
+          pushToken: sql`COALESCE(EXCLUDED.push_token, ${users.pushToken})`,
         },
       })
       .returning();
@@ -74,7 +74,7 @@ router.post('/apple', async (req: Request, res: Response, next: NextFunction) =>
 
 router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { idToken, apnsToken } = req.body ?? {};
+    const { idToken, pushToken } = req.body ?? {};
     if (!idToken) return res.status(400).json({ error: 'idToken required' });
 
     const { sub, name, picture } = await verifyGoogleToken(idToken);
@@ -86,14 +86,14 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
         googleSub: sub,
         displayName,
         avatarUrl: picture ?? null,
-        apnsToken: apnsToken ?? null,
+        pushToken: pushToken ?? null,
       })
       .onConflictDoUpdate({
         target: users.googleSub,
         set: {
           displayName: sql`COALESCE(EXCLUDED.display_name, ${users.displayName})`,
           avatarUrl: sql`COALESCE(EXCLUDED.avatar_url, ${users.avatarUrl})`,
-          apnsToken: sql`COALESCE(EXCLUDED.apns_token, ${users.apnsToken})`,
+          pushToken: sql`COALESCE(EXCLUDED.push_token, ${users.pushToken})`,
         },
       })
       .returning();
@@ -107,7 +107,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
 
 router.post('/logout', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await db.update(users).set({ apnsToken: null }).where(eq(users.id, req.user!.id));
+    await db.update(users).set({ pushToken: null }).where(eq(users.id, req.user!.id));
     res.status(204).send();
   } catch (err) {
     next(err);

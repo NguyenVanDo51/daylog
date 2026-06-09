@@ -4,7 +4,7 @@ jest.mock('../services/r2', () => ({
   deleteObject: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('../services/thumbnail', () => ({ generateThumbnail: jest.fn().mockResolvedValue({ key: 'thumb_key', width: 800, height: 600 }) }));
-jest.mock('../services/apns', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../services/push', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
 
 import request from 'supertest';
 import { eq } from 'drizzle-orm';
@@ -20,7 +20,7 @@ import { deleteObject } from '../services/r2';
 const mockGetObjectBuffer = getObjectBuffer as jest.Mock;
 const mockDeleteObject = deleteObject as jest.Mock;
 import { generateThumbnail } from '../services/thumbnail';
-import { sendPush } from '../services/apns';
+import { sendPush } from '../services/push';
 
 const mockPresign = getPresignedPutUrl as jest.Mock;
 const mockGenThumb = generateThumbnail as jest.Mock;

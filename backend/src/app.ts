@@ -16,6 +16,7 @@ import albumDaysRoutes from './routes/album-days';
 import storiesRoutes from './routes/stories';
 import versionRoutes from './routes/version';
 import waitlistRoutes from './routes/waitlist';
+import usersRoutes from './routes/users';
 
 const app = express();
 
@@ -37,6 +38,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.use('/auth', authRoutes);
+app.use('/users', usersRoutes);
 app.use('/albums', albumsRoutes);
 app.use('/photos', photosRoutes);
 app.use('/', invitesRoutes);
