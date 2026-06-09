@@ -71,6 +71,7 @@ jobs:
             docker compose up -d postgres
 
             echo "==> Run migrations"
+            docker compose build migrate
             docker compose --profile migrate run --rm migrate
 
             echo "==> Build & start API"
