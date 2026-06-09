@@ -167,7 +167,7 @@ describe('POST /photos', () => {
       `INSERT INTO album_members (album_id, user_id, role) VALUES ($1, $2, 'member')`,
       [album.id, member.id]
     );
-    await pool.query(`UPDATE users SET apns_token = 'token-abc' WHERE id = $1`, [member.id]);
+    await pool.query(`UPDATE users SET push_token = 'token-abc' WHERE id = $1`, [member.id]);
 
     await request(app)
       .post('/photos')
@@ -269,7 +269,7 @@ describe('POST /photos', () => {
     expect(res.status).toBe(500);
   });
 
-  it('calls sendPush with empty array when no other members have apns_token', async () => {
+  it('calls sendPush with empty array when no other members have push_token', async () => {
     await createPresignToken(user.id, 'photos/solo.webp');  // seed presign token
     await request(app)
       .post('/photos')
