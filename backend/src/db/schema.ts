@@ -22,7 +22,7 @@ export const users = pgTable('users', {
   googleSub: varchar('google_sub').unique(),
   displayName: varchar('display_name').notNull(),
   avatarUrl: text('avatar_url'),
-  apnsToken: text('apns_token'),
+  pushToken: text('push_token'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
