@@ -176,12 +176,6 @@ export default function StoryScreen() {
           <TouchableOpacity style={styles.tapRight} onPress={goNext} testID="story-next" />
         </View>
 
-        {isPaused && (
-          <View style={styles.pauseIcon} testID="story-pause-icon" pointerEvents="none">
-            <Text style={styles.pauseIconText}>⏸</Text>
-          </View>
-        )}
-
         <View style={styles.progressLine} pointerEvents="none" testID="story-progress-line">
           <View
             style={[
