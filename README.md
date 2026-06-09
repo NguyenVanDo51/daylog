@@ -55,6 +55,16 @@ Store release (breaking): đổi backend URL hoặc API breaking change
   → set MIN_APP_VERSION=2.0.0 trên backend → user cũ bị chặn, thấy màn hình bắt update
 ```
 
+**Quy tắc tăng version (`MAJOR.MINOR.PATCH`):**
+
+| Phần | Khi nào tăng | Ví dụ |
+|---|---|---|
+| `MAJOR` | Breaking change — user cũ không dùng được, phải set `MIN_APP_VERSION` | `1.x.x` → `2.0.0` |
+| `MINOR` | Tính năng mới lên store, user cũ vẫn dùng được | `1.0.x` → `1.1.0` |
+| `PATCH` | Không dùng — fix nhỏ dùng OTA, không cần store release | — |
+
+> OTA (`eas update`) không đổi version. `PATCH` chỉ dùng nếu bắt buộc hotfix qua store.
+
 Sau mỗi store release: tăng `version` và `ios.buildNumber` / `android.versionCode` trong `app.json`.
 
 ## Links
