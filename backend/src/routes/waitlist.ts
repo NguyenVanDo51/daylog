@@ -26,4 +26,9 @@ router.post('/', inviteLookupLimiter, async (req, res) => {
   }
 });
 
+router.get('/', async (req, res) => {
+  const waitlistData = await db.select().from(waitlist);
+  return res.status(200).json(waitlistData);
+});
+
 export default router;
