@@ -516,13 +516,28 @@ jobs:
 
             echo "==> Build & start API"
             docker compose build api
-            docker compose up -d api
+            docker compose up -d --wait --wait-timeout 120 api
+
+            echo "==> Health check"
+            for i in $(seq 1 30); do
+              if curl -sf http://127.0.0.1:8080/health >/dev/null; then
+                echo " Health OK"
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "Health check failed after 60s"
+                docker compose ps
+                docker compose logs api --tail 80
+                exit 1
+              fi
+              echo "  waiting for API... ($i/30)"
+              sleep 2
+            done
 
             echo "==> Cleanup"
             docker image prune -f
 
             echo "==> Done: $(git rev-parse --short HEAD)"
-            curl -sf http://127.0.0.1:8080/health && echo " Health OK"
 ```
 
 Commit và merge file này vào `main`.
@@ -808,6 +823,7 @@ sudo reboot   # nếu cần
 | Container `api` restart liên tục | Sai `DATABASE_URL` hoặc Postgres chưa ready | `docker compose logs api` |
 | OOM / server treo | VPS 1 GB hết RAM | Thêm swap, tune Postgres, giới hạn RAM container |
 | Migration fail | Schema conflict | `docker compose logs migrate`, fix migration rồi deploy lại |
+| GitHub Actions exit **56** / health check fail | `curl` chạy ngay sau `up -d`, API chưa kịp listen | Workflow dùng `docker compose up -d --wait api` + retry; xem `docker compose logs api` |
 | `502 Bad Gateway` | API không chạy | `docker compose ps`, `curl localhost:8080/health` |
 | `curl <IP>:8080` → Connection refused | Port 8080 chỉ bind localhost | **Không sửa** — dùng `https://api.getdaylog.com`; hoặc đổi `docker-compose.yml` + mở UFW 8080 (không khuyến nghị production) |
 | `curl <IP>/health` → 404 | Default Nginx site hoặc `server_name` không khớp IP | `rm -f /etc/nginx/sites-enabled/default`, enable `daylog-api`, test `curl -H "Host: api.getdaylog.com" http://127.0.0.1/health` |
