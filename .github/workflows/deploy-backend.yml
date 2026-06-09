@@ -1,0 +1,84 @@
+name: Deploy Backend to VPS
+
+on:
+  push:
+    branches: [main]
+    paths: # Only deploy backend if these files are changed
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: # cho phép chạy tay từ Actions tab
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ vars.VPS_HOST }}
+          username: ${{ vars.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ vars.VPS_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/daylog
+
+            echo "==> Pull latest code"
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Write .env from GitHub Variables/Secrets"
+            cat > .env << 'ENVEOF'
+            NODE_ENV=${{ vars.NODE_ENV }}
+            PORT=${{ vars.PORT }}
+
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            DATABASE_URL=postgres://daylog:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/daylog
+
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+
+            ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}
+
+            R2_ENDPOINT=${{ vars.R2_ENDPOINT }}
+            R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
+            R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
+            R2_BUCKET=${{ vars.R2_BUCKET }}
+            R2_PUBLIC_URL=${{ vars.R2_PUBLIC_URL }}
+
+            APPLE_CLIENT_ID=${{ vars.APPLE_CLIENT_ID }}
+            GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
+
+            APNS_KEY=${{ secrets.APNS_KEY }}
+            APNS_KEY_ID=${{ vars.APNS_KEY_ID }}
+            APNS_TEAM_ID=${{ vars.APNS_TEAM_ID }}
+            APNS_BUNDLE_ID=${{ vars.APNS_BUNDLE_ID }}
+
+            SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_ORG=${{ vars.SENTRY_ORG }}
+            SENTRY_PROJECT=${{ vars.SENTRY_PROJECT }}
+
+            MIN_APP_VERSION=${{ vars.MIN_APP_VERSION }}
+            LATEST_APP_VERSION=${{ vars.LATEST_APP_VERSION }}
+            ENVEOF
+
+            chmod 600 .env
+
+            echo "==> Start Postgres"
+            docker compose up -d postgres
+
+            echo "==> Run migrations"
+            docker compose --profile migrate run --rm migrate
+
+            echo "==> Build & start API"
+            docker compose build api
+            docker compose up -d api
+
+            echo "==> Cleanup"
+            docker image prune -f
+
+            echo "==> Done: $(git rev-parse --short HEAD)"
+            curl -sf http://127.0.0.1:8080/health && echo " Health OK"
