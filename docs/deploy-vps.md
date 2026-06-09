@@ -6,6 +6,16 @@ Hướng dẫn deploy backend Daylog lên VPS, cài PostgreSQL trên cùng máy,
 
 **Env:** Lưu trên GitHub (Variables + Secrets) → workflow tự ghi file `.env` trên VPS mỗi lần deploy.
 
+**Domain production (`getdaylog.com`):**
+
+| Subdomain | URL |
+|-----------|-----|
+| API (VPS + Nginx) | `https://api.getdaylog.com` |
+| Web landing | `https://getdaylog.com` |
+| CDN R2 | `https://cdn.getdaylog.com` |
+
+> Không dùng `daylog.app` hay placeholder khác — domain thật là **`getdaylog.com`**.
+
 ---
 
 ## Mục lục
@@ -58,6 +68,8 @@ File `docker-compose.yml` ở root repo đã cấu hình sẵn 3 service:
 | `postgres` | PostgreSQL 16, data persist trong volume `pgdata` |
 | `api` | Backend build từ `backend/Dockerfile`, port `8080` |
 | `migrate` | Chạy `drizzle-kit migrate` (profile `migrate`, không chạy tự động) |
+
+> **Lưu ý port 8080:** Trong `docker-compose.yml`, API bind `127.0.0.1:8080:8080` — chỉ truy cập được từ **trong VPS** (`curl http://127.0.0.1:8080/health`). Không mở `:8080` ra internet; client bên ngoài luôn gọi qua **Nginx** (`https://api.getdaylog.com`).
 
 ---
 
@@ -543,6 +555,25 @@ api:
 
 ## 8. Cấu hình Nginx + SSL
 
+**Domain API:** `api.getdaylog.com` — dùng đúng trong `server_name` và certbot (không phải `api.daylog.app`).
+
+### 8.1 DNS & Cloudflare (trước khi cấu hình Nginx)
+
+Record **`api`** trên Cloudflare:
+
+| Type | Name | Content | Proxy |
+|------|------|---------|-------|
+| A | `api` | IP VPS (`103.x.x.x`) | Proxied (đám mây cam) |
+
+**SSL/TLS → Overview** trên Cloudflare:
+
+| Giai đoạn | Mode khuyến nghị |
+|-----------|------------------|
+| Chưa chạy certbot (test tạm) | **Flexible** — Cloudflare → origin qua HTTP :80 |
+| Sau `certbot --nginx` | **Full (strict)** — Cloudflare → origin qua HTTPS :443 |
+
+> Nếu Cloudflare để **Full / Full (strict)** mà VPS **chưa có SSL** (chưa certbot), truy cập `https://api.getdaylog.com` sẽ báo lỗi **521** (Cloudflare không kết nối được origin trên :443).
+
 Chạy trên VPS (root hoặc sudo):
 
 ```bash
@@ -568,16 +599,54 @@ server {
 }
 ```
 
-Enable site và lấy SSL:
+Enable site, **tắt default site**, và lấy SSL:
 
 ```bash
-ln -s /etc/nginx/sites-available/daylog-api /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/daylog-api /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default   # bắt buộc — nếu giữ default, request qua IP hoặc Host không khớp → 404
 nginx -t
 systemctl reload nginx
+```
+
+Kiểm tra Nginx đã proxy đúng **trước** khi chạy certbot:
+
+```bash
+# API trực tiếp (Docker)
+curl http://127.0.0.1:8080/health
+# → {"ok":true}
+
+# Qua Nginx — giả lập Host header của domain
+curl -H "Host: api.getdaylog.com" http://127.0.0.1/health
+# → {"ok":true}
+```
+
+> `curl http://<IP_VPS>/health` có thể vẫn **404** — đúng như thiết kế vì `server_name` chỉ nhận `api.getdaylog.com`. Luôn test bằng domain hoặc lệnh `-H "Host: ..."` ở trên.
+
+Lấy SSL (Let's Encrypt):
+
+```bash
 certbot --nginx -d api.getdaylog.com
 ```
 
-Certbot tự redirect HTTP → HTTPS.
+Certbot tự redirect HTTP → HTTPS và mở listener :443.
+
+Sau certbot, đổi Cloudflare SSL mode sang **Full (strict)**, rồi verify:
+
+```bash
+# Từ máy local
+curl https://api.getdaylog.com/health
+
+# Kiểm tra auto-renew trên VPS
+sudo certbot renew --dry-run
+```
+
+### Sửa nếu đã cấu hình nhầm `api.daylog.app`
+
+```bash
+sudo sed -i 's/api\.daylog\.app/api.getdaylog.com/g' /etc/nginx/sites-available/daylog-api
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d api.getdaylog.com
+```
 
 ---
 
@@ -600,14 +669,25 @@ Thứ tự thực hiện lần đầu:
 ### Verify
 
 ```bash
-# Trên VPS
+# Trên VPS — API (Docker, chỉ localhost)
 curl http://127.0.0.1:8080/health
 # → {"ok":true}
 
-# Từ bên ngoài
+# Trên VPS — qua Nginx
+curl -H "Host: api.getdaylog.com" http://127.0.0.1/health
+# → {"ok":true}
+
+# Từ bên ngoài — luôn dùng domain, không dùng IP:8080
 curl https://api.getdaylog.com/health
 curl https://api.getdaylog.com/version
 ```
+
+| Lệnh test | Kết quả mong đợi |
+|-----------|------------------|
+| `curl http://127.0.0.1:8080/health` (trên VPS) | `{"ok":true}` |
+| `curl http://<IP>:8080/health` (từ ngoài) | Connection refused — **bình thường** |
+| `curl http://<IP>/health` (từ ngoài) | 404 — **bình thường** nếu chưa xóa default hoặc gọi bằng IP thay vì domain |
+| `curl https://api.getdaylog.com/health` | `{"ok":true}` |
 
 ```bash
 # Xem logs
@@ -729,6 +809,9 @@ sudo reboot   # nếu cần
 | OOM / server treo | VPS 1 GB hết RAM | Thêm swap, tune Postgres, giới hạn RAM container |
 | Migration fail | Schema conflict | `docker compose logs migrate`, fix migration rồi deploy lại |
 | `502 Bad Gateway` | API không chạy | `docker compose ps`, `curl localhost:8080/health` |
+| `curl <IP>:8080` → Connection refused | Port 8080 chỉ bind localhost | **Không sửa** — dùng `https://api.getdaylog.com`; hoặc đổi `docker-compose.yml` + mở UFW 8080 (không khuyến nghị production) |
+| `curl <IP>/health` → 404 | Default Nginx site hoặc `server_name` không khớp IP | `rm -f /etc/nginx/sites-enabled/default`, enable `daylog-api`, test `curl -H "Host: api.getdaylog.com" http://127.0.0.1/health` |
+| Cloudflare **521** | Origin không listen :443 (chưa SSL) hoặc sai IP DNS | Chạy `certbot --nginx -d api.getdaylog.com`; kiểm tra A record `api` → IP VPS; tạm **Flexible** nếu chưa certbot, sau đó **Full (strict)** |
 | SSL lỗi | DNS chưa trỏ đúng | Kiểm tra A record, chạy lại `certbot` |
 | SSH deploy fail | Sai key / user / firewall | Test `ssh -i key deploy@host`, mở port 22 |
 | CORS error | Thiếu origin | Thêm domain vào `ALLOWED_ORIGINS` variable, re-run workflow |
@@ -775,6 +858,8 @@ docker compose exec postgres psql -U daylog -d daylog
 - [ ] SSH key: `VPS_SSH_KEY` secret + public key trên VPS
 - [ ] `.github/workflows/deploy-backend.yml` merged vào `main`
 - [ ] Nginx reverse proxy + HTTPS
-- [ ] DNS: `api.getdaylog.com` → A record → IP VPS
+- [ ] Đã xóa `/etc/nginx/sites-enabled/default`
+- [ ] `certbot --nginx -d api.getdaylog.com` + `certbot renew --dry-run` OK
+- [ ] Cloudflare: A record `api` → IP VPS (Proxied), SSL mode **Full (strict)**
 - [ ] `curl https://api.getdaylog.com/health` → `{"ok":true}`
 - [ ] Mobile `EXPO_PUBLIC_API_URL` trỏ đúng domain API
