@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { useCapture, type UploadResult } from '@/hooks/useCapture';
 import { useAlbums } from '@/hooks/useAlbums';
+import { useLastAlbumSelection } from '@/hooks/useLastAlbumSelection';
 import { Confetti } from '@/components/ui/Confetti';
 import { colors, spacing, fonts, radii, shadows } from '@/constants/theme';
 import { success } from '@/lib/haptics';
@@ -42,6 +43,8 @@ export default function PhotoReviewScreen() {
   const [celebrate, setCelebrate] = useState(false);
 
   const uploadPromiseRef = useRef<Promise<UploadResult>>();
+  const { savedIds, persist } = useLastAlbumSelection();
+  const initializedRef = useRef(false);
 
   const asset = assets[0];
 
@@ -55,6 +58,13 @@ export default function PhotoReviewScreen() {
     if (assets.length === 0) { router.back(); return; }
     uploadPromiseRef.current = startBackgroundUpload(asset);
   }, []);
+
+  useEffect(() => {
+    if (initializedRef.current || savedIds === null || albums.length === 0) return;
+    initializedRef.current = true;
+    const valid = savedIds.filter((id) => albums.some((a) => a.id === id));
+    if (valid.length > 0) setSelectedIds(new Set(valid));
+  }, [savedIds, albums]);
 
   if (assets.length === 0 || !asset) return null;
 
@@ -72,6 +82,7 @@ export default function PhotoReviewScreen() {
     try {
       const result = await uploadPromiseRef.current!;
       await finishCapture(result, asset, albumIds, caption.trim() || null);
+      void persist(albumIds);
       success();
       setCelebrate(true);
       setTimeout(() => { setCelebrate(false); clear(); router.dismissAll(); }, 1300);
