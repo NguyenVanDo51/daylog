@@ -82,7 +82,7 @@ export default function PhotoReviewScreen() {
     try {
       const result = await uploadPromiseRef.current!;
       await finishCapture(result, asset, albumIds, caption.trim() || null);
-      void persist(albumIds);
+      if (albumIds.length > 0) void persist(albumIds);
       success();
       setCelebrate(true);
       setTimeout(() => { setCelebrate(false); clear(); router.dismissAll(); }, 1300);
