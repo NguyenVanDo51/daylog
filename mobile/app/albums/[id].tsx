@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CaretLeft } from 'phosphor-react-native';
+import { CaretLeft, DotsThree } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { DayCell } from '@/components/album/DayCell';
 import { useAlbumDays, AlbumDay } from '@/hooks/useAlbumDays';
 import { useAlbumStore } from '@/stores/albumStore';
+import { AlbumMenuSheet } from '@/components/family/AlbumMenuSheet';
+import { InviteSheet } from '@/components/family/InviteSheet';
+import { QRSheet } from '@/components/family/QRSheet';
+import { MembersSheet } from '@/components/family/MembersSheet';
 import { colors, spacing, typography } from '@/constants/theme';
 
 export default function AlbumScreen() {
@@ -14,6 +18,11 @@ export default function AlbumScreen() {
   const albumId = useAlbumStore((s) => s.albumId);
   const albumName = useAlbumStore((s) => s.albumName);
   const { data: days, isLoading } = useAlbumDays(albumId ?? null);
+
+  const [menuOpen,    setMenuOpen]    = useState(false);
+  const [inviteOpen,  setInviteOpen]  = useState(false);
+  const [qrOpen,      setQrOpen]      = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
 
   // Build pairs for 2-column masonry layout
   const pairs: Array<[AlbumDay, AlbumDay | undefined]> = [];
@@ -30,7 +39,9 @@ export default function AlbumScreen() {
           <CaretLeft size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{albumName ?? ''}</Text>
-        <View style={styles.backBtn} />
+        <TouchableOpacity onPress={() => setMenuOpen(true)} hitSlop={8} style={styles.backBtn}>
+          <DotsThree size={24} color={colors.ink} />
+        </TouchableOpacity>
       </View>
 
       {isLoading ? (
@@ -69,6 +80,17 @@ export default function AlbumScreen() {
           )}
         />
       )}
+
+      <AlbumMenuSheet
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onOpenMembers={() => { setMenuOpen(false); setMembersOpen(true); }}
+        onOpenInvite={() =>  { setMenuOpen(false); setInviteOpen(true); }}
+        onOpenQR={() =>      { setMenuOpen(false); setQrOpen(true); }}
+      />
+      <InviteSheet  visible={inviteOpen}  onClose={() => setInviteOpen(false)} />
+      <QRSheet      visible={qrOpen}      onClose={() => setQrOpen(false)} />
+      <MembersSheet visible={membersOpen} onClose={() => setMembersOpen(false)} />
     </View>
   );
 }
