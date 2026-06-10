@@ -201,4 +201,44 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
   }
 });
 
+router.post('/:id/archive', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const albumId = req.params.id as string;
+    if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
+
+    const membership = await db
+      .select({ role: albumMembers.role })
+      .from(albumMembers)
+      .where(and(eq(albumMembers.albumId, albumId), eq(albumMembers.userId, req.user!.id)))
+      .limit(1);
+
+    if (!membership[0] || membership[0].role !== 'admin') {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const current = await db
+      .select({ archivedAt: albums.archivedAt })
+      .from(albums)
+      .where(eq(albums.id, albumId))
+      .limit(1);
+
+    if (!current[0]) { res.status(404).json({ error: 'Not found' }); return; }
+    if (current[0].archivedAt !== null) {
+      res.status(409).json({ error: 'Album is already archived' });
+      return;
+    }
+
+    const [updated] = await db
+      .update(albums)
+      .set({ archivedAt: new Date() })
+      .where(eq(albums.id, albumId))
+      .returning({ archived_at: albums.archivedAt });
+
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export = router;

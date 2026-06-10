@@ -320,3 +320,49 @@ describe('Albums my_role and archived_at fields', () => {
     expect(res.body[0].my_role).toBe('member');
   });
 });
+
+describe('POST /albums/:id/archive', () => {
+  let user: any;
+  let headers: Record<string, string>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    headers = authHeader(user);
+  });
+
+  it('returns 200 and sets archived_at', async () => {
+    const album = await createTestAlbum(user.id);
+    const res = await request(app)
+      .post(`/albums/${album.id}/archive`)
+      .set(headers);
+    expect(res.status).toBe(200);
+    expect(res.body.archived_at).toBeTruthy();
+  });
+
+  it('returns 403 for non-admin member', async () => {
+    const creator = await createTestUser({ apple_sub: 'creator-2' });
+    const album = await createTestAlbum(creator.id);
+    await createTestAlbumMember(album.id, user.id, 'member');
+    const res = await request(app)
+      .post(`/albums/${album.id}/archive`)
+      .set(headers);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 403 for non-member', async () => {
+    const other = await createTestUser({ apple_sub: 'other-3' });
+    const album = await createTestAlbum(other.id);
+    const res = await request(app)
+      .post(`/albums/${album.id}/archive`)
+      .set(headers);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 409 if already archived', async () => {
+    const album = await createTestAlbum(user.id, { archived: true });
+    const res = await request(app)
+      .post(`/albums/${album.id}/archive`)
+      .set(headers);
+    expect(res.status).toBe(409);
+  });
+});
