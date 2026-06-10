@@ -60,6 +60,7 @@ export default function PhotoReviewScreen() {
   }, []);
 
   useEffect(() => {
+    // albums.length === 0 defers init until albums are fetched, allowing re-evaluation when they arrive
     if (initializedRef.current || savedIds === null || albums.length === 0) return;
     initializedRef.current = true;
     const valid = savedIds.filter((id) => albums.some((a) => a.id === id));

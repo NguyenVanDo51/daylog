@@ -8,7 +8,11 @@ export function useLastAlbumSelection() {
 
   useEffect(() => {
     AsyncStorage.getItem(KEY)
-      .then((raw) => setSavedIds(raw ? JSON.parse(raw) : []))
+      .then((raw) => {
+        if (!raw) return setSavedIds([]);
+        const parsed = JSON.parse(raw);
+        setSavedIds(Array.isArray(parsed) ? parsed.filter((v: unknown) => typeof v === 'string') : []);
+      })
       .catch(() => setSavedIds([]));
   }, []);
 
