@@ -32,8 +32,10 @@ Hướng dẫn deploy backend Daylog lên VPS, cài PostgreSQL trên cùng máy,
 9. [Deploy lần đầu (manual)](#9-deploy-lần-đầu-manual)
 10. [Auto-deploy khi merge main](#10-auto-deploy-khi-merge-main)
 11. [Cập nhật Mobile / Web](#11-cập-nhật-mobile--web)
-12. [Backup & bảo trì](#12-backup--bảo-trì)
+12. [Bảo trì](#12-bảo-trì)
 13. [Troubleshooting](#13-troubleshooting)
+
+**Database:** [database-vps.md](./database-vps.md) — TablePlus, backup, reset schema, migration.
 
 ---
 
@@ -711,10 +713,7 @@ docker compose logs -f api
 docker compose logs postgres
 ```
 
-```bash
-# Kiểm tra bảng DB
-docker compose exec postgres psql -U daylog -d daylog -c '\dt'
-```
+Kiểm tra DB: xem [database-vps.md](./database-vps.md).
 
 ### Deploy thủ công trên VPS (khi cần debug)
 
@@ -775,28 +774,9 @@ Thêm env trên Vercel dashboard nếu web gọi API trực tiếp.
 
 ---
 
-## 12. Backup & bảo trì
+## 12. Bảo trì
 
-### Backup PostgreSQL
-
-```bash
-cd /opt/daylog
-docker compose exec postgres pg_dump -U daylog daylog > ~/backup_$(date +%F).sql
-```
-
-Restore:
-
-```bash
-cat backup_2026-06-09.sql | docker compose exec -T postgres psql -U daylog daylog
-```
-
-### Cron backup hàng ngày (tuỳ chọn)
-
-```bash
-crontab -e
-# 3h sáng mỗi ngày
-0 3 * * * cd /opt/daylog && docker compose exec -T postgres pg_dump -U daylog daylog > /home/deploy/backups/daylog_$(date +\%F).sql
-```
+Backup, restore, reset schema, TablePlus, migration: **[database-vps.md](./database-vps.md)**.
 
 ### Xem tài nguyên
 
@@ -822,7 +802,7 @@ sudo reboot   # nếu cần
 |-------------|------------------------|------------|
 | Container `api` restart liên tục | Sai `DATABASE_URL` hoặc Postgres chưa ready | `docker compose logs api` |
 | OOM / server treo | VPS 1 GB hết RAM | Thêm swap, tune Postgres, giới hạn RAM container |
-| Migration fail | Schema conflict | `docker compose logs migrate`, fix migration rồi deploy lại |
+| Migration fail | Schema conflict | [database-vps.md](./database-vps.md) — `docker compose logs migrate` |
 | GitHub Actions exit **56** / health check fail | `curl` chạy ngay sau `up -d`, API chưa kịp listen | Workflow dùng `docker compose up -d --wait api` + retry; xem `docker compose logs api` |
 | `502 Bad Gateway` | API không chạy | `docker compose ps`, `curl localhost:8080/health` |
 | `curl <IP>:8080` → Connection refused | Port 8080 chỉ bind localhost | **Không sửa** — dùng `https://api.getdaylog.com`; hoặc đổi `docker-compose.yml` + mở UFW 8080 (không khuyến nghị production) |
@@ -854,10 +834,9 @@ docker compose up -d api
 
 # Xem .env (cẩn thận — có secrets)
 cat .env
-
-# Vào shell Postgres
-docker compose exec postgres psql -U daylog -d daylog
 ```
+
+Database (psql, backup, reset): [database-vps.md](./database-vps.md).
 
 ---
 
