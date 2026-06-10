@@ -9,6 +9,8 @@ export interface Album {
   created_by: string;
   created_at: string;
   is_private: boolean;
+  my_role: 'admin' | 'member';
+  archived_at: string | null;
 }
 
 export function useAlbums() {
