@@ -42,10 +42,10 @@ function toSnakeUser(u: typeof users.$inferSelect) {
 router.post('/apple', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { idToken, pushToken } = req.body ?? {};
-    if (!idToken) return res.status(400).json({ error: 'idToken required' });
+    if (!idToken) return next(Object.assign(new Error('idToken required'), { status: 400 }));
 
     const { sub, name, email } = await verifyAppleToken(idToken);
-    const displayName = name || 'Family Member';
+    const displayName = name || 'Member';
 
     let user: typeof users.$inferSelect;
 
@@ -65,7 +65,8 @@ router.post('/apple', async (req: Request, res: Response, next: NextFunction) =>
       const [upserted] = await db.insert(users)
         .values({ appleSub: sub, displayName, avatarUrl: null, pushToken: pushToken ?? null, email })
         .onConflictDoUpdate({
-          target: users.email, // If email already exists (from Google login), update the user
+          target: users.email,
+          targetWhere: sql`email IS NOT NULL`,
           set: {
             appleSub: sub,
             displayName: sql`COALESCE(EXCLUDED.display_name, ${users.displayName})`,
@@ -99,10 +100,10 @@ router.post('/apple', async (req: Request, res: Response, next: NextFunction) =>
 router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { idToken, pushToken } = req.body ?? {};
-    if (!idToken) return res.status(400).json({ error: 'idToken required' });
+    if (!idToken) return next(Object.assign(new Error('idToken required'), { status: 400 }));
 
     const { sub, name, picture, email } = await verifyGoogleToken(idToken);
-    const displayName = name || 'Family Member';
+    const displayName = name || 'Member';
 
     let user: typeof users.$inferSelect;
 
@@ -124,6 +125,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
         .values({ googleSub: sub, displayName, avatarUrl: picture ?? null, pushToken: pushToken ?? null, email })
         .onConflictDoUpdate({
           target: users.email,
+          targetWhere: sql`email IS NOT NULL`,
           set: {
             googleSub: sub,
             displayName: sql`COALESCE(EXCLUDED.display_name, ${users.displayName})`,

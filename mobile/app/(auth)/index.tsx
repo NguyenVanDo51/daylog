@@ -47,6 +47,7 @@ export default function SignInScreen() {
       const cred = await AppleAuthentication.signInAsync({
         requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL],
       });
+      if (!cred.identityToken) throw new Error('Apple không trả về identity token');
       const { data } = await api.post('/auth/apple', { idToken: cred.identityToken, fullName: cred.fullName });
       await finishAuth(data.token, data.user);
     } catch (e: any) {
