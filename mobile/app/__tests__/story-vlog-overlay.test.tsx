@@ -28,6 +28,12 @@ const makePhoto = (overrides: Partial<DayPhoto> = {}): DayPhoto => ({
   ...overrides,
 });
 
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => {
+  act(() => { jest.runOnlyPendingTimers(); });
+  jest.useRealTimers();
+});
+
 describe('VlogOverlay — static rendering', () => {
   it('vlog-time row is present', () => {
     const { getByTestId } = render(
@@ -59,12 +65,6 @@ describe('VlogOverlay — static rendering', () => {
 });
 
 describe('VlogOverlay — typewriter animation', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-  });
-
   it('time text starts empty on mount', () => {
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,

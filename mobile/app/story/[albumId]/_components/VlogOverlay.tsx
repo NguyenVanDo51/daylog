@@ -88,7 +88,7 @@ export function VlogOverlay({
 const styles = StyleSheet.create({
   upperCenter: {
     position: 'absolute',
-    top: '38%' as any, // RN supports % strings for absolute position (SDK 56+)
+    top: '38%', // RN supports % strings for absolute position (SDK 56+)
     left: 0,
     right: 0,
     zIndex: 10,
