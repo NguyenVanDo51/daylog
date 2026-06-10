@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import * as Linking from 'expo-linking';
+import { PRIVACY_URL } from '@/constants/urls';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, router } from 'expo-router';
@@ -114,7 +116,9 @@ export default function SignInScreen() {
           />
           <Button label={t('signin.google')} onPress={handleGoogle} variant="ghost" fullWidth loading={loading === 'google'} />
         </View>
-        <Text style={styles.privacy}>{t('signin.privacy')}</Text>
+        <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_URL)}>
+          <Text style={styles.privacy}>{t('signin.privacy')}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
