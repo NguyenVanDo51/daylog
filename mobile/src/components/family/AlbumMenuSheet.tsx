@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { UsersThree, UserPlus, QrCode } from 'phosphor-react-native';
+import { UsersThree, UserPlus } from 'phosphor-react-native';
 import { SheetModal } from '@/components/ui/SheetModal';
 import { colors, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
@@ -10,15 +10,13 @@ interface AlbumMenuSheetProps {
   onClose: () => void;
   onOpenMembers: () => void;
   onOpenInvite: () => void;
-  onOpenQR: () => void;
 }
 
-export function AlbumMenuSheet({ visible, onClose, onOpenMembers, onOpenInvite, onOpenQR }: AlbumMenuSheetProps) {
+export function AlbumMenuSheet({ visible, onClose, onOpenMembers, onOpenInvite }: AlbumMenuSheetProps) {
   return (
     <SheetModal visible={visible} onClose={onClose}>
       <MenuItem icon={<UsersThree size={22} color={colors.ink} />} label={t('album_menu.members')} onPress={onOpenMembers} />
-      <MenuItem icon={<UserPlus size={22} color={colors.ink} />} label={t('album_menu.invite')}   onPress={onOpenInvite} />
-      <MenuItem icon={<QrCode    size={22} color={colors.ink} />} label={t('album_menu.scan_qr')} onPress={onOpenQR} />
+      <MenuItem icon={<UserPlus  size={22} color={colors.ink} />} label={t('album_menu.invite')}  onPress={onOpenInvite} />
     </SheetModal>
   );
 }

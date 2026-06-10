@@ -8,7 +8,6 @@ import { useAlbumDays, AlbumDay } from '@/hooks/useAlbumDays';
 import { useAlbumStore } from '@/stores/albumStore';
 import { AlbumMenuSheet } from '@/components/family/AlbumMenuSheet';
 import { InviteSheet } from '@/components/family/InviteSheet';
-import { QRSheet } from '@/components/family/QRSheet';
 import { MembersSheet } from '@/components/family/MembersSheet';
 import { colors, spacing, typography } from '@/constants/theme';
 
@@ -21,7 +20,6 @@ export default function AlbumScreen() {
 
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [inviteOpen,  setInviteOpen]  = useState(false);
-  const [qrOpen,      setQrOpen]      = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
 
   // Build pairs for 2-column masonry layout
@@ -86,10 +84,8 @@ export default function AlbumScreen() {
         onClose={() => setMenuOpen(false)}
         onOpenMembers={() => { setMenuOpen(false); setMembersOpen(true); }}
         onOpenInvite={() =>  { setMenuOpen(false); setInviteOpen(true); }}
-        onOpenQR={() =>      { setMenuOpen(false); setQrOpen(true); }}
       />
       <InviteSheet  visible={inviteOpen}  onClose={() => setInviteOpen(false)} />
-      <QRSheet      visible={qrOpen}      onClose={() => setQrOpen(false)} />
       <MembersSheet visible={membersOpen} onClose={() => setMembersOpen(false)} />
     </View>
   );
