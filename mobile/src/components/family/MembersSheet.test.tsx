@@ -1,9 +1,6 @@
 jest.mock('@/hooks/useMembers', () => ({
   useMembers: jest.fn(),
 }));
-jest.mock('@/stores/albumStore', () => ({
-  useAlbumStore: jest.fn(),
-}));
 jest.mock('@/components/family/MemberList', () => ({
   MemberList: ({ members }: { members: { id: string; display_name: string }[] }) => {
     const React = require('react');

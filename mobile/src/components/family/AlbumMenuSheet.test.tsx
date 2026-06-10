@@ -37,4 +37,12 @@ describe('AlbumMenuSheet', () => {
     fireEvent.press(getByText('Quét mã QR'));
     expect(defaultProps.onOpenQR).toHaveBeenCalledTimes(1);
   });
+
+  it('does not call onClose when a row is pressed', () => {
+    const { getByText } = render(<AlbumMenuSheet {...defaultProps} />);
+    fireEvent.press(getByText('Thành viên'));
+    fireEvent.press(getByText('Mời thành viên'));
+    fireEvent.press(getByText('Quét mã QR'));
+    expect(defaultProps.onClose).not.toHaveBeenCalled();
+  });
 });
