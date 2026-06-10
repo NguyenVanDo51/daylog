@@ -16,12 +16,11 @@ jest.mock('phosphor-react-native', () => ({
 }));
 
 import { VlogOverlay } from '../story/[albumId]/_components/VlogOverlay';
+import { DayPhoto } from '@/hooks/useDayPhotos';
 
-const makePhoto = (overrides: Partial<{
-  id: string; taken_at: string; caption: string | null;
-}> = {}) => ({
+const makePhoto = (overrides: Partial<DayPhoto> = {}): DayPhoto => ({
   id: 'p1',
-  media_type: 'photo' as const,
+  media_type: 'photo',
   duration_ms: null,
   taken_at: '2025-12-25T13:42:00Z',
   caption: null,
