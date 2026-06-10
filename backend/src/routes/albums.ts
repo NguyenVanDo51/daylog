@@ -19,6 +19,7 @@ const albumSelect = {
   created_by: albums.createdBy,
   created_at: albums.createdAt,
   is_private: albums.isPrivate,
+  archived_at: albums.archivedAt,
 };
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -75,7 +76,10 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const rows = await db
-      .select(albumSelect)
+      .select({
+        ...albumSelect,
+        my_role: albumMembers.role,
+      })
       .from(albums)
       .innerJoin(albumMembers, eq(albumMembers.albumId, albums.id))
       .where(eq(albumMembers.userId, req.user!.id))
@@ -92,7 +96,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     const albumId = req.params.id as string;
     if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
     const membership = await db
-      .select()
+      .select({ role: albumMembers.role })
       .from(albumMembers)
       .where(
         and(eq(albumMembers.albumId, albumId), eq(albumMembers.userId, req.user!.id))
@@ -118,7 +122,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
       res.status(404).json({ error: 'Not found' });
       return;
     }
-    res.json(rows[0]);
+    res.json({ ...rows[0], my_role: membership[0].role });
   } catch (err) {
     next(err);
   }

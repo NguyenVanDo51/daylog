@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { pool } from '../db';
-import { createTestUser, createTestAlbum, authHeader } from '../../tests/setup';
+import { createTestUser, createTestAlbum, createTestAlbumMember, authHeader } from '../../tests/setup';
 
 // app.js is still JS — use require to skirt allowJs.
 const app = require('../app');
@@ -264,5 +264,59 @@ describe('Albums is_private', () => {
     const res = await request(app).get('/albums').set(headers);
     expect(res.status).toBe(200);
     expect(typeof res.body[0].is_private).toBe('boolean');
+  });
+});
+
+describe('Albums my_role and archived_at fields', () => {
+  let user: any;
+  let headers: Record<string, string>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    headers = authHeader(user);
+  });
+
+  it('GET /albums returns my_role for each album', async () => {
+    await createTestAlbum(user.id, { name: 'Mine' });
+    const res = await request(app).get('/albums').set(headers);
+    expect(res.status).toBe(200);
+    expect(res.body[0].my_role).toBe('admin');
+  });
+
+  it('GET /albums returns archived_at as null for active albums', async () => {
+    await createTestAlbum(user.id);
+    const res = await request(app).get('/albums').set(headers);
+    expect(res.status).toBe(200);
+    expect(res.body[0].archived_at).toBeNull();
+  });
+
+  it('GET /albums returns archived_at as ISO string for archived albums', async () => {
+    await createTestAlbum(user.id, { archived: true });
+    const res = await request(app).get('/albums').set(headers);
+    expect(res.status).toBe(200);
+    expect(res.body[0].archived_at).toBeTruthy();
+  });
+
+  it('GET /albums/:id returns my_role', async () => {
+    const album = await createTestAlbum(user.id);
+    const res = await request(app).get(`/albums/${album.id}`).set(headers);
+    expect(res.status).toBe(200);
+    expect(res.body.my_role).toBe('admin');
+  });
+
+  it('GET /albums/:id returns archived_at', async () => {
+    const album = await createTestAlbum(user.id, { archived: true });
+    const res = await request(app).get(`/albums/${album.id}`).set(headers);
+    expect(res.status).toBe(200);
+    expect(res.body.archived_at).toBeTruthy();
+  });
+
+  it('GET /albums returns my_role as member when user is not the creator', async () => {
+    const creator = await createTestUser({ apple_sub: 'creator-sub' });
+    const album = await createTestAlbum(creator.id);
+    await createTestAlbumMember(album.id, user.id, 'member');
+    const res = await request(app).get('/albums').set(headers);
+    expect(res.status).toBe(200);
+    expect(res.body[0].my_role).toBe('member');
   });
 });
