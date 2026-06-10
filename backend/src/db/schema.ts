@@ -39,6 +39,7 @@ export const albums = pgTable('albums', {
     .references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   isPrivate: boolean('is_private').notNull().default(false),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
 });
 
 export const albumMembers = pgTable(

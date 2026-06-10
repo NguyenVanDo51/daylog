@@ -23,6 +23,7 @@ export interface TestAlbum {
   created_by: string;
   created_at: Date | null;
   is_private: boolean;
+  archived_at: Date | null;
 }
 
 function toSnakeUser(u: typeof users.$inferSelect): TestUser {
@@ -46,6 +47,7 @@ function toSnakeAlbum(a: typeof albums.$inferSelect): TestAlbum {
     created_by: a.createdBy,
     created_at: a.createdAt,
     is_private: a.isPrivate,
+    archived_at: a.archivedAt ?? null,
   };
 }
 
@@ -79,7 +81,11 @@ export function authHeader(user: { id: string }): { Authorization: string } {
 
 export async function createTestAlbum(
   userId: string,
-  overrides: Partial<{ name: string; child_birthdate: string | null }> = {}
+  overrides: Partial<{
+    name: string;
+    child_birthdate: string | null;
+    archived: boolean;
+  }> = {}
 ): Promise<TestAlbum> {
   const [album] = await db
     .insert(albums)
@@ -88,6 +94,7 @@ export async function createTestAlbum(
       createdBy: userId,
       childBirthdate:
         overrides.child_birthdate !== undefined ? overrides.child_birthdate : '2024-01-15',
+      archivedAt: overrides.archived ? new Date() : null,
     })
     .returning();
   await db.insert(albumMembers).values({

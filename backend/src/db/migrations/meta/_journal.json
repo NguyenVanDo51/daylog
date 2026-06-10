@@ -79,5 +79,12 @@
       "tag": "0012_rename_push_token",
       "breakpoints": true
     }
+    ,{
+      "idx": 11,
+      "version": "7",
+      "when": 1781049600000,
+      "tag": "0013_add_archived_at",
+      "breakpoints": true
+    }
   ]
 }
