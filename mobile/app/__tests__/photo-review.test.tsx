@@ -169,12 +169,19 @@ describe('PhotoReview', () => {
     expect(router.back).toHaveBeenCalled();
   });
 
-  it('auto-selects saved album ids that still exist in the list', () => {
+  it('auto-selects saved album ids that still exist in the list', async () => {
     mockUseLastAlbumSelection.mockReturnValue({ savedIds: ['album-1'], persist: mockPersist });
     const { getByTestId } = render(<PhotoReviewScreen />);
     const saveBtn = getByTestId('review-save');
     const isDisabled = saveBtn.props.disabled ?? saveBtn.props.accessibilityState?.disabled;
     expect(isDisabled).toBeFalsy();
+    await act(async () => { fireEvent.press(saveBtn); });
+    expect(mockFinishCapture).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.arrayContaining(['album-1']),
+      null,
+    );
   });
 
   it('does not auto-select ids for albums that no longer exist', () => {
@@ -193,11 +200,20 @@ describe('PhotoReview', () => {
     expect(isDisabled).toBeTruthy();
   });
 
-  it('persists selected album ids after successful save', async () => {
+  it('persists manually selected album ids after successful save', async () => {
     const { getByTestId } = render(<PhotoReviewScreen />);
     fireEvent.press(getByTestId('album-checkbox-album-1'));
     await act(async () => { fireEvent.press(getByTestId('review-save')); });
-    expect(mockPersist).toHaveBeenCalledWith(['album-1']);
+    await waitFor(() => expect(mockPersist).toHaveBeenCalledWith(['album-1']));
+  });
+
+  it('persists auto-selected album ids after successful save without manual interaction', async () => {
+    mockUseLastAlbumSelection.mockReturnValue({ savedIds: ['album-1', 'album-2'], persist: mockPersist });
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    await waitFor(() => expect(mockPersist).toHaveBeenCalledWith(
+      expect.arrayContaining(['album-1', 'album-2']),
+    ));
   });
 
   it('does not persist when finishCapture throws', async () => {
