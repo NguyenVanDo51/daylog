@@ -40,10 +40,13 @@ export const vi = {
     joined_on:    'tham gia ngày {{date}}',
   },
   settings: {
-    title:      'Cài đặt',
-    push_label: 'Thông báo đẩy',
-    signout:    'Đăng xuất',
-    version:    'Phiên bản {{v}}',
+    title:         'Cài đặt',
+    push_label:    'Thông báo đẩy',
+    signout:       'Đăng xuất',
+    version:       'Phiên bản {{v}}',
+    legal_section: 'Pháp lý',
+    privacy_policy:'Chính sách bảo mật',
+    terms:         'Điều khoản sử dụng',
   },
   signin: {
     tagline:    'lưu giữ từng khoảnh khắc bé yêu',

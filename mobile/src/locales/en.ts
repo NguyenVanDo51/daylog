@@ -5,7 +5,7 @@ export const en = {
   home:    { album_default: "Baby's Album", badge_age: '{{months}} months', badge_members: '{{count}} family', badge_photos: '{{count}} photos', empty_message: 'No photos yet — add your first memory!' },
   moments: { title: 'Moments 🌟', eyebrow: '~ moments to remember ~', empty_message: 'No milestones yet — record your first one ✦' },
   family:  { title: 'Family 👨‍👩‍👧', invite_title: 'Invite family', copy_link: 'Copy invite link', scan_qr: 'Scan QR code', role_admin: 'Admin', role_member: 'Member', joined_on: 'joined on {{date}}' },
-  settings:{ title: 'Settings', push_label: 'Push notifications', signout: 'Sign out', version: 'Version {{v}}' },
+  settings: { title: 'Settings', push_label: 'Push notifications', signout: 'Sign out', version: 'Version {{v}}', legal_section: 'Legal', privacy_policy: 'Privacy Policy', terms: 'Terms of Service' },
   signin:  { tagline: 'capture every tiny moment', headline: 'Every day, your baby grows a little more', sub_copy: "Don't let those moments live only in memory", apple: 'Sign in with Apple', google: 'Sign in with Google', privacy: 'By signing in, you agree to our Privacy Policy.', failed: 'Sign in failed' },
   upload:  { title: 'New photos', eyebrow: '~ add photos ~', caption_ph: 'short note for the photo...', uploading: 'uploading {{done}}/{{total}}...', compressing: 'compressing...', cta: 'Upload {{n}} photos', cta_one: 'Upload 1 photo', cancel: 'Cancel', error_title: 'Upload incomplete', error_body: '{{success}} photos uploaded, {{failed}} failed' },
   milestone:{ new_title: 'New milestone', new_eyebrow: '~ add a milestone ~', name_ph: 'Milestone name', note_ph: 'short note... (optional)', save: 'Save milestone ✦', pick_cover: 'Pick cover photo' },
