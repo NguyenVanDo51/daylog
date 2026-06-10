@@ -43,4 +43,12 @@ describe('useLastAlbumSelection', () => {
       '["album-3","album-4"]',
     );
   });
+
+  it('persist does not throw when AsyncStorage write fails', async () => {
+    mockGetItem.mockResolvedValue(null);
+    mockSetItem.mockRejectedValue(new Error('write failed'));
+    const { result } = renderHook(() => useLastAlbumSelection());
+    await waitFor(() => expect(result.current.savedIds).toEqual([]));
+    await expect(result.current.persist(['album-1'])).resolves.toBeUndefined();
+  });
 });

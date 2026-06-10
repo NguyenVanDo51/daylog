@@ -13,7 +13,7 @@ export function useLastAlbumSelection() {
   }, []);
 
   const persist = useCallback(
-    (ids: string[]) => AsyncStorage.setItem(KEY, JSON.stringify(ids)),
+    (ids: string[]) => AsyncStorage.setItem(KEY, JSON.stringify(ids)).catch(() => {}),
     [],
   );
 
