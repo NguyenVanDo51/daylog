@@ -321,6 +321,53 @@ describe('Albums my_role and archived_at fields', () => {
   });
 });
 
+describe('DELETE /albums/:id', () => {
+  let user: any;
+  let headers: Record<string, string>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    headers = authHeader(user);
+  });
+
+  it('returns 204 and removes the album', async () => {
+    const album = await createTestAlbum(user.id);
+    const res = await request(app)
+      .delete(`/albums/${album.id}`)
+      .set(headers);
+    expect(res.status).toBe(204);
+
+    const check = await request(app).get(`/albums/${album.id}`).set(headers);
+    expect(check.status).toBe(403);
+  });
+
+  it('returns 403 for non-admin member', async () => {
+    const creator = await createTestUser({ apple_sub: 'creator-del-2' });
+    const album = await createTestAlbum(creator.id);
+    await createTestAlbumMember(album.id, user.id, 'member');
+    const res = await request(app)
+      .delete(`/albums/${album.id}`)
+      .set(headers);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 403 for non-member', async () => {
+    const other = await createTestUser({ apple_sub: 'other-del-3' });
+    const album = await createTestAlbum(other.id);
+    const res = await request(app)
+      .delete(`/albums/${album.id}`)
+      .set(headers);
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for non-existent album', async () => {
+    const res = await request(app)
+      .delete('/albums/00000000-0000-0000-0000-000000000000')
+      .set(headers);
+    expect(res.status).toBe(404);
+  });
+});
+
 describe('POST /albums/:id/archive', () => {
   let user: any;
   let headers: Record<string, string>;

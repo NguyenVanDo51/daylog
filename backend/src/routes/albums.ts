@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { albums, albumMembers, photos } from '../db/schema';
 import { isValidUUID } from '../lib/validation';
+import { deleteObject } from '../services/r2';
 
 const router = express.Router();
 
@@ -196,6 +197,62 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       return;
     }
     res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const albumId = req.params.id as string;
+    if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
+
+    const membership = await db
+      .select({ role: albumMembers.role })
+      .from(albumMembers)
+      .where(and(eq(albumMembers.albumId, albumId), eq(albumMembers.userId, req.user!.id)))
+      .limit(1);
+
+    if (!membership[0]) {
+      // Distinguish "album doesn't exist" (404) from "album exists but user is not a member" (403)
+      const albumExists = await db
+        .select({ id: albums.id })
+        .from(albums)
+        .where(eq(albums.id, albumId))
+        .limit(1);
+      if (!albumExists[0]) { res.status(404).json({ error: 'Not found' }); return; }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    if (membership[0].role !== 'admin') {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    // Fetch all R2 keys before deleting
+    const photoRows = await db
+      .select({ r2Key: photos.r2Key, thumbnailKey: photos.thumbnailKey })
+      .from(photos)
+      .where(eq(photos.albumId, albumId));
+
+    // Delete the album row — cascades album_members, photos, album_photos, day_labels, invites, reactions
+    const deleted = await db
+      .delete(albums)
+      .where(eq(albums.id, albumId))
+      .returning({ id: albums.id });
+
+    if (!deleted[0]) { res.status(404).json({ error: 'Not found' }); return; }
+
+    // Delete R2 objects after DB delete succeeds
+    await Promise.all(
+      photoRows.flatMap((p) => {
+        const ops = [deleteObject(p.r2Key)];
+        if (p.thumbnailKey) ops.push(deleteObject(p.thumbnailKey));
+        return ops;
+      })
+    );
+
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
