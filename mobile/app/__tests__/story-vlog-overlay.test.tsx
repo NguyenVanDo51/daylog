@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, act } from '@testing-library/react-native';
 
 jest.mock('expo-linear-gradient', () => {
   const React = require('react');
@@ -10,53 +10,90 @@ jest.mock('expo-linear-gradient', () => {
   };
 });
 
-import { View, Text } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+jest.mock('phosphor-react-native', () => ({
+  PlayIcon: () => null,
+  PauseIcon: () => null,
+}));
 
-function VlogOverlay({ photo }: { photo: { taken_at: string; caption: string | null } }) {
-  const dt = new Date(photo.taken_at);
-  const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-  const dateStr = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
+import { VlogOverlay } from '../story/[albumId]/_components/VlogOverlay';
 
-  return (
-    <LinearGradient
-      colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.85)']}
-      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}
-      pointerEvents="none"
-    >
-      <Text testID="vlog-date">{dateStr}</Text>
-      <Text testID="vlog-time">▶ {timeStr}</Text>
-      {photo.caption?.trim() ? <Text testID="vlog-caption">{photo.caption}</Text> : null}
-    </LinearGradient>
-  );
-}
+const makePhoto = (overrides: Partial<{
+  id: string; taken_at: string; caption: string | null;
+}> = {}) => ({
+  id: 'p1',
+  media_type: 'photo' as const,
+  duration_ms: null,
+  taken_at: '2025-12-25T13:42:00Z',
+  caption: null,
+  uploaded_by: 'u1',
+  ...overrides,
+});
 
-describe('VlogOverlay', () => {
-  it('renders formatted date from taken_at', () => {
-    const photo = { taken_at: '2025-12-25T13:42:00Z', caption: null };
-    const { getByTestId } = render(<VlogOverlay photo={photo} />);
-
-    expect(getByTestId('vlog-date').props.children).toMatch(/2025\.12\.25/);
+describe('VlogOverlay — static rendering', () => {
+  it('vlog-time row is present', () => {
+    const { getByTestId } = render(
+      <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
+    );
+    expect(getByTestId('vlog-time')).toBeTruthy();
   });
 
-  it('renders caption when present', () => {
-    const photo = { taken_at: '2025-12-25T13:42:00Z', caption: 'Bữa sáng gia đình' };
-    const { getByTestId } = render(<VlogOverlay photo={photo} />);
-
-    expect(getByTestId('vlog-caption').props.children).toBe('Bữa sáng gia đình');
-  });
-
-  it('does not render caption when null', () => {
-    const photo = { taken_at: '2025-12-25T13:42:00Z', caption: null };
-    const { queryByTestId } = render(<VlogOverlay photo={photo} />);
-
+  it('does not render caption element when caption is null', () => {
+    const { queryByTestId } = render(
+      <VlogOverlay photo={makePhoto({ caption: null })} currentIndex={0} total={1} />,
+    );
     expect(queryByTestId('vlog-caption')).toBeNull();
   });
 
-  it('does not render caption when empty string', () => {
-    const photo = { taken_at: '2025-12-25T13:42:00Z', caption: '' };
-    const { queryByTestId } = render(<VlogOverlay photo={photo} />);
-
+  it('does not render caption element when caption is empty string', () => {
+    const { queryByTestId } = render(
+      <VlogOverlay photo={makePhoto({ caption: '' })} currentIndex={0} total={1} />,
+    );
     expect(queryByTestId('vlog-caption')).toBeNull();
+  });
+
+  it('renders caption element when caption is present', () => {
+    const { getByTestId } = render(
+      <VlogOverlay photo={makePhoto({ caption: 'Buổi sáng' })} currentIndex={0} total={1} />,
+    );
+    expect(getByTestId('vlog-caption')).toBeTruthy();
+  });
+});
+
+describe('VlogOverlay — typewriter animation', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  it('time text starts empty on mount', () => {
+    const { getByTestId } = render(
+      <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
+    );
+    expect(getByTestId('vlog-time-text').props.children).toBe('');
+  });
+
+  it('time text is non-empty after 500ms', () => {
+    const { getByTestId } = render(
+      <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
+    );
+    act(() => { jest.advanceTimersByTime(500); });
+    expect(getByTestId('vlog-time-text').props.children).not.toBe('');
+  });
+
+  it('caption starts empty on mount', () => {
+    const { getByTestId } = render(
+      <VlogOverlay photo={makePhoto({ caption: 'Xin chào' })} currentIndex={0} total={1} />,
+    );
+    expect(getByTestId('vlog-caption').props.children).toBe('');
+  });
+
+  it('caption reaches full text after enough time', () => {
+    // time: 5 chars × 70ms = 350ms + 100ms gap + 8 chars × 35ms = 730ms → use 1200ms
+    const { getByTestId } = render(
+      <VlogOverlay photo={makePhoto({ caption: 'Xin chào' })} currentIndex={0} total={1} />,
+    );
+    act(() => { jest.advanceTimersByTime(1200); });
+    expect(getByTestId('vlog-caption').props.children).toBe('Xin chào');
   });
 });
