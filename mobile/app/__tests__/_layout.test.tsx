@@ -12,12 +12,12 @@ jest.mock('expo-font', () => ({
   FontLoader: jest.fn(),
 }));
 
-jest.mock('@expo-google-fonts/comfortaa', () => ({
+jest.mock('@expo-google-fonts/baloo-2', () => ({
   useFonts: jest.fn(() => [true, null]),
-  Comfortaa_400Regular: 'Comfortaa_400Regular',
-  Comfortaa_500Medium: 'Comfortaa_500Medium',
-  Comfortaa_600SemiBold: 'Comfortaa_600SemiBold',
-  Comfortaa_700Bold: 'Comfortaa_700Bold',
+  Baloo2_400Regular: 'Baloo2_400Regular',
+  Baloo2_500Medium: 'Baloo2_500Medium',
+  Baloo2_600SemiBold: 'Baloo2_600SemiBold',
+  Baloo2_700Bold: 'Baloo2_700Bold',
 }));
 
 

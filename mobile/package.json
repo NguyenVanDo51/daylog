@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo-google-fonts/baloo-2": "^0.4.2",
     "@expo-google-fonts/comfortaa": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
     "@lodev09/react-native-true-sheet": "^3.10.1",

@@ -72,10 +72,10 @@ export const shadows = {
 } as const;
 
 export const fonts = {
-  regular:  'Fredoka_400Regular',
-  medium:   'Fredoka_500Medium',
-  semiBold: 'Fredoka_600SemiBold',
-  bold:     'Fredoka_700Bold',
+  regular:  'Baloo2_400Regular',
+  medium:   'Baloo2_500Medium',
+  semiBold: 'Baloo2_600SemiBold',
+  bold:     'Baloo2_700Bold',
 } as const;
 
 export const typography = {

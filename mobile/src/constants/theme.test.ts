@@ -28,6 +28,6 @@ describe('theme tokens', () => {
 
   it('exports typography', () => {
     expect(typography.heading.fontSize).toBe(22);
-    expect(typography.heading.fontFamily).toBe('Fredoka_600SemiBold');
+    expect(typography.heading.fontFamily).toBe('Baloo2_600SemiBold');
   });
 });
