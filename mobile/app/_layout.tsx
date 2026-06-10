@@ -44,15 +44,15 @@ function RootLayout() {
       const stored = await SecureStore.getItemAsync(TOKEN_KEY);
       if (stored) {
         const cachedUser = await SecureStore.getItemAsync(USER_KEY);
-        if (cachedUser) setAuth(stored, JSON.parse(cachedUser));
         try {
+          if (cachedUser) setAuth(stored, JSON.parse(cachedUser));
           const { data } = await api.get('/users/me', { headers: { Authorization: `Bearer ${stored}` } });
           setAuth(stored, data);
           Sentry.setUser({ id: data.id });
           await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data));
           registerPushToken().catch(() => { });
-        } catch (err: any) {
-          if (err?.response?.status === 401) {
+        } catch (err) {
+          if ((err as { response?: { status?: number } }).response?.status === 401) {
             await SecureStore.deleteItemAsync(TOKEN_KEY);
             await SecureStore.deleteItemAsync(USER_KEY);
             clearAuth();

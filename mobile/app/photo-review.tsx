@@ -116,7 +116,7 @@ export default function PhotoReviewScreen() {
               <TouchableOpacity onPress={() => { clear(); router.back(); }} testID="review-close">
                 <X size={26} color={colors.white} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.back()} testID="review-retake">
+              <TouchableOpacity onPress={() => { clear(); router.back(); }} testID="review-retake">
                 <Text style={styles.retakeText}>Chụp lại</Text>
               </TouchableOpacity>
             </View>
