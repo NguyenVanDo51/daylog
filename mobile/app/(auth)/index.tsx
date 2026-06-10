@@ -47,7 +47,7 @@ export default function SignInScreen() {
       const cred = await AppleAuthentication.signInAsync({
         requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL],
       });
-      const { data } = await api.post('/auth/apple', { identityToken: cred.identityToken, fullName: cred.fullName });
+      const { data } = await api.post('/auth/apple', { idToken: cred.identityToken, fullName: cred.fullName });
       await finishAuth(data.token, data.user);
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('signin.failed'), e.message);

@@ -100,5 +100,12 @@
       "tag": "0013_add_archived_at",
       "breakpoints": true
     }
+    ,{
+      "idx": 12,
+      "version": "7",
+      "when": 1749513600000,
+      "tag": "0014_add_email_to_users",
+      "breakpoints": true
+    }
   ]
 }

@@ -20,6 +20,7 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
   appleSub: varchar('apple_sub').unique(),
   googleSub: varchar('google_sub').unique(),
+  email: varchar('email').unique(),
   displayName: varchar('display_name').notNull(),
   avatarUrl: text('avatar_url'),
   pushToken: text('push_token'),
