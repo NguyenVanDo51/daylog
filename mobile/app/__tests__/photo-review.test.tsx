@@ -33,6 +33,12 @@ jest.mock('@/hooks/useAlbums', () => ({
 
 jest.mock('@/lib/haptics', () => ({ tap: jest.fn(), success: jest.fn() }));
 
+const mockPersist = jest.fn().mockResolvedValue(undefined);
+
+jest.mock('@/hooks/useLastAlbumSelection', () => ({
+  useLastAlbumSelection: jest.fn(),
+}));
+
 jest.mock('@/components/ui/Confetti', () => {
   const React = require('react');
   return { Confetti: () => React.createElement('View', { testID: 'confetti' }) };
@@ -56,6 +62,8 @@ jest.mock('expo-video', () => ({
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { router } from 'expo-router';
 import PhotoReviewScreen from '../photo-review';
+import { useLastAlbumSelection } from '@/hooks/useLastAlbumSelection';
+const mockUseLastAlbumSelection = useLastAlbumSelection as jest.Mock;
 
 const photoAsset = {
   uri: 'file:///photo.jpg',
@@ -68,6 +76,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   usePhotoReviewStore.setState({ assets: [photoAsset] });
   mockStartBackgroundUpload.mockResolvedValue({ r2Key: 'photos/abc.webp' });
+  mockPersist.mockResolvedValue(undefined);
+  mockUseLastAlbumSelection.mockReturnValue({ savedIds: [], persist: mockPersist });
 });
 
 describe('PhotoReview', () => {
@@ -157,5 +167,44 @@ describe('PhotoReview', () => {
     usePhotoReviewStore.setState({ assets: [] });
     render(<PhotoReviewScreen />);
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('auto-selects saved album ids that still exist in the list', () => {
+    mockUseLastAlbumSelection.mockReturnValue({ savedIds: ['album-1'], persist: mockPersist });
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    const saveBtn = getByTestId('review-save');
+    const isDisabled = saveBtn.props.disabled ?? saveBtn.props.accessibilityState?.disabled;
+    expect(isDisabled).toBeFalsy();
+  });
+
+  it('does not auto-select ids for albums that no longer exist', () => {
+    mockUseLastAlbumSelection.mockReturnValue({ savedIds: ['album-deleted'], persist: mockPersist });
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    const saveBtn = getByTestId('review-save');
+    const isDisabled = saveBtn.props.disabled ?? saveBtn.props.accessibilityState?.disabled;
+    expect(isDisabled).toBeTruthy();
+  });
+
+  it('does not auto-select when savedIds is null (still loading)', () => {
+    mockUseLastAlbumSelection.mockReturnValue({ savedIds: null, persist: mockPersist });
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    const saveBtn = getByTestId('review-save');
+    const isDisabled = saveBtn.props.disabled ?? saveBtn.props.accessibilityState?.disabled;
+    expect(isDisabled).toBeTruthy();
+  });
+
+  it('persists selected album ids after successful save', async () => {
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.press(getByTestId('album-checkbox-album-1'));
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(mockPersist).toHaveBeenCalledWith(['album-1']);
+  });
+
+  it('does not persist when finishCapture throws', async () => {
+    mockFinishCapture.mockRejectedValueOnce(new Error('server error'));
+    const { getByTestId } = render(<PhotoReviewScreen />);
+    fireEvent.press(getByTestId('album-checkbox-album-1'));
+    await act(async () => { fireEvent.press(getByTestId('review-save')); });
+    expect(mockPersist).not.toHaveBeenCalled();
   });
 });
