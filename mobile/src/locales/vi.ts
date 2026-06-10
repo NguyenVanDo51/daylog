@@ -147,4 +147,10 @@ export const vi = {
     save_error:           'Không thể lưu ghi chú',
     delete_error:         'Không thể xoá ảnh',
   },
+  album_menu: {
+    members:       'Thành viên',
+    invite:        'Mời thành viên',
+    scan_qr:       'Quét mã QR',
+    members_title: 'Thành viên',
+  },
 };

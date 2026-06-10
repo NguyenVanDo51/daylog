@@ -57,4 +57,10 @@ export const en = {
     save_error:           'Could not save note',
     delete_error:         'Could not delete photo',
   },
+  album_menu: {
+    members:       'Members',
+    invite:        'Invite members',
+    scan_qr:       'Scan QR code',
+    members_title: 'Members',
+  },
 };
