@@ -88,7 +88,7 @@ export function VlogOverlay({
 const styles = StyleSheet.create({
   upperCenter: {
     position: 'absolute',
-    top: '38%' as any,
+    top: '38%' as any, // RN supports % strings for absolute position (SDK 56+)
     left: 0,
     right: 0,
     zIndex: 10,
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   time: {
     fontFamily: fonts.bold,
@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
   },
   caption: {
     fontSize: 18,
+    fontFamily: fonts.regular,
     color: 'rgba(255,255,255,0.95)',
     fontStyle: 'italic',
     lineHeight: 26,
