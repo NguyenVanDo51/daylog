@@ -5,6 +5,7 @@ import { reactions, photos, users, albumMembers } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
 import { sendPush } from '../services/push';
 import { isValidUUID } from '../lib/validation';
+import { isAlbumArchived } from '../lib/albumGuards';
 
 const router = Router({ mergeParams: true });
 
@@ -18,6 +19,16 @@ async function requirePhotoMember(photoId: string, userId: string): Promise<bool
     .where(and(eq(photos.id, photoId), eq(albumMembers.userId, userId)))
     .limit(1);
   return rows.length > 0;
+}
+
+async function getPhotoMembership(photoId: string, userId: string): Promise<{ albumId: string } | null> {
+  const rows = await db
+    .select({ albumId: photos.albumId })
+    .from(photos)
+    .innerJoin(albumMembers, eq(albumMembers.albumId, photos.albumId))
+    .where(and(eq(photos.id, photoId), eq(albumMembers.userId, userId)))
+    .limit(1);
+  return rows[0] ? { albumId: rows[0].albumId } : null;
 }
 
 router.get('/', requireAuth, async (req: Request, res: Response) => {
@@ -47,8 +58,12 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
   if (!VALID_EMOJIS.includes(emoji)) {
     return res.status(400).json({ error: 'Invalid emoji' });
   }
-  if (!(await requirePhotoMember(photoId, userId))) {
+  const membership = await getPhotoMembership(photoId, userId);
+  if (!membership) {
     return res.status(403).json({ error: 'Forbidden' });
+  }
+  if (await isAlbumArchived(membership.albumId)) {
+    return res.status(409).json({ error: 'Album is archived' });
   }
 
   try {

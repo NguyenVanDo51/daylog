@@ -417,6 +417,26 @@ describe('DELETE /albums/:id/members/me', () => {
   });
 });
 
+describe('PATCH /albums/:id blocked when archived', () => {
+  let user: any;
+  let headers: Record<string, string>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    headers = authHeader(user);
+  });
+
+  it('returns 409 when renaming an archived album', async () => {
+    const album = await createTestAlbum(user.id, { archived: true });
+    const res = await request(app)
+      .patch(`/albums/${album.id}`)
+      .set(headers)
+      .send({ name: 'New Name' });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('Album is archived');
+  });
+});
+
 describe('POST /albums/:id/archive', () => {
   let user: any;
   let headers: Record<string, string>;

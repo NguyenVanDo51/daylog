@@ -7,6 +7,7 @@ import { getPresignedPutUrl, getObjectBuffer, deleteObject } from '../services/r
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/push';
 import { isValidUUID, isValidDate } from '../lib/validation';
+import { isAlbumArchived } from '../lib/albumGuards';
 import { presignLimiter } from '../lib/rateLimit';
 
 const router = express.Router();
@@ -114,6 +115,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     );
     if (memberChecks.some((isMember) => !isMember)) {
       return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const archiveChecks = await Promise.all(
+      (album_ids as string[]).map((albumId) => isAlbumArchived(albumId))
+    );
+    if (archiveChecks.some((archived) => archived)) {
+      return res.status(409).json({ error: 'Album is archived' });
     }
 
     const primaryAlbumId = (album_ids as string[])[0];
@@ -317,6 +325,10 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       .limit(1);
     if (!photo) return res.status(404).json({ error: 'Not found' });
     if (photo.uploadedBy !== req.user!.id) return res.status(403).json({ error: 'Forbidden' });
+
+    if (await isAlbumArchived(photo.albumId)) {
+      return res.status(409).json({ error: 'Album is archived' });
+    }
 
     const { caption } = req.body ?? {};
     const newCaption = (typeof caption === 'string' && caption.length > 0) ? caption : null;

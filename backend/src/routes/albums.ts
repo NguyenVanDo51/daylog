@@ -146,6 +146,17 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       return;
     }
 
+    const albumRow = await db
+      .select({ archivedAt: albums.archivedAt })
+      .from(albums)
+      .where(eq(albums.id, albumId))
+      .limit(1);
+    if (!albumRow[0]) { res.status(404).json({ error: 'Not found' }); return; }
+    if (albumRow[0].archivedAt !== null) {
+      res.status(409).json({ error: 'Album is archived' });
+      return;
+    }
+
     const { name, child_birthdate, cover_photo_id } = req.body ?? {};
 
     if (cover_photo_id) {

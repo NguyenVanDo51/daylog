@@ -4,6 +4,7 @@ import { db } from '../db';
 import { albumMembers, dayLabels } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
 import { isValidUUID } from '../lib/validation';
+import { isAlbumArchived } from '../lib/albumGuards';
 
 const router = express.Router({ mergeParams: true });
 router.use(requireAuth);
@@ -70,6 +71,10 @@ router.put('/:date', async (req: Request, res: Response, next: NextFunction) => 
 
     if (!(await isAlbumMember(albumId, req.user!.id))) {
       return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (await isAlbumArchived(albumId)) {
+      return res.status(409).json({ error: 'Album is archived' });
     }
 
     const [row] = await db
