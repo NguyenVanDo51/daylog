@@ -20,18 +20,30 @@ ALTER TABLE albums ADD COLUMN archived_at TIMESTAMPTZ DEFAULT NULL;
 ```
 
 - `NULL` = active album
-- Non-null = archived (soft-deleted, no undo)
-- `GET /albums` list query gains `WHERE archived_at IS NULL`
+- Non-null = archived (read-only, no undo)
+- Archived albums remain visible in the list and detail screen but all write operations are blocked
+- `GET /albums` list returns archived albums too; response includes `archived_at` field
 
 ### Endpoint changes
 
-#### `GET /albums` and `GET /albums/:id` — add `my_role` to response
+#### `GET /albums` and `GET /albums/:id` — add `my_role` and `archived_at` to response
 
 Both list and detail responses gain:
 ```json
-{ "my_role": "admin" | "member" }
+{ "my_role": "admin" | "member", "archived_at": "<iso>" | null }
 ```
-Derived by joining `album_members` for the requesting user. Adding it to the list response means `albumStore.setAlbum` (called on album row tap) already has the role — no extra fetch needed on the detail screen.
+`my_role` is derived by joining `album_members` for the requesting user. Adding both fields to the list response means `albumStore.setAlbum` (called on album row tap) already has role and archive state — no extra fetch needed on the detail screen.
+
+#### Write-protection for archived albums
+
+All endpoints that mutate album content must check `archived_at IS NOT NULL` and return `409 { error: "Album is archived" }` if set. Affected endpoints:
+- `POST /photos` (upload)
+- `POST /photos/capture`
+- `PATCH /photos/:id` (caption edit)
+- `POST /reactions`
+- `PUT /album-days/:albumId/:date/label` (day label)
+- `PATCH /albums/:id` (rename — blocked while archived)
+- `POST /invites` (new invites blocked while archived)
 
 #### `POST /albums/:id/archive` (admin only)
 
@@ -65,29 +77,44 @@ Rename uses the existing endpoint with `{ name }`. No changes needed.
 
 ### `albumStore`
 
-Add `myRole: 'admin' | 'member' | null` field. Set it when the album detail screen loads, sourced from `GET /albums/:id` → `my_role`.
+Add `myRole` and `archivedAt` fields. Both are populated from the `GET /albums` list response when the user taps an album row — no extra network call on the detail screen.
 
 ```ts
-myRole: 'admin' | 'member' | null
-setAlbum: (album: { ..., my_role: 'admin' | 'member' }) => void
+myRole:     'admin' | 'member' | null
+archivedAt: string | null   // ISO timestamp or null
+setAlbum: (album: { ..., my_role: 'admin' | 'member', archived_at: string | null }) => void
 ```
-
-`myRole` is populated from the `my_role` field in the `GET /albums` list response, which is set when the user taps an album row in `AlbumsPage`. No extra network call required on the detail screen.
 
 ### `AlbumMenuSheet`
 
-Becomes role-aware. Props stay the same; add `onRename`, `onArchive`, `onDelete`, `onLeave` callbacks.
+Becomes role-aware and archive-aware. Add `onRename`, `onArchive`, `onDelete`, `onLeave` callbacks. Reads `myRole` and `archivedAt` from `albumStore`.
 
-**Admin view:**
+**Admin — active album:**
 1. Đổi tên (PencilSimple icon)
 2. Thành viên (UsersThree icon)
 3. Mời thành viên (UserPlus icon) — hidden if `isPrivate`
 4. Lưu trữ album (Archive icon)
 5. Xóa album (Trash icon, red color)
 
-**Member view:**
+**Admin — archived album:**
+1. Thành viên (UsersThree icon)
+2. Xóa album (Trash icon, red color)
+_(Rename, Invite, and Archive hidden — album is read-only)_
+
+**Member — active album:**
 1. Thành viên (UsersThree icon)
 2. Rời album (SignOut icon)
+
+**Member — archived album:**
+1. Thành viên (UsersThree icon)
+2. Rời album (SignOut icon)
+
+### Read-only banner — `app/albums/[id].tsx`
+
+When `archivedAt` is non-null, show a banner below the header:
+> "Album đã lưu trữ — chỉ đọc" (Archive icon + muted text, no action)
+
+Camera/upload FAB is hidden when `archivedAt` is non-null.
 
 ### `app/albums/[id].tsx`
 
@@ -98,8 +125,8 @@ Handles all confirmation dialogs and API calls inline (no new screens):
 - On confirm: `PATCH /albums/:id { name }` → update `albumStore.albumName` → invalidate `['albums']`
 
 **Archive:**
-- `Alert.alert("Lưu trữ album?", "Thao tác này không thể hoàn tác.", [Huỷ, Lưu trữ])`
-- On confirm: `POST /albums/:id/archive` → `router.back()` → invalidate `['albums']`
+- `Alert.alert("Lưu trữ album?", "Album sẽ chuyển sang chế độ chỉ đọc. Thao tác này không thể hoàn tác.", [Huỷ, Lưu trữ])`
+- On confirm: `POST /albums/:id/archive` → invalidate `['albums']` → stay on detail screen (now in read-only mode)
 
 **Delete:**
 - `Alert.alert("Xóa album?", "Tất cả ảnh sẽ bị xóa vĩnh viễn.", [Huỷ, { text: "Xóa", style: "destructive" }])`
@@ -121,7 +148,8 @@ album_menu: {
   delete_album:    'Xóa album',
   leave_album:     'Rời album',
   rename_title:    'Đổi tên album',
-  archive_confirm: 'Lưu trữ album này? Thao tác này không thể hoàn tác.',
+  archive_confirm: 'Album sẽ chuyển sang chế độ chỉ đọc. Thao tác này không thể hoàn tác.',
+  archived_banner: 'Album đã lưu trữ — chỉ đọc',
   delete_confirm:  'Xóa album này? Tất cả ảnh sẽ bị xóa vĩnh viễn.',
   leave_confirm:   'Rời album này? Bạn sẽ không còn quyền xem album này.',
 }
