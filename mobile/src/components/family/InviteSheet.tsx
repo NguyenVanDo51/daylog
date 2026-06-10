@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -19,15 +19,20 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
   const albumId = useAlbumStore((s) => s.albumId);
   const [loading, setLoading] = useState(false);
   const [link, setLink] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!visible || !albumId) return;
     setLink(null);
+    setQrCode(null);
     setCopied(false);
     setLoading(true);
     api.post(`/albums/${albumId}/invites`)
-      .then(({ data }) => setLink(`familyguy://join/${data.token}`))
+      .then(({ data }) => {
+        setLink(`familyguy://join/${data.token}`);
+        setQrCode(data.qr_code ?? null);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [visible, albumId]);
@@ -49,6 +54,8 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
         <Text style={styles.linkValue} numberOfLines={1}>{loading ? '...' : (link ?? '—')}</Text>
       </Card>
 
+      {qrCode && <Image source={{ uri: qrCode }} style={styles.qr} />}
+
       <Text style={styles.expires}>{t('invite.expires')}</Text>
 
       <View style={{ gap: spacing.md, marginTop: spacing.lg }}>
@@ -66,4 +73,5 @@ const styles = StyleSheet.create({
   linkLabel: { ...typography.caption },
   linkValue: { fontFamily: fonts.medium, fontSize: 14, color: colors.inkSoft },
   expires:   { fontFamily: fonts.medium, fontSize: 14, color: colors.inkMuted, textAlign: 'center', marginTop: spacing.sm },
+  qr:        { width: 180, height: 180, alignSelf: 'center' },
 });

@@ -1,6 +1,6 @@
 jest.mock('../services/r2', () => ({ getPresignedPutUrl: jest.fn() }));
 jest.mock('../services/thumbnail', () => ({ generateThumbnail: jest.fn().mockResolvedValue({ key: 'thumb/x.webp', width: 100, height: 100 }) }));
-jest.mock('../services/apns', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../services/push', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
 
 import request from 'supertest';
 import { db } from '../db';

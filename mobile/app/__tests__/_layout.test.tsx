@@ -12,12 +12,12 @@ jest.mock('expo-font', () => ({
   FontLoader: jest.fn(),
 }));
 
-jest.mock('@expo-google-fonts/fredoka', () => ({
+jest.mock('@expo-google-fonts/baloo-2', () => ({
   useFonts: jest.fn(() => [true, null]),
-  Fredoka_400Regular: 'Fredoka_400Regular',
-  Fredoka_500Medium: 'Fredoka_500Medium',
-  Fredoka_600SemiBold: 'Fredoka_600SemiBold',
-  Fredoka_700Bold: 'Fredoka_700Bold',
+  Baloo2_400Regular: 'Baloo2_400Regular',
+  Baloo2_500Medium: 'Baloo2_500Medium',
+  Baloo2_600SemiBold: 'Baloo2_600SemiBold',
+  Baloo2_700Bold: 'Baloo2_700Bold',
 }));
 
 

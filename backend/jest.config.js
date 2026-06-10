@@ -9,6 +9,12 @@ module.exports = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
+  // expo-server-sdk is pure ESM; redirect to a CJS-compatible manual mock so
+  // tests that don't explicitly mock the push service still compile in Jest's
+  // CommonJS environment. Tests in push.test.ts override this with jest.mock().
+  moduleNameMapper: {
+    '^expo-server-sdk$': '<rootDir>/__mocks__/expo-server-sdk.js',
+  },
   transformIgnorePatterns: ['/node_modules/(?!(uuid)/)'],
   collectCoverageFrom: [
     'src/**/*.ts',

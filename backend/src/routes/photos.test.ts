@@ -4,7 +4,7 @@ jest.mock('../services/r2', () => ({
   deleteObject: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('../services/thumbnail', () => ({ generateThumbnail: jest.fn().mockResolvedValue({ key: 'thumb_key', width: 800, height: 600 }) }));
-jest.mock('../services/apns', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../services/push', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
 
 import request from 'supertest';
 import { eq } from 'drizzle-orm';
@@ -20,7 +20,7 @@ import { deleteObject } from '../services/r2';
 const mockGetObjectBuffer = getObjectBuffer as jest.Mock;
 const mockDeleteObject = deleteObject as jest.Mock;
 import { generateThumbnail } from '../services/thumbnail';
-import { sendPush } from '../services/apns';
+import { sendPush } from '../services/push';
 
 const mockPresign = getPresignedPutUrl as jest.Mock;
 const mockGenThumb = generateThumbnail as jest.Mock;
@@ -167,7 +167,7 @@ describe('POST /photos', () => {
       `INSERT INTO album_members (album_id, user_id, role) VALUES ($1, $2, 'member')`,
       [album.id, member.id]
     );
-    await pool.query(`UPDATE users SET apns_token = 'token-abc' WHERE id = $1`, [member.id]);
+    await pool.query(`UPDATE users SET push_token = 'token-abc' WHERE id = $1`, [member.id]);
 
     await request(app)
       .post('/photos')
@@ -269,7 +269,7 @@ describe('POST /photos', () => {
     expect(res.status).toBe(500);
   });
 
-  it('calls sendPush with empty array when no other members have apns_token', async () => {
+  it('calls sendPush with empty array when no other members have push_token', async () => {
     await createPresignToken(user.id, 'photos/solo.webp');  // seed presign token
     await request(app)
       .post('/photos')

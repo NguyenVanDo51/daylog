@@ -86,5 +86,19 @@
       "tag": "0011_add_waitlist",
       "breakpoints": true
     }
+    ,{
+      "idx": 10,
+      "version": "7",
+      "when": 1780963200000,
+      "tag": "0012_rename_push_token",
+      "breakpoints": true
+    }
+    ,{
+      "idx": 11,
+      "version": "7",
+      "when": 1781049600000,
+      "tag": "0013_add_archived_at",
+      "breakpoints": true
+    }
   ]
 }

@@ -66,6 +66,12 @@ export function CameraPage({ onTabPress }: Props) {
   }, []);
 
   React.useEffect(() => {
+    if (permissionResponse && !permissionResponse.granted && permissionResponse.canAskAgain !== false) {
+      requestPermission();
+    }
+  }, [permissionResponse?.granted, permissionResponse?.canAskAgain]);
+
+  React.useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state !== 'active' && recordingRef.current) {
         cameraRef.current?.stopRecording();
@@ -111,13 +117,12 @@ export function CameraPage({ onTabPress }: Props) {
 
   const tapGesture = Gesture.Tap().runOnJS(true).onStart(takePhoto);
   const longPressGesture = Gesture.LongPress().minDuration(250).runOnJS(true)
-    .onStart(startRecord).onEnd(stopRecord).onFinalize(stopRecord);
+    .onStart(startRecord).onFinalize(stopRecord);
   const composed = Gesture.Exclusive(longPressGesture, tapGesture);
 
   if (!permissionResponse) return <View style={styles.container} />;
 
   if (!permissionResponse.granted) {
-    if (permissionResponse.canAskAgain !== false) requestPermission();
     return (
       <View style={styles.container}>
         <Modal transparent animationType="fade" visible>

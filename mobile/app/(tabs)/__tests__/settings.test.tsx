@@ -1,5 +1,9 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 
+jest.mock('expo-linking', () => ({
+  openURL: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('@/lib/api', () => ({
   api: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() },
 }));
@@ -46,6 +50,8 @@ import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import Screen from '../settings';
 import { registerPushToken, hasPushPermission } from '@/lib/notifications';
+import * as Linking from 'expo-linking';
+const mockOpenURL = (Linking as any).openURL as jest.Mock;
 
 const mockRegisterPushToken = registerPushToken as jest.Mock;
 const mockHasPushPermission = hasPushPermission as jest.Mock;
@@ -54,6 +60,7 @@ const mockRouter = router as unknown as { replace: jest.Mock; back: jest.Mock };
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockOpenURL.mockClear();
   mockHasPushPermission.mockResolvedValue(false);
   mockAlbumState.clearAlbum.mockReset();
   mockAuthState.clearAuth.mockReset();
@@ -170,6 +177,26 @@ describe('SettingsTab', () => {
 
     fireEvent.press(getByTestId('settings-back'));
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the legal section header', async () => {
+    const { getByText } = render(<Screen />);
+    await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
+    expect(getByText('Pháp lý')).toBeTruthy();
+  });
+
+  it('pressing Chính sách bảo mật opens the privacy URL', async () => {
+    const { getByTestId } = render(<Screen />);
+    await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
+    fireEvent.press(getByTestId('settings-privacy'));
+    expect(mockOpenURL).toHaveBeenCalledWith('https://getdaylog.com/privacy');
+  });
+
+  it('pressing Điều khoản sử dụng opens the terms URL', async () => {
+    const { getByTestId } = render(<Screen />);
+    await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
+    fireEvent.press(getByTestId('settings-terms'));
+    expect(mockOpenURL).toHaveBeenCalledWith('https://getdaylog.com/terms');
   });
 
   it('Sign Out deletes the secure-store token, clears auth + album, and navigates to /(auth)', async () => {

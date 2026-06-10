@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Switch, Alert, TouchableOpacity } from 'react-native';
-import { CaretLeft } from 'phosphor-react-native';
+import { CaretLeft, ArrowSquareOut } from 'phosphor-react-native';
+import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { PRIVACY_URL, TERMS_URL } from '@/constants/urls';
 import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
 import { Avatar } from '@/components/ui/Avatar';
@@ -78,6 +80,27 @@ export default function SettingsTab() {
           </View>
         </Card>
 
+        <Card tier="quiet" style={styles.section}>
+          <Text style={styles.sectionHeader}>{t('settings.legal_section')}</Text>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => Linking.openURL(PRIVACY_URL)}
+            testID="settings-privacy"
+          >
+            <Text style={styles.rowLabel}>{t('settings.privacy_policy')}</Text>
+            <ArrowSquareOut size={18} color={colors.inkMuted} />
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => Linking.openURL(TERMS_URL)}
+            testID="settings-terms"
+          >
+            <Text style={styles.rowLabel}>{t('settings.terms')}</Text>
+            <ArrowSquareOut size={18} color={colors.inkMuted} />
+          </TouchableOpacity>
+        </Card>
+
         <Button label={t('settings.signout')} onPress={handleSignOut} variant="ghost" tier="quiet" fullWidth />
         <Text style={styles.version}>{t('settings.version', { v: '0.1.0' })}</Text>
       </ScrollView>
@@ -99,4 +122,6 @@ const styles = StyleSheet.create({
   row:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowLabel:    { ...typography.body, color: colors.ink },
   version:     { ...typography.caption, color: colors.inkMuted, textAlign: 'center', marginTop: spacing.lg },
+  sectionHeader: { ...typography.caption, color: colors.inkMuted, marginBottom: spacing.xs },
+  divider:       { height: 1, backgroundColor: colors.borderSoft },
 });

@@ -93,6 +93,7 @@ export function useUpload() {
     );
 
     qc.invalidateQueries({ queryKey: ['timeline', albumId] });
+    qc.invalidateQueries({ queryKey: ['album-days', albumId] });
     setFailedCount(failed);
     setUploading(false);
     setTimeout(() => clearAll(), 400);

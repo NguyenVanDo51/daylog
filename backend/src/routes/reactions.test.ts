@@ -1,11 +1,11 @@
-jest.mock('../services/apns', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../services/push', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
 
 import request from 'supertest';
 import { pool } from '../db';
 import { createTestUser, createTestAlbum, createTestAlbumMember, authHeader } from '../../tests/setup';
 const app = require('../app');
 
-import { sendPush } from '../services/apns';
+import { sendPush } from '../services/push';
 
 const mockSendPush = sendPush as jest.Mock;
 
@@ -193,7 +193,7 @@ describe('POST /photos/:photoId/reactions', () => {
 
   it('sends push notification when another user reacts to the photo', async () => {
     const uploader = await createTestUser({ apple_sub: 'uploader-sub' });
-    await pool.query(`UPDATE users SET apns_token = 'device-token-uploader' WHERE id = $1`, [uploader.id]);
+    await pool.query(`UPDATE users SET push_token = 'device-token-uploader' WHERE id = $1`, [uploader.id]);
 
     const album = await createTestAlbum(uploader.id);
     const photo = await createTestPhoto(album.id, uploader.id);

@@ -28,12 +28,12 @@ async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
 export function useCapture() {
   const qc = useQueryClient();
 
-  async function extractVideoThumbnail(videoUri: string): Promise<string> {
+  async function extractVideoThumbnail(videoUri: string): Promise<string | null> {
     try {
       const { uri } = await getThumbnailAsync(videoUri, { time: 0 });
       return uri;
     } catch {
-      return videoUri;
+      return null;
     }
   }
 
@@ -46,15 +46,21 @@ export function useCapture() {
         return { r2Key: presign.key };
       }
       const thumbUri = await extractVideoThumbnail(asset.uri);
+      const compressedThumb = thumbUri != null ? await compressToWebP(thumbUri) : null;
       const [videoPresign, thumbPresign] = await Promise.all([
         api.post('/photos/presign', { content_type: 'video/mp4' }),
-        api.post('/photos/presign', { content_type: 'image/jpeg' }),
+        compressedThumb != null ? api.post('/photos/presign', { content_type: 'image/webp' }) : Promise.resolve(null),
       ]);
       await Promise.all([
         putLocalFile(videoPresign.data.url, asset.uri, 'video/mp4'),
-        putLocalFile(thumbPresign.data.url, thumbUri, 'image/jpeg'),
+        ...(compressedThumb != null && thumbPresign != null
+          ? [putLocalFile(thumbPresign.data.url, compressedThumb, 'image/webp')]
+          : []),
       ]);
-      return { r2Key: videoPresign.data.key, thumbnailR2Key: thumbPresign.data.key };
+      return {
+        r2Key: videoPresign.data.key,
+        ...(thumbPresign != null ? { thumbnailR2Key: thumbPresign.data.key } : {}),
+      };
     });
   }
 
@@ -69,7 +75,10 @@ export function useCapture() {
       ...(asset.durationMs ? { duration_ms: asset.durationMs } : {}),
       ...(caption ? { caption } : {}),
     });
-    albumIds.forEach((id) => qc.invalidateQueries({ queryKey: ['album-days', id] }));
+    albumIds.forEach((id) => {
+      qc.invalidateQueries({ queryKey: ['album-days', id] });
+      qc.invalidateQueries({ queryKey: ['timeline', id] });
+    });
   }
 
   return { startBackgroundUpload, finishCapture };

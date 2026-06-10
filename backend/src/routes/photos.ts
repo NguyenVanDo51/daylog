@@ -5,8 +5,9 @@ import { db } from '../db';
 import { users, albumMembers, photos, presignTokens, albumPhotos, albums } from '../db/schema';
 import { getPresignedPutUrl, getObjectBuffer, deleteObject } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
-import { sendPush } from '../services/apns';
+import { sendPush } from '../services/push';
 import { isValidUUID, isValidDate } from '../lib/validation';
+import { isAlbumArchived } from '../lib/albumGuards';
 import { presignLimiter } from '../lib/rateLimit';
 
 const router = express.Router();
@@ -116,6 +117,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
+    const archiveChecks = await Promise.all(
+      (album_ids as string[]).map((albumId) => isAlbumArchived(albumId))
+    );
+    if (archiveChecks.some((archived) => archived)) {
+      return res.status(409).json({ error: 'Album is archived' });
+    }
+
     const primaryAlbumId = (album_ids as string[])[0];
 
     // Idempotency check first — before consuming a presign token
@@ -210,12 +218,12 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     // Push notification (send to primary album members)
     const recipients = await db
-      .select({ token: users.apnsToken })
+      .select({ token: users.pushToken })
       .from(users)
       .innerJoin(albumMembers, eq(albumMembers.userId, users.id))
       .where(and(
         eq(albumMembers.albumId, primaryAlbumId),
-        isNotNull(users.apnsToken),
+        isNotNull(users.pushToken),
         ne(users.id, req.user!.id)
       ));
     const tokens = recipients.map((r) => r.token!).filter(Boolean);
@@ -317,6 +325,10 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       .limit(1);
     if (!photo) return res.status(404).json({ error: 'Not found' });
     if (photo.uploadedBy !== req.user!.id) return res.status(403).json({ error: 'Forbidden' });
+
+    if (await isAlbumArchived(photo.albumId)) {
+      return res.status(409).json({ error: 'Album is archived' });
+    }
 
     const { caption } = req.body ?? {};
     const newCaption = (typeof caption === 'string' && caption.length > 0) ? caption : null;

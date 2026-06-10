@@ -7,7 +7,7 @@ jest.mock('@/stores/albumStore', () => ({
 jest.mock('@/lib/haptics', () => ({ success: jest.fn(), tap: jest.fn() }));
 
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, Image } from 'react-native';
 import { fireEvent, render, waitFor, act } from '@testing-library/react-native';
 import * as Clipboard from 'expo-clipboard';
 import { InviteSheet } from '@/components/family/InviteSheet';
@@ -24,7 +24,7 @@ beforeEach(() => {
   mockUseAlbumStore.mockImplementation((selector: (s: { albumId: string | null }) => unknown) =>
     selector({ albumId: 'album-42' }),
   );
-  mockApi.post.mockResolvedValue({ data: { token: 'tok-default' } });
+  mockApi.post.mockResolvedValue({ data: { token: 'tok-default', qr_code: 'data:image/png;base64,default' } });
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 });
 
@@ -90,6 +90,14 @@ describe('InviteSheet', () => {
     await waitFor(() => {
       expect(UNSAFE_queryAllByType(ActivityIndicator).length).toBe(0);
     });
+  });
+
+  it('renders a QR code image once the invite link loads', async () => {
+    mockApi.post.mockResolvedValueOnce({ data: { token: 'tok-qr', qr_code: 'data:image/png;base64,abc123' } });
+    const { UNSAFE_getAllByType } = render(<InviteSheet visible={true} onClose={jest.fn()} />);
+    await waitFor(() => expect(mockApi.post).toHaveBeenCalled());
+    const images = UNSAFE_getAllByType(Image);
+    expect(images.some((img: any) => img.props.source?.uri === 'data:image/png;base64,abc123')).toBe(true);
   });
 
   it('does not copy when api.post rejects on open', async () => {

@@ -70,7 +70,6 @@ export default function StoryScreen() {
 
   const parts = (date ?? '').split('-');
   const dateChip = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : '';
-  const dateLabel = parts.length === 3 ? `${parts[2]} / ${parts[1]}` : '';
 
   useEffect(() => {
     if (photos && photos.length === 0) {
@@ -187,8 +186,8 @@ export default function StoryScreen() {
         </View>
 
         <VlogOverlay
+          key={current.id}
           photo={current}
-          dayLabel={dateLabel}
           currentIndex={currentIndex}
           total={photos.length}
           bottomInset={insets.bottom}

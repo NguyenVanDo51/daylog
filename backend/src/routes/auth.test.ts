@@ -1,7 +1,10 @@
+jest.mock('../services/push', () => ({ sendPush: jest.fn().mockResolvedValue(undefined) }));
+
 import request from 'supertest';
 const app = require('../app');
 import { pool } from '../db';
 import jwt from 'jsonwebtoken';
+import { createTestUser, authHeader } from '../../tests/setup';
 
 jest.mock('../services/appleAuth');
 jest.mock('../services/googleAuth');
@@ -57,7 +60,7 @@ describe('POST /auth/apple', () => {
 
     const res = await request(app)
       .post('/auth/apple')
-      .send({ idToken: 'fake-apple-token', apnsToken: 'device-token-abc' });
+      .send({ idToken: 'fake-apple-token', pushToken: 'device-token-abc' });
 
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
@@ -65,7 +68,7 @@ describe('POST /auth/apple', () => {
 
     const { rows } = await pool.query(`SELECT * FROM users WHERE apple_sub = 'apple-sub-123'`);
     expect(rows).toHaveLength(1);
-    expect(rows[0].apns_token).toBe('device-token-abc');
+    expect(rows[0].push_token).toBe('device-token-abc');
   });
 
   it('returns existing user on second sign-in', async () => {
@@ -85,17 +88,17 @@ describe('POST /auth/apple', () => {
     expect(res.body.error).toBe('idToken required');
   });
 
-  it('persists apns_token when provided in the request body', async () => {
+  it('persists push_token when provided in the request body', async () => {
     mockVerifyApple.mockResolvedValueOnce({ sub: 'apple-sub-apns', name: 'Apns User', email: null });
 
     const res = await request(app)
       .post('/auth/apple')
-      .send({ idToken: 'token', apnsToken: 'apple-device-token-999' });
+      .send({ idToken: 'token', pushToken: 'apple-device-token-999' });
 
     expect(res.status).toBe(200);
-    const { rows } = await pool.query(`SELECT apns_token FROM users WHERE apple_sub = 'apple-sub-apns'`);
+    const { rows } = await pool.query(`SELECT push_token FROM users WHERE apple_sub = 'apple-sub-apns'`);
     expect(rows).toHaveLength(1);
-    expect(rows[0].apns_token).toBe('apple-device-token-999');
+    expect(rows[0].push_token).toBe('apple-device-token-999');
   });
 
   it('returns 500 when verifyAppleToken rejects', async () => {
@@ -116,7 +119,7 @@ describe('POST /auth/google', () => {
 
     const res = await request(app)
       .post('/auth/google')
-      .send({ idToken: 'fake-google-token', apnsToken: 'device-token-xyz' });
+      .send({ idToken: 'fake-google-token', pushToken: 'device-token-xyz' });
 
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
@@ -129,7 +132,7 @@ describe('POST /auth/google', () => {
     expect(res.body.error).toBe('idToken required');
   });
 
-  it('stores apns_token as null when not provided in the request body', async () => {
+  it('stores push_token as null when not provided in the request body', async () => {
     mockVerifyGoogle.mockResolvedValueOnce({ sub: 'google-sub-no-apns', name: 'No Apns', picture: null });
 
     const res = await request(app)
@@ -137,9 +140,9 @@ describe('POST /auth/google', () => {
       .send({ idToken: 'token' });
 
     expect(res.status).toBe(200);
-    const { rows } = await pool.query(`SELECT apns_token FROM users WHERE google_sub = 'google-sub-no-apns'`);
+    const { rows } = await pool.query(`SELECT push_token FROM users WHERE google_sub = 'google-sub-no-apns'`);
     expect(rows).toHaveLength(1);
-    expect(rows[0].apns_token).toBeNull();
+    expect(rows[0].push_token).toBeNull();
   });
 
   it('stores display_name and avatar_url from the verified payload', async () => {
@@ -208,11 +211,11 @@ describe('JWT token lifetime', () => {
 });
 
 describe('POST /auth/logout', () => {
-  it('clears the apns_token of the authenticated user and returns 204', async () => {
+  it('clears the push_token of the authenticated user and returns 204', async () => {
     mockVerifyApple.mockResolvedValueOnce({ sub: 'apple-sub-logout', name: 'Logout User', email: null });
     const loginRes = await request(app)
       .post('/auth/apple')
-      .send({ idToken: 'token', apnsToken: 'device-logout-token' });
+      .send({ idToken: 'token', pushToken: 'device-logout-token' });
     expect(loginRes.status).toBe(200);
 
     const logoutRes = await request(app)
@@ -221,13 +224,52 @@ describe('POST /auth/logout', () => {
     expect(logoutRes.status).toBe(204);
 
     const { rows } = await pool.query(
-      `SELECT apns_token FROM users WHERE apple_sub = 'apple-sub-logout'`
+      `SELECT push_token FROM users WHERE apple_sub = 'apple-sub-logout'`
     );
-    expect(rows[0].apns_token).toBeNull();
+    expect(rows[0].push_token).toBeNull();
   });
 
   it('returns 401 when no token is provided', async () => {
     const res = await request(app).post('/auth/logout');
     expect(res.status).toBe(401);
+  });
+});
+
+describe('PATCH /users/me', () => {
+  let user: Awaited<ReturnType<typeof createTestUser>>;
+
+  beforeEach(async () => {
+    user = await createTestUser({ apple_sub: 'patch-me-sub' });
+  });
+
+  it('returns 401 when no auth token provided', async () => {
+    const res = await request(app).patch('/users/me').send({ push_token: 'ExponentPushToken[abc]' });
+    expect(res.status).toBe(401);
+  });
+
+  it('updates push_token for authenticated user and returns 204', async () => {
+    const res = await request(app)
+      .patch('/users/me')
+      .set(authHeader(user))
+      .send({ push_token: 'ExponentPushToken[new-token]' });
+
+    expect(res.status).toBe(204);
+
+    const { rows } = await pool.query(`SELECT push_token FROM users WHERE id = $1`, [user.id]);
+    expect(rows[0].push_token).toBe('ExponentPushToken[new-token]');
+  });
+
+  it('sets push_token to null when push_token is not a string', async () => {
+    await pool.query(`UPDATE users SET push_token = 'ExponentPushToken[old]' WHERE id = $1`, [user.id]);
+
+    const res = await request(app)
+      .patch('/users/me')
+      .set(authHeader(user))
+      .send({ push_token: null });
+
+    expect(res.status).toBe(204);
+
+    const { rows } = await pool.query(`SELECT push_token FROM users WHERE id = $1`, [user.id]);
+    expect(rows[0].push_token).toBeNull();
   });
 });

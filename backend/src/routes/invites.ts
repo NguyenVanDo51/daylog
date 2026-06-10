@@ -7,6 +7,7 @@ import { db } from '../db';
 import { invites, albums, albumMembers } from '../db/schema';
 import { generateQRCode } from '../services/qrcode';
 import { isValidUUID } from '../lib/validation';
+import { isAlbumArchived } from '../lib/albumGuards';
 
 const router = Router();
 
@@ -37,6 +38,10 @@ router.post(
         .where(and(eq(albumMembers.albumId, albumId), eq(albumMembers.userId, req.user!.id)))
         .limit(1);
       if (!membership[0]) return res.status(403).json({ error: 'Forbidden' });
+
+      if (await isAlbumArchived(albumId)) {
+        return res.status(409).json({ error: 'Album is archived' });
+      }
 
       const [albumRow] = await db
         .select({ isPrivate: albums.isPrivate })
