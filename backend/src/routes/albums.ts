@@ -202,6 +202,24 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
   }
 });
 
+router.delete('/:id/members/me', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const albumId = req.params.id as string;
+    if (!isValidUUID(albumId)) { res.status(400).json({ error: 'Invalid albumId' }); return; }
+
+    const deleted = await db
+      .delete(albumMembers)
+      .where(and(eq(albumMembers.albumId, albumId), eq(albumMembers.userId, req.user!.id)))
+      .returning({ id: albumMembers.id });
+
+    if (!deleted[0]) { res.status(404).json({ error: 'Not a member' }); return; }
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const albumId = req.params.id as string;

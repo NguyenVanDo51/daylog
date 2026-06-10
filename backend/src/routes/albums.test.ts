@@ -368,6 +368,55 @@ describe('DELETE /albums/:id', () => {
   });
 });
 
+describe('DELETE /albums/:id/members/me', () => {
+  let user: any;
+  let headers: Record<string, string>;
+
+  beforeEach(async () => {
+    user = await createTestUser();
+    headers = authHeader(user);
+  });
+
+  it('returns 204 and removes the caller from album_members', async () => {
+    const album = await createTestAlbum(user.id);
+    const res = await request(app)
+      .delete(`/albums/${album.id}/members/me`)
+      .set(headers);
+    expect(res.status).toBe(204);
+
+    // User can no longer access the album
+    const check = await request(app).get(`/albums/${album.id}`).set(headers);
+    expect(check.status).toBe(403);
+  });
+
+  it('allows the last admin to leave (album becomes admin-less)', async () => {
+    const album = await createTestAlbum(user.id);
+    const res = await request(app)
+      .delete(`/albums/${album.id}/members/me`)
+      .set(headers);
+    expect(res.status).toBe(204);
+  });
+
+  it('returns 404 for non-member', async () => {
+    const other = await createTestUser({ apple_sub: 'leave-other' });
+    const album = await createTestAlbum(other.id);
+    const res = await request(app)
+      .delete(`/albums/${album.id}/members/me`)
+      .set(headers);
+    expect(res.status).toBe(404);
+  });
+
+  it('a regular member can leave', async () => {
+    const creator = await createTestUser({ apple_sub: 'leave-creator' });
+    const album = await createTestAlbum(creator.id);
+    await createTestAlbumMember(album.id, user.id, 'member');
+    const res = await request(app)
+      .delete(`/albums/${album.id}/members/me`)
+      .set(headers);
+    expect(res.status).toBe(204);
+  });
+});
+
 describe('POST /albums/:id/archive', () => {
   let user: any;
   let headers: Record<string, string>;
