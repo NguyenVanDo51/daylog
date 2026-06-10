@@ -1,6 +1,13 @@
+jest.mock('@/stores/albumStore', () => ({
+  useAlbumStore: jest.fn(),
+}));
+
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { AlbumMenuSheet } from '@/components/family/AlbumMenuSheet';
+import { useAlbumStore } from '@/stores/albumStore';
+
+const mockUseAlbumStore = useAlbumStore as unknown as jest.Mock;
 
 const defaultProps = {
   visible: true,
@@ -9,7 +16,12 @@ const defaultProps = {
   onOpenInvite: jest.fn(),
 };
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUseAlbumStore.mockImplementation((selector: (s: { isPrivate: boolean | null }) => unknown) =>
+    selector({ isPrivate: false }),
+  );
+});
 
 describe('AlbumMenuSheet', () => {
   it('renders both menu row labels', () => {
@@ -36,5 +48,14 @@ describe('AlbumMenuSheet', () => {
     fireEvent.press(getByText('Thành viên'));
     fireEvent.press(getByText('Mời thành viên'));
     expect(defaultProps.onClose).not.toHaveBeenCalled();
+  });
+
+  it('hides the invite row when the album is private', () => {
+    mockUseAlbumStore.mockImplementation((selector: (s: { isPrivate: boolean | null }) => unknown) =>
+      selector({ isPrivate: true }),
+    );
+    const { getByText, queryByText } = render(<AlbumMenuSheet {...defaultProps} />);
+    expect(getByText('Thành viên')).toBeTruthy();
+    expect(queryByText('Mời thành viên')).toBeNull();
   });
 });
