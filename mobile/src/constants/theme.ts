@@ -114,6 +114,15 @@ export interface Theme {
     angleDeg?: number;
   };
 
+  overlays: {
+    scrim:         string;  // modal / sheet backdrop
+    scrimDeep:     string;  // bottom gradient end on photo backgrounds
+    scrimSoft:     string;  // top gradient start on photo backgrounds
+    surfaceOnDark: string;  // chip background on dark surfaces (camera, photo)
+    borderOnDark:  string;  // chip border on dark surfaces
+    cameraBg:      string;  // camera screen background
+  };
+
   components: {
     stickerCard: {
       backgroundColor: string;
@@ -265,6 +274,15 @@ export const stickerWorld: Theme = {
     kind:      'radial',
     primary:   palette.butter,
     highlight: palette.butterDeep,
+  },
+
+  overlays: {
+    scrim:         'rgba(0,0,0,0.4)',
+    scrimDeep:     'rgba(0,0,0,0.82)',
+    scrimSoft:     'rgba(0,0,0,0.55)',
+    surfaceOnDark: 'rgba(255,255,255,0.12)',
+    borderOnDark:  'rgba(255,255,255,0.22)',
+    cameraBg:      '#000000',
   },
 
   components: {

@@ -56,6 +56,13 @@ describe('theme.ts', () => {
     });
   });
 
+  describe('Theme.overlays', () => {
+    it('exposes named overlay tokens', () => {
+      const keys = ['scrim', 'scrimDeep', 'scrimSoft', 'surfaceOnDark', 'borderOnDark', 'cameraBg'] as const;
+      keys.forEach((k) => expect(typeof theme.overlays[k]).toBe('string'));
+    });
+  });
+
   describe('Compatibility re-exports', () => {
     it('keeps legacy color aliases pointing at semantic tokens', () => {
       expect(colors.cream).toBe(theme.colors.background);
