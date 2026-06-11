@@ -13,6 +13,9 @@ const THEME_CLEAN_FILES = [
   'src/components/tabs/AlbumsPage.tsx',
   'src/components/tabs/CameraPage.tsx',
   'src/components/album/DayCell.tsx',
+  'src/components/family/AlbumMenuSheet.tsx',
+  'src/components/tabs/SettingsSheet.tsx',
+  'src/components/ui/SheetModal.tsx',
 ];
 
 // app/photo-review.tsx is at a different relative root; use the app/ prefix.

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
-import { colors, spacing } from '@/constants/theme';
+import { theme, spacing } from '@/constants/theme';
 
 interface SheetModalProps {
   visible: boolean;
@@ -28,8 +28,8 @@ export function SheetModal({ visible, onClose, children, size = 'auto' }: SheetM
     <TrueSheet
       ref={ref}
       detents={[size === 'large' ? 0.92 : 'auto']}
-      cornerRadius={24}
-      backgroundColor={colors.background}
+      cornerRadius={theme.radii.lg}
+      backgroundColor={theme.colors.background}
       onDidDismiss={() => {
         presented.current = false;
         onClose();
