@@ -8,14 +8,18 @@ import { Redirect, router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
-import { colors, shadows, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
 import { useOnboardingStore } from '@/stores/onboardingStore';
-import { Button } from '@/components/ui/Button';
+import { Mascot } from '@/components/ui/Mascot';
+import { StickerChip } from '@/components/ui/StickerChip';
+import { StickerButton } from '@/components/ui/StickerButton';
 import { registerPushToken } from '@/lib/notifications';
 import { t } from '@/lib/i18n';
+// Apple's HIG requires using their native button for Sign In with Apple.
+// We keep AppleAuthenticationButton instead of substituting StickerButton.
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
@@ -106,21 +110,22 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      <FloatingDot x="10%" y={100} size={18} color={colors.yellow} delay={0} />
-      <FloatingDot x="85%" y={140} size={14} color={colors.pink}   delay={300} />
-      <FloatingDot x="15%" y={300} size={12} color={colors.mint}   delay={600} />
-      <FloatingDot x="80%" y={360} size={16} color={colors.peach}  delay={900} />
-      <FloatingDot x="50%" y={70}  size={10} color={colors.sky}    delay={1200} />
-      <FloatingDot x="35%" y={520} size={14} color={colors.yellow} delay={1500} />
+      <FloatingDot x="10%" y={100} size={18} color={theme.colors.accent1} delay={0} />
+      <FloatingDot x="85%" y={140} size={14} color={theme.colors.primary}  delay={300} />
+      <FloatingDot x="15%" y={300} size={12} color={theme.colors.accent2}  delay={600} />
+      <FloatingDot x="80%" y={360} size={16} color={theme.colors.accent4}  delay={900} />
 
       <LinearGradient
-        colors={['#FF9A9E', '#FECFEF', '#FFE8C8']}
+        colors={[theme.colors.backgroundHighlight, theme.colors.background]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.hero}
       >
-        <Text style={styles.logo}>👶</Text>
-        <Text style={styles.headline}>{t('signin.headline')}</Text>
+        <Mascot size={80} tilt="playful" flip />
+        <View style={styles.logoWrap}>
+          <StickerChip label="Nhật ký" variant="yellow" tilt="default" flip />
+        </View>
+        <Text style={styles.tagline}>{t('signin.tagline')}</Text>
         <Text style={styles.subCopy}>{t('signin.sub_copy')}</Text>
       </LinearGradient>
 
@@ -129,11 +134,17 @@ export default function SignInScreen() {
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-            cornerRadius={22}
+            cornerRadius={theme.radii.md}
             style={styles.appleBtn}
             onPress={handleApple}
           />
-          <Button label={t('signin.google')} onPress={handleGoogle} variant="ghost" fullWidth loading={loading === 'google'} />
+          <StickerButton
+            label={t('signin.google')}
+            variant="surface"
+            fullWidth
+            loading={loading === 'google'}
+            onPress={handleGoogle}
+          />
         </View>
         <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_URL)}>
           <Text style={styles.privacy}>{t('signin.privacy')}</Text>
@@ -145,13 +156,13 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  dot:       { position: 'absolute', borderRadius: 9999, opacity: 0.7, borderWidth: 2, borderColor: colors.ink, ...shadows.sticker },
-  hero:      { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'] },
-  logo:      { fontSize: 72, marginBottom: spacing.lg },
-  headline:  { ...typography.heading, fontSize: 24, textAlign: 'center', marginBottom: spacing.sm },
-  subCopy:   { ...typography.body, color: colors.inkMuted, textAlign: 'center', fontSize: 13 },
-  bottom:    { backgroundColor: colors.cream, paddingHorizontal: spacing['3xl'], paddingTop: spacing['3xl'], paddingBottom: spacing['4xl'] },
+  dot:       { position: 'absolute', borderRadius: theme.radii.pill, opacity: 0.7, borderWidth: theme.border.medium, borderColor: theme.colors.border, ...theme.shadows.sticker },
+  hero:      { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'], gap: spacing.md },
+  logoWrap:  { marginTop: spacing.lg },
+  tagline:   { ...typography.body, color: theme.colors.textPrimary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: spacing.md },
+  subCopy:   { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center', fontSize: 13 },
+  bottom:    { backgroundColor: theme.colors.background, paddingHorizontal: spacing['3xl'], paddingTop: spacing['3xl'], paddingBottom: spacing['4xl'] },
   buttons:   { gap: spacing.md },
-  appleBtn:  { height: 52, width: '100%', marginBottom: spacing.xs },
-  privacy:   { ...typography.caption, color: colors.inkMuted, marginTop: spacing['3xl'], textAlign: 'center' },
+  appleBtn:  { height: 52, width: '100%' },
+  privacy:   { ...typography.caption, color: theme.colors.textMuted, marginTop: spacing['3xl'], textAlign: 'center' },
 });

@@ -18,6 +18,7 @@ const THEME_CLEAN_FILES = [
 const THEME_CLEAN_APP_FILES = [
   'app/photo-review.tsx',
   'app/onboarding.tsx',
+  'app/(auth)/index.tsx',
 ];
 
 const HEX_OR_RGBA = /#[0-9a-fA-F]{3,8}\b|rgba?\s*\(/;
