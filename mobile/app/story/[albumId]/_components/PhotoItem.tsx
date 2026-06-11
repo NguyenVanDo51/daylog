@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { DayPhoto } from '@/hooks/useDayPhotos';
-import { API_URL } from '@/constants/api';
 
 const PHOTO_DURATION_MS = 3000;
 
@@ -43,7 +42,7 @@ export function PhotoItem({
 
   return (
     <Image
-      source={{ uri: `${API_URL}/photos/${photo.id}/thumb` }}
+      source={{ uri: photo.thumb_url ?? undefined }}
       style={StyleSheet.absoluteFill}
       contentFit="contain"
     />

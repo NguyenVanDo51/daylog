@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDayPhotos, DayPhoto } from '@/hooks/useDayPhotos';
 import { useDeletePhoto, useUpdateCaption } from '@/hooks/usePhotoActions';
 import { useAuthStore } from '@/stores/authStore';
-import { API_URL } from '@/constants/api';
 import { colors, spacing, typography, radii, shadows } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 
@@ -109,7 +108,7 @@ export default function ManageScreen() {
             <View style={styles.card} testID={`manage-item-${photo.id}`}>
               <View style={styles.imageContainer}>
                 <Image
-                  source={{ uri: `${API_URL}/photos/${photo.id}/thumb` }}
+                  source={{ uri: photo.thumb_url ?? undefined }}
                   style={styles.image}
                   resizeMode="cover"
                 />

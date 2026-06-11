@@ -190,7 +190,7 @@ export default function AlbumScreen() {
             <View style={styles.row}>
               <DayCell
                 date={left.date}
-                thumbnailPhotoId={left.thumbnail_photo_id}
+                thumbnailUrl={left.thumb_url}
                 hasVideo={left.has_video}
                 tall={index % 2 === 0}
                 onPress={() => router.push(`/story/${albumId}/${left.date}`)}
@@ -198,7 +198,7 @@ export default function AlbumScreen() {
               {right && (
                 <DayCell
                   date={right.date}
-                  thumbnailPhotoId={right.thumbnail_photo_id}
+                  thumbnailUrl={right.thumb_url}
                   hasVideo={right.has_video}
                   tall={index % 2 !== 0}
                   onPress={() => router.push(`/story/${albumId}/${right.date}`)}

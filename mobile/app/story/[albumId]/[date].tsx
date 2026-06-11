@@ -7,11 +7,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { CaretLeftIcon, PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon } from 'phosphor-react-native';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { useDayPhotos } from '@/hooks/useDayPhotos';
 import { useAlbumDays } from '@/hooks/useAlbumDays';
 import { useStoryExport } from '@/hooks/useStoryExport';
 import { colors, fonts, spacing, typography } from '@/constants/theme';
-import { PhotoItem, VideoItem, VlogOverlay } from './_components';
+import { PhotoItem, VlogOverlay } from './_components';
 
 export default function StoryScreen() {
   const { albumId, date } = useLocalSearchParams<{ albumId: string; date: string }>();
@@ -24,8 +25,12 @@ export default function StoryScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [photoProgress, setPhotoProgress] = useState(0);
+  const [videoReady, setVideoReady] = useState(false);
 
   const { exporting, exportStory } = useStoryExport(photos ?? [], date);
+
+  // Single persistent video player — never remounted
+  const videoPlayer = useVideoPlayer(null, (p) => { p.muted = true; });
 
   const goNext = useCallback(() => {
     if (!photos) return;
@@ -77,6 +82,55 @@ export default function StoryScreen() {
     }
   }, [photos]);
 
+  // Hide video until first frame is ready to avoid black flash on source change
+  useEffect(() => {
+    const sub = videoPlayer.addListener('statusChange', ({ status }) => {
+      setVideoReady(status === 'readyToPlay');
+    });
+    return () => sub.remove();
+  }, [videoPlayer]);
+
+  // Load / replace video source when current item changes
+  useEffect(() => {
+    if (!photos) return;
+    const current = photos[Math.min(currentIndex, photos.length - 1)];
+    if (current.media_type === 'video') {
+      setVideoReady(false);
+      videoPlayer.replace({ uri: current.photo_url });
+      if (!isPaused) videoPlayer.play();
+    } else {
+      videoPlayer.pause();
+    }
+  }, [currentIndex, photos]);
+
+  // Sync pause/play state with video player
+  useEffect(() => {
+    if (!photos) return;
+    const current = photos[Math.min(currentIndex, photos.length - 1)];
+    if (current.media_type !== 'video') return;
+    if (isPaused) videoPlayer.pause();
+    else videoPlayer.play();
+  }, [isPaused]);
+
+  // Video end → advance
+  useEffect(() => {
+    const sub = videoPlayer.addListener('playToEnd', goNext);
+    return () => sub.remove();
+  }, [goNext]);
+
+  // Video progress reporting
+  useEffect(() => {
+    if (!photos) return;
+    const current = photos[Math.min(currentIndex, photos.length - 1)];
+    if (current.media_type !== 'video') return;
+    const id = setInterval(() => {
+      const dur = videoPlayer.duration;
+      if (!dur || isNaN(dur) || dur === 0) { setPhotoProgress(0); return; }
+      setPhotoProgress(Math.min(videoPlayer.currentTime / dur, 1));
+    }, 200);
+    return () => clearInterval(id);
+  }, [currentIndex, photos, isPaused]);
+
   if (isLoading || !photos || photos.length === 0) {
     return (
       <View style={styles.container}>
@@ -87,25 +141,28 @@ export default function StoryScreen() {
   }
 
   const current = photos[Math.min(currentIndex, photos.length - 1)];
+  const isVideo = current.media_type === 'video';
 
   return (
     <GestureDetector gesture={swipeGesture}>
       <View style={styles.container}>
         <StatusBar hidden />
 
-        {current.media_type === 'video' ? (
-          <VideoItem
-            photo={current}
-            onEnd={goNext}
-            isPaused={isPaused}
-            onProgress={setPhotoProgress}
-          />
-        ) : (
+        {/* Single persistent video view — hidden until first frame is ready */}
+        <VideoView
+          player={videoPlayer}
+          style={[StyleSheet.absoluteFill, !(isVideo && videoReady) && styles.hidden]}
+          contentFit="contain"
+          nativeControls={false}
+        />
+
+        {/* Show photo; while a video is loading, render its thumbnail as a poster */}
+        {(!isVideo || !videoReady) && (
           <PhotoItem
             photo={current}
-            onEnd={goNext}
-            isPaused={isPaused}
-            onProgress={setPhotoProgress}
+            onEnd={!isVideo ? goNext : () => {}}
+            isPaused={isPaused || isVideo}
+            onProgress={!isVideo ? setPhotoProgress : () => {}}
           />
         )}
 
@@ -200,6 +257,7 @@ export default function StoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
+  hidden: { opacity: 0 },
   topBar: {
     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
     paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm
@@ -211,7 +269,7 @@ const styles = StyleSheet.create({
   dateChip: {
     flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 7,
     paddingVertical: 3, paddingHorizontal: 8, ...typography.caption,
-    color: 'rgba(255,255,255,0.75)', fontFamily: fonts.medium, letterSpacing: 0.5,
+    color: colors.pink, fontFamily: fonts.medium, letterSpacing: 0.5,
     textAlign: 'center'
   },
   menuDots: { color: colors.white, fontSize: 12, letterSpacing: 1, lineHeight: 14 },
@@ -219,18 +277,6 @@ const styles = StyleSheet.create({
   tapLeft: { flex: 3 },
   tapCenter: { flex: 4 },
   tapRight: { flex: 3 },
-  pauseIcon: {
-    position: 'absolute',
-    top: '50%', left: '50%',
-    width: 52, height: 52,
-    marginTop: -26, marginLeft: -26,
-    borderRadius: 26,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    alignItems: 'center', justifyContent: 'center',
-    zIndex: 15,
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)',
-  },
-  pauseIconText: { fontSize: 20, color: colors.white },
   progressLine: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     height: 3, backgroundColor: 'rgba(255,255,255,0.12)', zIndex: 20,

@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { albums, albumMembers, photos } from '../db/schema';
 import { isValidUUID } from '../lib/validation';
-import { deleteObject } from '../services/r2';
+import { deleteObject, getPresignedGetUrl } from '../services/r2';
 
 const router = express.Router();
 
@@ -80,13 +80,22 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       .select({
         ...albumSelect,
         my_role: albumMembers.role,
+        cover_thumbnail_key: photos.thumbnailKey,
       })
       .from(albums)
       .innerJoin(albumMembers, eq(albumMembers.albumId, albums.id))
+      .leftJoin(photos, eq(photos.id, albums.coverPhotoId))
       .where(eq(albumMembers.userId, req.user!.id))
       .orderBy(desc(albums.createdAt));
 
-    res.json(rows);
+    const result = await Promise.all(
+      rows.map(async ({ cover_thumbnail_key, ...row }) => ({
+        ...row,
+        cover_thumb_url: cover_thumbnail_key ? await getPresignedGetUrl(cover_thumbnail_key) : null,
+      }))
+    );
+
+    res.json(result);
   } catch (err) {
     next(err);
   }

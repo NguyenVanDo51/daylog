@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { albumMembers, albumPhotos, photos } from '../db/schema';
 import { isValidUUID } from '../lib/validation';
+import { getPresignedGetUrl } from '../services/r2';
 
 const router = express.Router({ mergeParams: true });
 router.use(requireAuth);
@@ -30,6 +31,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       SELECT
         day_group.date,
         thumb.thumbnail_photo_id,
+        thumb.thumbnail_key,
         day_group.has_video,
         day_group.photo_count
       FROM (
@@ -44,7 +46,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         GROUP BY DATE(p.taken_at AT TIME ZONE 'UTC')
       ) AS day_group
       JOIN LATERAL (
-        SELECT p2.id AS thumbnail_photo_id
+        SELECT p2.id AS thumbnail_photo_id, p2.thumbnail_key
         FROM photos p2
         JOIN album_photos ap2 ON ap2.photo_id = p2.id
         WHERE ap2.album_id = ${albumId}::uuid
@@ -54,7 +56,14 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       ORDER BY day_group.date DESC
     `);
 
-    res.json(rows.rows);
+    const days = await Promise.all(
+      (rows.rows as any[]).map(async (row) => ({
+        ...row,
+        thumb_url: row.thumbnail_key ? await getPresignedGetUrl(row.thumbnail_key) : null,
+      }))
+    );
+
+    res.json(days);
   } catch (err) {
     next(err);
   }
@@ -73,7 +82,9 @@ router.get('/:date/photos', async (req: Request, res: Response, next: NextFuncti
       SELECT p.id, p.media_type, p.duration_ms,
              to_char(p.taken_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS taken_at,
              p.caption,
-             p.uploaded_by
+             p.uploaded_by,
+             p.r2_key,
+             p.thumbnail_key
       FROM photos p
       JOIN album_photos ap ON ap.photo_id = p.id
       WHERE ap.album_id = ${albumId}::uuid
@@ -81,7 +92,15 @@ router.get('/:date/photos', async (req: Request, res: Response, next: NextFuncti
       ORDER BY p.taken_at ASC
     `);
 
-    res.json(rows.rows);
+    const dayPhotos = await Promise.all(
+      (rows.rows as any[]).map(async (row) => ({
+        ...row,
+        photo_url: await getPresignedGetUrl(row.r2_key),
+        thumb_url: row.thumbnail_key ? await getPresignedGetUrl(row.thumbnail_key) : null,
+      }))
+    );
+
+    res.json(dayPhotos);
   } catch (err) {
     next(err);
   }

@@ -8,6 +8,8 @@ export interface DayPhoto {
   taken_at: string;
   caption: string | null;
   uploaded_by: string;
+  photo_url: string;
+  thumb_url: string | null;
 }
 
 export function useDayPhotos(albumId: string | null, date: string | null) {

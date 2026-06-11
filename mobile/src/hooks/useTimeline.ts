@@ -7,6 +7,8 @@ export interface TimelinePhoto {
   id: string;
   r2_key: string;
   thumbnail_key: string | null;
+  photo_url: string;
+  thumb_url: string | null;
   taken_at: string;
   caption: string | null;
   media_type: 'photo' | 'video';

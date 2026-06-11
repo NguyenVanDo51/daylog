@@ -1,12 +1,11 @@
 import * as Sentry from '@sentry/react-native';
 import Constants from 'expo-constants';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
-import { router } from 'expo-router';
 import { useFonts, Baloo2_400Regular, Baloo2_500Medium, Baloo2_600SemiBold, Baloo2_700Bold } from '@expo-google-fonts/baloo-2';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
@@ -21,8 +20,10 @@ Sentry.init({
   dsn: Constants.expoConfig?.extra?.sentryDsn,
   tracesSampleRate: 0.2,
   tracePropagationTargets: [API_URL],
-  integrations: [Sentry.reactNativeTracingIntegration()],
+  integrations: [Sentry.reactNativeTracingIntegration(), Sentry.mobileReplayIntegration()],
   environment: __DEV__ ? 'development' : 'production',
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
 });
 
 const TOKEN_KEY = 'auth_token';

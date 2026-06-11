@@ -3,7 +3,7 @@ import { and, eq, isNotNull, ne, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { users, albumMembers, photos, presignTokens, albumPhotos, albums } from '../db/schema';
-import { getPresignedPutUrl, getObjectBuffer, deleteObject } from '../services/r2';
+import { getPresignedPutUrl, getPresignedGetUrl, getObjectBuffer, deleteObject } from '../services/r2';
 import { generateThumbnail } from '../services/thumbnail';
 import { sendPush } from '../services/push';
 import { isValidUUID, isValidDate } from '../lib/validation';
@@ -26,13 +26,19 @@ async function requireMember(albumId: string, userId: string): Promise<boolean> 
   return rows.length > 0;
 }
 
-function toSnakePhoto(p: typeof photos.$inferSelect) {
+async function toSnakePhoto(p: typeof photos.$inferSelect) {
+  const [photoUrl, thumbUrl] = await Promise.all([
+    getPresignedGetUrl(p.r2Key),
+    p.thumbnailKey ? getPresignedGetUrl(p.thumbnailKey) : Promise.resolve(null),
+  ]);
   return {
     id: p.id,
     album_id: p.albumId,
     uploaded_by: p.uploadedBy,
     r2_key: p.r2Key,
     thumbnail_key: p.thumbnailKey,
+    photo_url: photoUrl,
+    thumb_url: thumbUrl,
     taken_at: p.takenAt,
     caption: p.caption,
     local_asset_id: p.localAssetId,
@@ -137,7 +143,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
           eq(photos.uploadedBy, req.user!.id)
         ))
         .limit(1);
-      if (existing[0]) return res.status(200).json(toSnakePhoto(existing[0]));
+      if (existing[0]) return res.status(200).json(await toSnakePhoto(existing[0]));
     }
 
     // Verify main r2_key ownership (outside tx — bail early before opening a transaction)
@@ -233,7 +239,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       : `${req.user!.displayName} đã thêm ảnh mới`;
     sendPush(tokens, pushTitle, pushBody, { photoId: photo.id }).catch(console.error);
 
-    return res.status(201).json(toSnakePhoto(photo));
+    return res.status(201).json(await toSnakePhoto(photo));
   } catch (err) {
     next(err);
   }
@@ -339,7 +345,7 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       .where(eq(photos.id, photoId))
       .returning();
 
-    return res.json(toSnakePhoto(updated));
+    return res.json(await toSnakePhoto(updated));
   } catch (err) {
     next(err);
   }

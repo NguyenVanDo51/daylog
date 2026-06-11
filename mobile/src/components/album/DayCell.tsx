@@ -2,18 +2,17 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Images, Play } from 'phosphor-react-native';
-import { API_URL } from '@/constants/api';
 import { colors, spacing, typography } from '@/constants/theme';
 
 interface Props {
   date: string;
-  thumbnailPhotoId: string | null;
+  thumbnailUrl: string | null;
   hasVideo: boolean;
   tall: boolean;
   onPress: () => void;
 }
 
-export function DayCell({ date, thumbnailPhotoId, hasVideo, tall, onPress }: Props) {
+export function DayCell({ date, thumbnailUrl, hasVideo, tall, onPress }: Props) {
   const { width } = useWindowDimensions();
   const colWidth = (width - spacing['2xl'] * 2 - spacing.sm) / 2;
   const cellHeight = tall ? colWidth * 1.4 : colWidth * 0.85;
@@ -28,9 +27,9 @@ export function DayCell({ date, thumbnailPhotoId, hasVideo, tall, onPress }: Pro
       activeOpacity={0.85}
       style={[styles.cell, { width: colWidth, height: cellHeight }]}
     >
-      {thumbnailPhotoId ? (
+      {thumbnailUrl ? (
         <Image
-          source={{ uri: `${API_URL}/photos/${thumbnailPhotoId}/thumb` }}
+          source={{ uri: thumbnailUrl }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
         />

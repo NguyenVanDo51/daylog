@@ -6,6 +6,7 @@ export interface Album {
   name: string;
   child_birthdate: string | null;
   cover_photo_id: string | null;
+  cover_thumb_url: string | null;
   created_by: string;
   created_at: string;
   is_private: boolean;

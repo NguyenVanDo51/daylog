@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 
 export interface AlbumDay {
   date: string;
-  thumbnail_photo_id: string | null;
+  thumb_url: string | null;
   has_video: boolean;
   photo_count: number;
 }

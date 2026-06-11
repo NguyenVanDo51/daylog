@@ -8,6 +8,7 @@ const auth_1 = require("../middleware/auth");
 const db_1 = require("../db");
 const schema_1 = require("../db/schema");
 const validation_1 = require("../lib/validation");
+const r2_1 = require("../services/r2");
 const router = express_1.default.Router();
 router.use(auth_1.requireAuth);
 // Shape of an album row returned by these endpoints. Keys match the snake_case
@@ -20,6 +21,7 @@ const albumSelect = {
     created_by: schema_1.albums.createdBy,
     created_at: schema_1.albums.createdAt,
     is_private: schema_1.albums.isPrivate,
+    archived_at: schema_1.albums.archivedAt,
 };
 router.post('/', async (req, res, next) => {
     try {
@@ -70,7 +72,10 @@ router.post('/', async (req, res, next) => {
 router.get('/', async (req, res, next) => {
     try {
         const rows = await db_1.db
-            .select(albumSelect)
+            .select({
+            ...albumSelect,
+            my_role: schema_1.albumMembers.role,
+        })
             .from(schema_1.albums)
             .innerJoin(schema_1.albumMembers, (0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, schema_1.albums.id))
             .where((0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id))
@@ -89,7 +94,7 @@ router.get('/:id', async (req, res, next) => {
             return;
         }
         const membership = await db_1.db
-            .select()
+            .select({ role: schema_1.albumMembers.role })
             .from(schema_1.albumMembers)
             .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, albumId), (0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id)))
             .limit(1);
@@ -110,7 +115,7 @@ router.get('/:id', async (req, res, next) => {
             res.status(404).json({ error: 'Not found' });
             return;
         }
-        res.json(rows[0]);
+        res.json({ ...rows[0], my_role: membership[0].role });
     }
     catch (err) {
         next(err);
@@ -130,6 +135,19 @@ router.patch('/:id', async (req, res, next) => {
             .limit(1);
         if (!membership[0] || membership[0].role !== 'admin') {
             res.status(403).json({ error: 'Forbidden' });
+            return;
+        }
+        const albumRow = await db_1.db
+            .select({ archivedAt: schema_1.albums.archivedAt })
+            .from(schema_1.albums)
+            .where((0, drizzle_orm_1.eq)(schema_1.albums.id, albumId))
+            .limit(1);
+        if (!albumRow[0]) {
+            res.status(404).json({ error: 'Not found' });
+            return;
+        }
+        if (albumRow[0].archivedAt !== null) {
+            res.status(409).json({ error: 'Album is archived' });
             return;
         }
         const { name, child_birthdate, cover_photo_id } = req.body ?? {};
@@ -177,6 +195,124 @@ router.patch('/:id', async (req, res, next) => {
             res.status(404).json({ error: 'Not found' });
             return;
         }
+        res.json(updated);
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.delete('/:id/members/me', async (req, res, next) => {
+    try {
+        const albumId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(albumId)) {
+            res.status(400).json({ error: 'Invalid albumId' });
+            return;
+        }
+        const deleted = await db_1.db
+            .delete(schema_1.albumMembers)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, albumId), (0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id)))
+            .returning({ id: schema_1.albumMembers.id });
+        if (!deleted[0]) {
+            res.status(404).json({ error: 'Not a member' });
+            return;
+        }
+        res.status(204).send();
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.delete('/:id', async (req, res, next) => {
+    try {
+        const albumId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(albumId)) {
+            res.status(400).json({ error: 'Invalid albumId' });
+            return;
+        }
+        const membership = await db_1.db
+            .select({ role: schema_1.albumMembers.role })
+            .from(schema_1.albumMembers)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, albumId), (0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id)))
+            .limit(1);
+        if (!membership[0]) {
+            // Distinguish "album doesn't exist" (404) from "album exists but user is not a member" (403)
+            const albumExists = await db_1.db
+                .select({ id: schema_1.albums.id })
+                .from(schema_1.albums)
+                .where((0, drizzle_orm_1.eq)(schema_1.albums.id, albumId))
+                .limit(1);
+            if (!albumExists[0]) {
+                res.status(404).json({ error: 'Not found' });
+                return;
+            }
+            res.status(403).json({ error: 'Forbidden' });
+            return;
+        }
+        if (membership[0].role !== 'admin') {
+            res.status(403).json({ error: 'Forbidden' });
+            return;
+        }
+        // Fetch all R2 keys before deleting
+        const photoRows = await db_1.db
+            .select({ r2Key: schema_1.photos.r2Key, thumbnailKey: schema_1.photos.thumbnailKey })
+            .from(schema_1.photos)
+            .where((0, drizzle_orm_1.eq)(schema_1.photos.albumId, albumId));
+        // Delete the album row — cascades album_members, photos, album_photos, day_labels, invites, reactions
+        const deleted = await db_1.db
+            .delete(schema_1.albums)
+            .where((0, drizzle_orm_1.eq)(schema_1.albums.id, albumId))
+            .returning({ id: schema_1.albums.id });
+        if (!deleted[0]) {
+            res.status(404).json({ error: 'Not found' });
+            return;
+        }
+        // Delete R2 objects after DB delete succeeds
+        await Promise.all(photoRows.flatMap((p) => {
+            const ops = [(0, r2_1.deleteObject)(p.r2Key)];
+            if (p.thumbnailKey)
+                ops.push((0, r2_1.deleteObject)(p.thumbnailKey));
+            return ops;
+        }));
+        res.status(204).send();
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.post('/:id/archive', async (req, res, next) => {
+    try {
+        const albumId = req.params.id;
+        if (!(0, validation_1.isValidUUID)(albumId)) {
+            res.status(400).json({ error: 'Invalid albumId' });
+            return;
+        }
+        const membership = await db_1.db
+            .select({ role: schema_1.albumMembers.role })
+            .from(schema_1.albumMembers)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.albumMembers.albumId, albumId), (0, drizzle_orm_1.eq)(schema_1.albumMembers.userId, req.user.id)))
+            .limit(1);
+        if (!membership[0] || membership[0].role !== 'admin') {
+            res.status(403).json({ error: 'Forbidden' });
+            return;
+        }
+        const current = await db_1.db
+            .select({ archivedAt: schema_1.albums.archivedAt })
+            .from(schema_1.albums)
+            .where((0, drizzle_orm_1.eq)(schema_1.albums.id, albumId))
+            .limit(1);
+        if (!current[0]) {
+            res.status(404).json({ error: 'Not found' });
+            return;
+        }
+        if (current[0].archivedAt !== null) {
+            res.status(409).json({ error: 'Album is already archived' });
+            return;
+        }
+        const [updated] = await db_1.db
+            .update(schema_1.albums)
+            .set({ archivedAt: new Date() })
+            .where((0, drizzle_orm_1.eq)(schema_1.albums.id, albumId))
+            .returning({ archived_at: schema_1.albums.archivedAt });
         res.json(updated);
     }
     catch (err) {

@@ -12,7 +12,6 @@ import { useAlbums, Album } from '@/hooks/useAlbums';
 import { useAlbumStore } from '@/stores/albumStore';
 import { SettingsSheet } from './SettingsSheet';
 import { api } from '@/lib/api';
-import { API_URL } from '@/constants/api';
 import { colors, fonts, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 
@@ -117,9 +116,9 @@ export function AlbumsPage({ onCameraPress }: Props) {
               activeOpacity={0.75}
               testID={`album-row-${item.id}`}
             >
-              {item.cover_photo_id ? (
+              {item.cover_thumb_url ? (
                 <Image
-                  source={{ uri: `${API_URL}/photos/${item.cover_photo_id}/thumb` }}
+                  source={{ uri: item.cover_thumb_url }}
                   style={styles.thumb}
                 />
               ) : (

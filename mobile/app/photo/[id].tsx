@@ -6,7 +6,6 @@ import { X } from 'phosphor-react-native';
 import { BlurView } from 'expo-blur';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useTimeline } from '@/hooks/useTimeline';
-import { API_URL } from '@/constants/api';
 import { colors, spacing, typography } from '@/constants/theme';
 import { useSharedTransition } from '@/lib/sharedElement';
 import { t } from '@/lib/i18n';
@@ -26,7 +25,7 @@ export default function PhotoViewer() {
   const style = useSharedTransition(source, width, height, true);
 
   const isVideo = (photo as any)?.media_type === 'video';
-  const videoUri = isVideo ? `${API_URL}/photos/${photo?.id}/full` : '';
+  const videoUri = isVideo ? ((photo as any)?.photo_url ?? '') : '';
   const player = useVideoPlayer(videoUri, (p) => {
     p.loop = true;
   });
@@ -53,7 +52,7 @@ export default function PhotoViewer() {
             />
           </Animated.View>
         )
-        : <Animated.Image source={{ uri: `${API_URL}/photos/${photo.id}/full` }} style={[style]} resizeMode="contain" />
+        : <Animated.Image source={{ uri: (photo as any).photo_url }} style={[style]} resizeMode="contain" />
       }
 
       <BlurView intensity={30} tint="dark" style={styles.topBar}>

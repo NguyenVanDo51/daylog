@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPresignedPutUrl = getPresignedPutUrl;
 exports.getObjectBuffer = getObjectBuffer;
 exports.putObject = putObject;
+exports.deleteObject = deleteObject;
 const crypto_1 = require("crypto");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
@@ -13,6 +14,10 @@ const r2 = new client_s3_1.S3Client({
         accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
     },
+    // AWS SDK v3 ≥ 3.600 auto-injects CRC32 checksums; R2 rejects presigned PUTs that
+    // include a checksum query param the client doesn't echo back.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
 });
 const BUCKET = process.env.R2_BUCKET || '';
 async function getPresignedPutUrl(contentType = 'image/webp') {
@@ -38,5 +43,8 @@ async function getObjectBuffer(key) {
 }
 async function putObject(key, buffer, contentType = 'image/webp') {
     await r2.send(new client_s3_1.PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType }));
+}
+async function deleteObject(key) {
+    await r2.send(new client_s3_1.DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
 //# sourceMappingURL=r2.js.map
