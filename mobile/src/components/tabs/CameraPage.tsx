@@ -11,29 +11,26 @@ import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { colors, fonts, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import * as SecureStore from 'expo-secure-store';
+import { MediaCaption } from '@/components/ui/MediaCaption';
 
 const HINT_KEY = 'capture.hint_seen';
-const VI_DAYS = ['chủ nhật', 'thứ hai', 'thứ ba', 'thứ tư', 'thứ năm', 'thứ sáu', 'thứ bảy'];
 
 interface Props {
   onTabPress: (index: number) => void;
 }
 
-function formatClock() {
+function formatClock(): string {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
-  return {
-    time: `${hh}:${mm}`,
-    date: `${VI_DAYS[now.getDay()]}, ${now.getDate()} tháng ${now.getMonth() + 1}`,
-  };
+  return `${hh}:${mm}`;
 }
 
 export function CameraPage({ onTabPress }: Props) {
   const [facing, setFacing] = useState<'back' | 'front'>('back');
   const [permissionResponse, requestPermission] = useCameraPermissions();
   const [showHint, setShowHint] = useState(false);
-  const [clock, setClock] = useState(formatClock);
+  const [clock, setClock] = useState<string>(formatClock);
   const cameraRef = useRef<CameraView>(null);
   const recordingRef = useRef(false);
   const insets = useSafeAreaInsets();
@@ -155,11 +152,7 @@ export function CameraPage({ onTabPress }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* Clock centered on screen */}
-      <View style={styles.clockOverlay} pointerEvents="none">
-        <Text testID="clock-display" style={styles.clockTime}>{clock.time}</Text>
-        <Text style={styles.clockDate}>{clock.date}</Text>
-      </View>
+      <MediaCaption time={clock} />
 
       {showHint && (
         <View style={styles.hint}>
@@ -184,9 +177,6 @@ const styles = StyleSheet.create({
   topBar:       { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, zIndex: 10 },
   closeBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   iconBtn:      { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  clockOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  clockTime:    { fontFamily: fonts.bold, fontSize: 52, color: colors.white, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 10 },
-  clockDate:    { fontFamily: fonts.semiBold, fontSize: 18, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   shutterArea:  { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' },
   shutterOuter: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   progressArc:  { position: 'absolute', width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: colors.pink, borderTopColor: 'transparent', borderRightColor: 'transparent' },
