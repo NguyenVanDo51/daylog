@@ -23,14 +23,22 @@ function applyLanguage(pref: AppLanguage): void {
 // Synchronous default so the first render has a locale set.
 applyLanguage('device');
 
+// Prevents race condition: if setLanguage() is called while AsyncStorage load is pending,
+// we won't overwrite the explicit choice with the late-resolving stored preference.
+let initialized = false;
+
 // Then override from persisted preference as soon as AsyncStorage resolves.
 AsyncStorage.getItem(LANGUAGE_KEY).then((stored) => {
+  if (initialized) return;
   if (stored === 'vi' || stored === 'en' || stored === 'device') {
-    applyLanguage(stored);
+    applyLanguage(stored as AppLanguage);
   }
-}).catch(() => {});
+}).catch((err) => {
+  if (__DEV__) console.warn('[i18n] AsyncStorage load failed:', err);
+});
 
 export async function setLanguage(pref: AppLanguage): Promise<void> {
+  initialized = true;
   await AsyncStorage.setItem(LANGUAGE_KEY, pref);
   applyLanguage(pref);
 }
