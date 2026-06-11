@@ -106,7 +106,7 @@ export default function SettingsTab() {
         {user && (
           <TouchableOpacity onPress={() => router.push('/settings/profile')}>
             <Card tier="quiet" style={styles.profileCard}>
-              <Avatar uri={user.avatar_url} name={user.display_name} size={56} />
+              <Avatar src={user.avatar_url} size={56} bgColor="accent1" />
               <View style={styles.profileInfo}>
                 <Text style={styles.name}>{user.display_name}</Text>
                 <Text style={styles.email}>{user.email}</Text>

@@ -80,7 +80,7 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.avatarWrap}>
           <TouchableOpacity onPress={pickAvatar} disabled={uploading}>
-            <Avatar uri={avatarUri} name={name} size={96} />
+            <Avatar src={avatarUri} size={96} bgColor="primary" withCameraOverlay />
             <View style={styles.cameraOverlay}>
               {uploading
                 ? <ActivityIndicator size="small" color={colors.white} />

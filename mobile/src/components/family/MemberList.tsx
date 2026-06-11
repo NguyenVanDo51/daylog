@@ -15,7 +15,7 @@ export function MemberList({ members }: { members: Member[] }) {
       scrollEnabled={false}
       renderItem={({ item }) => (
         <View style={styles.row}>
-          <Avatar uri={item.avatar_url} name={item.display_name} size={40} ring shadow />
+          <Avatar src={item.avatar_url} size={40} bgColor="accent1" />
           <View style={styles.info}>
             <Text style={styles.name}>{item.display_name}</Text>
             <Text style={styles.joined}>
