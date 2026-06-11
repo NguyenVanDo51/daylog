@@ -17,6 +17,7 @@ const THEME_CLEAN_FILES = [
 // app/photo-review.tsx is at a different relative root; use the app/ prefix.
 const THEME_CLEAN_APP_FILES = [
   'app/photo-review.tsx',
+  'app/onboarding.tsx',
 ];
 
 const HEX_OR_RGBA = /#[0-9a-fA-F]{3,8}\b|rgba?\s*\(/;
