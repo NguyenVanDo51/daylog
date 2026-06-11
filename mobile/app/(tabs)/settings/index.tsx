@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Switch, Alert, TouchableOpacity } from 'react-native';
-import { CaretLeft, ArrowSquareOut, CaretRight, Bell, Globe, DownloadSimple, Trash, ShieldCheck, FileText, User } from 'phosphor-react-native';
+import { CaretLeft, ArrowSquareOut, CaretRight, Bell, Globe, DownloadSimple, Trash, ShieldCheck, FileText } from 'phosphor-react-native';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
@@ -9,7 +9,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
 import { api } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
-import { Mascot } from '@/components/ui/Mascot';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerButton } from '@/components/ui/StickerButton';
 import { registerPushToken, hasPushPermission } from '@/lib/notifications';
