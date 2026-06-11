@@ -23,3 +23,44 @@
 
 - Mỗi ảnh có thể lưu riêng tư (chỉ mình xem) hoặc đưa vào album nhóm gia đình.
 - Ví dụ: mẹ chụp ảnh con và lưu vào album chung với bố để cả hai cùng xem và bình luận.
+
+## Kiểm thử E2E (Maestro)
+
+### Cài đặt (một lần)
+
+```bash
+curl -Ls "https://get.maestro.mobile.dev" | bash
+```
+
+### Cấu hình token
+
+1. Đăng nhập vào app trên simulator, lấy token từ `SecureStore` bằng Expo dev menu → debugger console:
+   ```js
+   await SecureStore.getItemAsync('auth_token')
+   ```
+2. Copy file mẫu và điền token:
+   ```bash
+   cp mobile/.env.e2e.example mobile/.env.e2e
+   # Mở .env.e2e và thay thế phần REPLACE_ME bằng token thực
+   ```
+
+### Build app với token E2E
+
+```bash
+cd mobile
+source .env.e2e
+npx expo run:ios
+```
+
+### Chạy tests
+
+```bash
+# Tất cả flows (chạy theo thứ tự)
+maestro test e2e/flows/
+
+# Một flow cụ thể
+maestro test e2e/flows/01-day-grid.yaml
+
+# Xem hierarchy hiện tại khi debug
+maestro hierarchy
+```

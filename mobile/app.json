@@ -30,8 +30,8 @@
       [
         "@sentry/react-native",
         {
-          "organization": "",
-          "project": ""
+          "organization": "andystudio",
+          "project": "react-native"
         }
       ],
       "expo-router",

@@ -9,9 +9,18 @@ const r2 = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
   },
+  // AWS SDK v3 ≥ 3.600 auto-injects CRC32 checksums; R2 rejects presigned PUTs that
+  // include a checksum query param the client doesn't echo back.
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
 const BUCKET = process.env.R2_BUCKET || '';
+
+export async function getPresignedGetUrl(key: string, expiresIn = 3600): Promise<string> {
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  return getSignedUrl(r2, command, { expiresIn });
+}
 
 export async function getPresignedPutUrl(
   contentType: 'image/webp' | 'image/jpeg' | 'video/mp4' = 'image/webp'

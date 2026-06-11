@@ -62,8 +62,8 @@ describe('SignInScreen', () => {
     expect(
       UNSAFE_getAllByType('AppleAuthenticationButton' as never).length,
     ).toBeGreaterThan(0);
-    // Headline rendered (vi locale)
-    expect(getByText('Mỗi ngày bé lớn thêm một chút')).toBeTruthy();
+    // Tagline rendered (vi locale)
+    expect(getByText('lưu giữ từng khoảnh khắc bé yêu')).toBeTruthy();
   });
 
   describe('handleApple', () => {

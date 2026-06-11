@@ -25,6 +25,7 @@ export const users = pgTable('users', {
   avatarUrl: text('avatar_url'),
   pushToken: text('push_token'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 });
 
 // NOTE: albums.cover_photo_id references photos.id, creating a circular dependency

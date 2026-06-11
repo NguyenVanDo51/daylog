@@ -8,32 +8,32 @@ import { router } from 'expo-router';
 import { X, CameraRotate } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
-import { colors, fonts, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import * as SecureStore from 'expo-secure-store';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
+import { StickerButton } from '@/components/ui/StickerButton';
+import { MediaCaption } from '@/components/ui/MediaCaption';
 
 const HINT_KEY = 'capture.hint_seen';
-const VI_DAYS = ['chủ nhật', 'thứ hai', 'thứ ba', 'thứ tư', 'thứ năm', 'thứ sáu', 'thứ bảy'];
 
 interface Props {
   onTabPress: (index: number) => void;
 }
 
-function formatClock() {
+function formatClock(): string {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
-  return {
-    time: `${hh}:${mm}`,
-    date: `${VI_DAYS[now.getDay()]}, ${now.getDate()} tháng ${now.getMonth() + 1}`,
-  };
+  return `${hh}:${mm}`;
 }
 
 export function CameraPage({ onTabPress }: Props) {
   const [facing, setFacing] = useState<'back' | 'front'>('back');
   const [permissionResponse, requestPermission] = useCameraPermissions();
   const [showHint, setShowHint] = useState(false);
-  const [clock, setClock] = useState(formatClock);
+  const [clock, setClock] = useState<string>(formatClock);
   const cameraRef = useRef<CameraView>(null);
   const recordingRef = useRef(false);
   const insets = useSafeAreaInsets();
@@ -43,13 +43,11 @@ export function CameraPage({ onTabPress }: Props) {
     transform: [{ rotate: `${progress.value * 360}deg` }],
   }));
 
-  // Lock to portrait permanently
   React.useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
     return () => { ScreenOrientation.unlockAsync().catch(() => {}); };
   }, []);
 
-  // Live clock
   React.useEffect(() => {
     const id = setInterval(() => setClock(formatClock()), 1000);
     return () => clearInterval(id);
@@ -127,13 +125,16 @@ export function CameraPage({ onTabPress }: Props) {
       <View style={styles.container}>
         <Modal transparent animationType="fade" visible>
           <View style={styles.permOverlay}>
-            <View style={styles.permSheet}>
+            <StickerCard shadow="heavy" style={styles.permSheet}>
               <Text style={styles.permTitle}>{t('capture.perm_title')}</Text>
               <Text style={styles.permBody}>{t('capture.perm_body')}</Text>
-              <TouchableOpacity style={styles.permBtn} onPress={() => Linking.openSettings()}>
-                <Text style={styles.permBtnText}>{t('capture.perm_open')}</Text>
-              </TouchableOpacity>
-            </View>
+              <StickerButton
+                label={t('capture.perm_open')}
+                variant="primary"
+                fullWidth
+                onPress={() => Linking.openSettings()}
+              />
+            </StickerCard>
           </View>
         </Modal>
       </View>
@@ -145,25 +146,24 @@ export function CameraPage({ onTabPress }: Props) {
       <StatusBar hidden />
       <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} mode="video" mute />
 
-      {/* Top bar: close (left) + flip (right) */}
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}>
-        <TouchableOpacity testID="close-btn" style={styles.closeBtn} onPress={() => onTabPress(1)}>
-          <X size={28} color={colors.white} />
+        <TouchableOpacity testID="close-btn" onPress={() => onTabPress(1)} hitSlop={8}>
+          <StickerCard style={styles.iconBtn}>
+            <X size={20} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}>
-          <CameraRotate size={24} color={colors.white} />
+        <TouchableOpacity onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))} hitSlop={8}>
+          <StickerCard style={styles.iconBtn}>
+            <CameraRotate size={20} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
         </TouchableOpacity>
       </View>
 
-      {/* Clock centered on screen */}
-      <View style={styles.clockOverlay} pointerEvents="none">
-        <Text testID="clock-display" style={styles.clockTime}>{clock.time}</Text>
-        <Text style={styles.clockDate}>{clock.date}</Text>
-      </View>
+      <MediaCaption time={clock} style={styles.clockArea} />
 
       {showHint && (
-        <View style={styles.hint}>
-          <Text style={styles.hintText}>{t('capture.hint_video')}</Text>
+        <View style={styles.hintArea} pointerEvents="none">
+          <StickerChip label={t('capture.hint_video')} variant="ink" />
         </View>
       )}
 
@@ -180,23 +180,23 @@ export function CameraPage({ onTabPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: '#000' },
+  container:    { flex: 1, backgroundColor: theme.overlays.cameraBg },
   topBar:       { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, zIndex: 10 },
-  closeBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  iconBtn:      { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  clockOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  clockTime:    { fontFamily: fonts.bold, fontSize: 52, color: colors.white, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 10 },
-  clockDate:    { fontFamily: fonts.semiBold, fontSize: 18, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
+  iconBtn:      { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', padding: 0 },
+  clockArea:    { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
+  hintArea:     { position: 'absolute', bottom: 160, left: 0, right: 0, alignItems: 'center' },
   shutterArea:  { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' },
-  shutterOuter: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-  progressArc:  { position: 'absolute', width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: colors.pink, borderTopColor: 'transparent', borderRightColor: 'transparent' },
-  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.white },
-  hint:         { position: 'absolute', bottom: 160, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: 20 },
-  hintText:     { ...typography.caption, color: colors.white, fontSize: 13 },
-  permOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'flex-end' },
-  permSheet:    { width: '100%', backgroundColor: colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing['2xl'], gap: spacing.md },
-  permTitle:    { ...typography.title, color: colors.ink },
-  permBody:     { ...typography.body, color: colors.inkSoft },
-  permBtn:      { backgroundColor: colors.pink, borderRadius: 12, paddingVertical: spacing.md, alignItems: 'center' },
-  permBtnText:  { ...typography.body, color: colors.white, fontWeight: '700' },
+  shutterOuter: {
+    width: 76, height: 76, borderRadius: 38,
+    borderWidth: theme.border.thick, borderColor: theme.colors.border,
+    alignItems: 'center', justifyContent: 'center',
+    ...theme.shadows.stickerHeavy,
+    backgroundColor: theme.colors.surface,
+  },
+  progressArc:  { position: 'absolute', width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: theme.colors.primary, borderTopColor: 'transparent', borderRightColor: 'transparent' },
+  shutterInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.primary, borderWidth: theme.border.medium, borderColor: theme.colors.border },
+  permOverlay:  { flex: 1, backgroundColor: theme.overlays.scrimDeep, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: spacing['2xl'], paddingBottom: spacing['3xl'] },
+  permSheet:    { width: '100%', padding: spacing['2xl'], gap: spacing.md },
+  permTitle:    { ...typography.title, color: theme.colors.textPrimary },
+  permBody:     { ...typography.body, color: theme.colors.textSecondary },
 });

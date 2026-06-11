@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
 import { Video } from 'phosphor-react-native';
-import { API_URL } from '@/constants/api';
 import { colors, spacing, typography, shadows } from '@/constants/theme';
 import { ReactionBadge } from '@/components/ui/ReactionBadge';
 import { ReactionPicker } from '@/components/ui/ReactionPicker';
@@ -26,7 +25,7 @@ export function PolaroidCard({ photo }: PolaroidCardProps) {
   const { add } = useReact(photo.id);
 
   // Hook must be called unconditionally; empty string disables loading for non-video
-  const videoUri = photo.media_type === 'video' ? `${API_URL}/photos/${photo.id}/full` : '';
+  const videoUri = photo.media_type === 'video' ? (photo.photo_url ?? '') : '';
   const videoPlayer = useVideoPlayer(videoUri, (p) => {
     p.loop = true;
     p.muted = true;
@@ -54,7 +53,7 @@ export function PolaroidCard({ photo }: PolaroidCardProps) {
           />
         ) : (
           <Image
-            source={{ uri: `${API_URL}/photos/${photo.id}/thumb` }}
+            source={{ uri: photo.thumb_url ?? undefined }}
             style={[styles.image, { width: imageWidth, height: imageWidth * 0.75 }]}
             contentFit="cover"
           />

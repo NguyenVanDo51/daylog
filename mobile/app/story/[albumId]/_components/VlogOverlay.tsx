@@ -1,9 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  cancelAnimation,
+  Easing,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { PlayIcon, PauseIcon } from 'phosphor-react-native';
 import { DayPhoto } from '@/hooks/useDayPhotos';
-import { colors, fonts, spacing } from '@/constants/theme';
+import { theme, spacing } from '@/constants/theme';
+import { MediaCaption } from '@/components/ui/MediaCaption';
+
+const CHAR_STAGGER_MS = 20;
+const CHAR_FADE_MS = 40;
+
+function TypingChar({
+  children,
+  startMs,
+  elapsed,
+}: {
+  children: string;
+  startMs: number;
+  elapsed: SharedValue<number>;
+}) {
+  const style = useAnimatedStyle(() => {
+    const t = (elapsed.value - startMs) / CHAR_FADE_MS;
+    return { opacity: t < 0 ? 0 : t > 1 ? 1 : t };
+  });
+  return <Animated.Text style={style}>{children}</Animated.Text>;
+}
 
 export function VlogOverlay({
   photo,
@@ -21,53 +48,50 @@ export function VlogOverlay({
   const dt = new Date(photo.taken_at);
   const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
   const caption = photo.caption?.trim() ?? '';
+  const chars = caption ? Array.from(caption) : [];
+  const totalMs = chars.length > 0 ? (chars.length - 1) * CHAR_STAGGER_MS + CHAR_FADE_MS : 0;
 
-  const [displayedTime, setDisplayedTime] = useState('');
-  const [displayedCaption, setDisplayedCaption] = useState('');
-
-  useEffect(() => {
-    let timeIdx = 0;
-    const timeInterval = setInterval(() => {
-      timeIdx++;
-      setDisplayedTime(timeStr.slice(0, timeIdx));
-      if (timeIdx >= timeStr.length) clearInterval(timeInterval);
-    }, 70);
-    return () => clearInterval(timeInterval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const elapsed = useSharedValue(0);
+  const [done, setDone] = useState(chars.length === 0);
 
   useEffect(() => {
-    if (!caption) return;
-    let capInterval: ReturnType<typeof setInterval>;
-    const capDelay = setTimeout(() => {
-      let capIdx = 0;
-      capInterval = setInterval(() => {
-        capIdx++;
-        setDisplayedCaption(caption.slice(0, capIdx));
-        if (capIdx >= caption.length) clearInterval(capInterval);
-      }, 35);
-    }, timeStr.length * 70 + 100);
-    return () => {
-      clearTimeout(capDelay);
-      clearInterval(capInterval);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (chars.length === 0 || done) return;
+
+    if (isPaused) {
+      cancelAnimation(elapsed);
+      return;
+    }
+
+    const remaining = Math.max(0, totalMs - elapsed.value);
+    if (remaining === 0) {
+      setDone(true);
+      return;
+    }
+
+    elapsed.value = withTiming(totalMs, { duration: remaining, easing: Easing.linear });
+    const doneTimer = setTimeout(() => setDone(true), remaining);
+    return () => clearTimeout(doneTimer);
+  }, [isPaused, done, totalMs, chars.length, elapsed]);
+
+  let captionNode: React.ReactNode | undefined;
+  if (chars.length > 0) {
+    captionNode = done
+      ? caption
+      : chars.map((c, i) => (
+        <TypingChar key={i} startMs={i * CHAR_STAGGER_MS} elapsed={elapsed}>{c}</TypingChar>
+      ));
+  }
 
   return (
     <>
-      <View style={styles.upperCenter} pointerEvents="none">
-        <View style={styles.timeRow} testID="vlog-time">
-          {isPaused
-            ? <PauseIcon size={16} color="#ffcc44" weight="fill" />
-            : <PlayIcon size={16} color="#ffcc44" weight="fill" />}
-          <Text style={styles.time} testID="vlog-time-text">{displayedTime}</Text>
-        </View>
-        {caption
-          ? <Text style={styles.caption} testID="vlog-caption">{displayedCaption}</Text>
-          : null}
-      </View>
+
+      <MediaCaption
+        time={timeStr}
+        caption={captionNode}
+      />
 
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.92)']}
+        colors={['transparent', theme.overlays.scrimSoft, theme.overlays.scrimDeep]}
         style={[styles.container, { paddingBottom: spacing.xl + bottomInset }]}
         pointerEvents="none"
       >
@@ -86,40 +110,12 @@ export function VlogOverlay({
 }
 
 const styles = StyleSheet.create({
-  upperCenter: {
+  captionPosition: {
     position: 'absolute',
-    top: '38%', // RN supports % strings for absolute position (SDK 56+)
+    top: '38%',
     left: 0,
     right: 0,
     zIndex: 10,
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: spacing.sm,
-  },
-  time: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    color: '#ffcc44',
-    letterSpacing: 1,
-    textShadowColor: 'rgba(255,180,0,0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
-  },
-  caption: {
-    fontSize: 18,
-    fontFamily: fonts.regular,
-    color: 'rgba(255,255,255,0.95)',
-    fontStyle: 'italic',
-    lineHeight: 26,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
   },
   container: {
     position: 'absolute',
@@ -136,15 +132,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dot: {
-    width: 5,
-    height: 5,
+    width: 4,
+    height: 4,
     borderRadius: 2.5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: theme.overlays.surfaceOnDark,
   },
   dotActive: {
     width: 18,
-    height: 5,
+    height: 4,
     borderRadius: 3,
-    backgroundColor: colors.white,
+    backgroundColor: theme.colors.surface,
   },
 });

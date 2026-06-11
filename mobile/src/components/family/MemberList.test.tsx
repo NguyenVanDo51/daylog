@@ -1,8 +1,9 @@
 import React from 'react';
-import { Image } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { MemberList } from '@/components/family/MemberList';
 import type { Member } from '@/hooks/useMembers';
+
+jest.mock('expo-image', () => ({ Image: 'Image' }));
 
 const members: Member[] = [
   {
@@ -28,18 +29,15 @@ describe('MemberList', () => {
     expect(getByText('Bob Member')).toBeTruthy();
   });
 
-  it('renders an Image avatar when avatar_url is provided', () => {
-    const { UNSAFE_getAllByType } = render(<MemberList members={members} />);
-    const images = UNSAFE_getAllByType(Image);
-    // Alice has an avatar_url; Bob renders initials fallback (no Image).
+  it('renders an Image avatar when avatar_url is provided and mascot fallback otherwise', () => {
+    const { UNSAFE_getAllByType, getAllByText } = render(<MemberList members={members} />);
+    // expo-image is mocked as host component string 'Image' (see jest.mock above).
+    const images = UNSAFE_getAllByType('Image' as unknown as React.ComponentType);
+    // Alice has an avatar_url → one expo-image; Bob falls back to the mascot.
     expect(images.length).toBe(1);
     expect(images[0].props.source).toEqual({ uri: 'https://cdn.example.com/alice.png' });
-  });
-
-  it('renders initials for members without an avatar_url', () => {
-    const { getByText } = render(<MemberList members={members} />);
-    // Bob Member -> "BM"
-    expect(getByText('BM')).toBeTruthy();
+    // Bob has no avatar_url → mascot emoji is rendered as fallback.
+    expect(getAllByText('🐱').length).toBe(1);
   });
 
   it('renders the admin badge for admin role and member badge for member role', () => {

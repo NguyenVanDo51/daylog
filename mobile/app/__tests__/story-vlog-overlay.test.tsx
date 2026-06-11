@@ -10,11 +10,6 @@ jest.mock('expo-linear-gradient', () => {
   };
 });
 
-jest.mock('phosphor-react-native', () => ({
-  PlayIcon: () => null,
-  PauseIcon: () => null,
-}));
-
 import { VlogOverlay } from '../story/[albumId]/_components/VlogOverlay';
 import { DayPhoto } from '@/hooks/useDayPhotos';
 
@@ -35,64 +30,78 @@ afterEach(() => {
 });
 
 describe('VlogOverlay — static rendering', () => {
-  it('vlog-time row is present', () => {
+  it('time text is rendered with the photo time', () => {
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
     );
-    expect(getByTestId('vlog-time')).toBeTruthy();
+    expect(getByTestId('media-caption-time')).toBeTruthy();
   });
 
-  it('does not render caption element when caption is null', () => {
-    const { queryByTestId } = render(
+  it('renders empty caption Text when caption is null', () => {
+    const { getByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: null })} currentIndex={0} total={1} />,
     );
-    expect(queryByTestId('vlog-caption')).toBeNull();
+    expect(getByTestId('media-caption-text').props.children).toBe('');
   });
 
-  it('does not render caption element when caption is empty string', () => {
-    const { queryByTestId } = render(
+  it('renders empty caption Text when caption is empty string', () => {
+    const { getByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: '' })} currentIndex={0} total={1} />,
     );
-    expect(queryByTestId('vlog-caption')).toBeNull();
+    expect(getByTestId('media-caption-text').props.children).toBe('');
   });
 
-  it('renders caption element when caption is present', () => {
+  it('renders caption element on mount when caption is present', () => {
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: 'Buổi sáng' })} currentIndex={0} total={1} />,
     );
-    expect(getByTestId('vlog-caption')).toBeTruthy();
+    // All words rendered from mount to reserve centered layout; opacity staggers in.
+    expect(getByTestId('media-caption-text')).toBeTruthy();
   });
 });
 
 describe('VlogOverlay — typewriter animation', () => {
-  it('time text starts empty on mount', () => {
+  it('time text is non-empty on mount (static from photo.taken_at)', () => {
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
     );
-    expect(getByTestId('vlog-time-text').props.children).toBe('');
+    expect(getByTestId('media-caption-time').props.children).not.toBe('');
   });
 
-  it('time text is non-empty after 500ms', () => {
-    const { getByTestId } = render(
-      <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
-    );
-    act(() => { jest.advanceTimersByTime(500); });
-    expect(getByTestId('vlog-time-text').props.children).not.toBe('');
-  });
-
-  it('caption starts empty on mount', () => {
-    const { getByTestId } = render(
-      <VlogOverlay photo={makePhoto({ caption: 'Xin chào' })} currentIndex={0} total={1} />,
-    );
-    expect(getByTestId('vlog-caption').props.children).toBe('');
-  });
-
-  it('caption reaches full text after enough time', () => {
-    // time: 5 chars × 70ms = 350ms + 100ms gap + 8 chars × 35ms = 730ms → use 1200ms
+  it('caption collapses to plain string after stagger completes', () => {
+    // 2 words → stagger 1*160ms + fade 280ms = 440ms; advance well past.
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: 'Xin chào' })} currentIndex={0} total={1} />,
     );
     act(() => { jest.advanceTimersByTime(1200); });
-    expect(getByTestId('vlog-caption').props.children).toBe('Xin chào');
+    expect(getByTestId('media-caption-text').props.children).toBe('Xin chào');
+  });
+
+  it('does not complete caption reveal while paused', () => {
+    const { getByTestId } = render(
+      <VlogOverlay
+        photo={makePhoto({ caption: 'Xin chào' })}
+        currentIndex={0}
+        total={1}
+        isPaused
+      />,
+    );
+    act(() => { jest.advanceTimersByTime(2000); });
+    // While paused, the done-timer never fires, so it stays as the array of TypingChar nodes
+    // rather than collapsing to the plain caption string.
+    expect(getByTestId('media-caption-text').props.children).not.toBe('Xin chào');
+  });
+
+  it('resumes caption reveal after unpausing', () => {
+    const photo = makePhoto({ caption: 'Xin chào' });
+    const { getByTestId, rerender } = render(
+      <VlogOverlay photo={photo} currentIndex={0} total={1} isPaused />,
+    );
+    act(() => { jest.advanceTimersByTime(500); });
+    rerender(
+      <VlogOverlay photo={photo} currentIndex={0} total={1} isPaused={false} />,
+    );
+    act(() => { jest.advanceTimersByTime(2000); });
+    expect(getByTestId('media-caption-text').props.children).toBe('Xin chào');
   });
 });

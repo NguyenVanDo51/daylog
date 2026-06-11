@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { DayPhoto } from '@/hooks/useDayPhotos';
-import { API_URL } from '@/constants/api';
 
 export function VideoItem({
   photo,
@@ -15,7 +14,7 @@ export function VideoItem({
   isPaused: boolean;
   onProgress: (f: number) => void;
 }) {
-  const player = useVideoPlayer(`${API_URL}/photos/${photo.id}/full`, (p) => {
+  const player = useVideoPlayer(photo.photo_url, (p) => {
     p.muted = true;
     p.play();
   });

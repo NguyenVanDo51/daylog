@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
 import { albumMembers } from '../db/schema';
 import { isValidUUID } from '../lib/validation';
+import { getPresignedGetUrl } from '../services/r2';
 
 const router = express.Router({ mergeParams: true });
 
@@ -89,7 +90,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ).toString('base64')
       : null;
 
-    res.json({ items, nextCursor });
+    const enrichedItems = await Promise.all(
+      items.map(async (item) => ({
+        ...item,
+        photo_url: item.r2_key ? await getPresignedGetUrl(item.r2_key) : null,
+        thumb_url: item.thumbnail_key ? await getPresignedGetUrl(item.thumbnail_key) : null,
+      }))
+    );
+
+    res.json({ items: enrichedItems, nextCursor });
   } catch (err) {
     next(err);
   }

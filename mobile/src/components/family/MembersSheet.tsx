@@ -3,7 +3,7 @@ import { Text, StyleSheet } from 'react-native';
 import { SheetModal } from '@/components/ui/SheetModal';
 import { MemberList } from '@/components/family/MemberList';
 import { useMembers } from '@/hooks/useMembers';
-import { colors, typography } from '@/constants/theme';
+import { theme, typography, spacing } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 
 interface MembersSheetProps {
@@ -22,5 +22,5 @@ export function MembersSheet({ visible, onClose }: MembersSheetProps) {
 }
 
 const styles = StyleSheet.create({
-  heading: { ...typography.heading, color: colors.ink },
+  heading: { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, marginBottom: spacing.md, textAlign: 'center' },
 });

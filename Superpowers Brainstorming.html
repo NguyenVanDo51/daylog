@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<!-- saved from url=(0023)http://localhost:51336/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <title>Superpowers Brainstorming</title>
+  <style>
+    /*
+     * BRAINSTORM COMPANION FRAME TEMPLATE
+     *
+     * This template provides a consistent frame with:
+     * - OS-aware light/dark theming
+     * - Fixed header and selection indicator bar
+     * - Scrollable main content area
+     * - CSS helpers for common UI patterns
+     *
+     * Content is injected via placeholder comment in #claude-content.
+     */
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    /* ===== THEME VARIABLES ===== */
+    :root {
+      --bg-primary: #f5f5f7;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #e5e5e7;
+      --border: #d1d1d6;
+      --text-primary: #1d1d1f;
+      --text-secondary: #86868b;
+      --text-tertiary: #aeaeb2;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --success: #34c759;
+      --warning: #ff9f0a;
+      --error: #ff3b30;
+      --selected-bg: #e8f4fd;
+      --selected-border: #0071e3;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1d1d1f;
+        --bg-secondary: #2d2d2f;
+        --bg-tertiary: #3d3d3f;
+        --border: #424245;
+        --text-primary: #f5f5f7;
+        --text-secondary: #86868b;
+        --text-tertiary: #636366;
+        --accent: #0a84ff;
+        --accent-hover: #409cff;
+        --selected-bg: rgba(10, 132, 255, 0.15);
+        --selected-border: #0a84ff;
+      }
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    /* ===== FRAME STRUCTURE ===== */
+    .header {
+      background: var(--bg-secondary);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); }
+    .header .status { font-size: 0.7rem; color: var(--success); display: flex; align-items: center; gap: 0.4rem; }
+    .header .status::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+    .main { flex: 1; overflow-y: auto; }
+    #claude-content { padding: 2rem; min-height: 100%; }
+
+    .indicator-bar {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 0.5rem 1.5rem;
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .indicator-bar span {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .indicator-bar .selected-text {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ===== TYPOGRAPHY ===== */
+    h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .section { margin-bottom: 2rem; }
+    .label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+
+    /* ===== OPTIONS (for A/B/C choices) ===== */
+    .options { display: flex; flex-direction: column; gap: 0.75rem; }
+    .option {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .option:hover { border-color: var(--accent); }
+    .option.selected { background: var(--selected-bg); border-color: var(--selected-border); }
+    .option .letter {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      width: 1.75rem; height: 1.75rem;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .option.selected .letter { background: var(--accent); color: white; }
+    .option .content { flex: 1; }
+    .option .content h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+    .option .content p { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
+
+    /* ===== CARDS (for showing designs/mockups) ===== */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .card.selected { border-color: var(--selected-border); border-width: 2px; }
+    .card-image { background: var(--bg-tertiary); aspect-ratio: 16/10; display: flex; align-items: center; justify-content: center; }
+    .card-body { padding: 1rem; }
+    .card-body h3 { margin-bottom: 0.25rem; }
+    .card-body p { color: var(--text-secondary); font-size: 0.85rem; }
+
+    /* ===== MOCKUP CONTAINER ===== */
+    .mockup {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .mockup-header {
+      background: var(--bg-tertiary);
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    .mockup-body { padding: 1.5rem; }
+
+    /* ===== SPLIT VIEW (side-by-side comparison) ===== */
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
+
+    /* ===== PROS/CONS ===== */
+    .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .pros, .cons { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; }
+    .pros h4 { color: var(--success); font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .cons h4 { color: var(--error); font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .pros ul, .cons ul { margin-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); }
+    .pros li, .cons li { margin-bottom: 0.25rem; }
+
+    /* ===== PLACEHOLDER (for mockup areas) ===== */
+    .placeholder {
+      background: var(--bg-tertiary);
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-tertiary);
+    }
+
+    /* ===== INLINE MOCKUP ELEMENTS ===== */
+    .mock-nav { background: var(--accent); color: white; padding: 0.75rem 1rem; display: flex; gap: 1.5rem; font-size: 0.9rem; }
+    .mock-sidebar { background: var(--bg-tertiary); padding: 1rem; min-width: 180px; }
+    .mock-content { padding: 1.5rem; flex: 1; }
+    .mock-button { background: var(--accent); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; }
+    .mock-input { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; width: 100%; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><a href="https://github.com/obra/superpowers" style="color: inherit; text-decoration: none;">Superpowers Brainstorming</a></h1>
+    <div class="status">Connected</div>
+  </div>
+
+  <div class="main">
+    <div id="claude-content">
+      <h2>The whole app — Sticker World × Mèo 🐱</h2>
+<p class="subtitle">Every screen, grouped by user journey. Mascot now committed to the cat.</p>
+
+<style>
+  .group-title {
+    margin: 22px 0 10px;
+    font-family: 'Comic Sans MS', cursive; font-weight: 800;
+    font-size: 16px; color: #2A1810;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .group-title::before, .group-title::after {
+    content: ''; flex: 1; height: 2px;
+    background: repeating-linear-gradient(90deg, #2A1810 0, #2A1810 5px, transparent 5px, transparent 10px);
+    opacity: 0.3;
+  }
+  .group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 28px 14px;
+    padding: 6px 0 4px;
+  }
+
+  /* ─────────── Shared phone ─────────── */
+  .scrn {
+    width: 100%; max-width: 200px;
+    aspect-ratio: 9/16;
+    border-radius: 26px;
+    overflow: hidden;
+    position: relative;
+    font-family: -apple-system, system-ui, sans-serif;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    background: #FFF6E0;
+    background-image: radial-gradient(circle at 50% 30%, #FFE9A8 0%, #FFF6E0 70%);
+  }
+  .scrn-label {
+    position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; color: #555; font-weight: 700;
+    background: rgba(255,255,255,0.9);
+    padding: 2px 7px; border-radius: 4px;
+    letter-spacing: 0.3px; white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .scrn-wrap { position: relative; padding-top: 26px; display: flex; flex-direction: column; align-items: center; }
+
+  .doodle { position: absolute; opacity: 0.45; font-size: 13px; pointer-events: none; }
+
+  /* ═══════════════════════════════════════════════
+     ONBOARDING & AUTH
+     ═══════════════════════════════════════════════ */
+  .ob { background: #FFF6E0; background-image: radial-gradient(circle at 50% 30%, #FFE9A8 0%, #FFF6E0 70%); height: 100%; position: relative; }
+  .ob .skip { position: absolute; top: 16px; right: 14px; font-size: 11px; font-weight: 700; color: #2A1810; opacity: 0.55; z-index: 5; }
+  .ob .hero { position: absolute; top: 36px; left: 0; right: 0; height: 38%; display: flex; align-items: center; justify-content: center; }
+  .ob .title { position: absolute; top: 56%; left: 18px; right: 18px; text-align: center; font-family: 'Comic Sans MS', cursive; font-weight: 800; font-size: 17px; color: #2A1810; line-height: 1.2; }
+  .ob .body { position: absolute; top: 70%; left: 22px; right: 22px; text-align: center; font-size: 10px; color: #2A1810; opacity: 0.75; line-height: 1.45; font-weight: 600; }
+  .ob .dots { position: absolute; bottom: 50px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; }
+  .ob .dots .d { width: 7px; height: 7px; border-radius: 50%; background: #2A1810; opacity: 0.18; border: 1.3px solid #2A1810; }
+  .ob .dots .d.on { width: 18px; border-radius: 5px; background: #FF7AA8; opacity: 1; }
+  .ob .cta { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); background: #FF7AA8; color: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 7px 22px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .ob .cta.wide { left: 16px; right: 16px; transform: none; width: auto; text-align: center; }
+
+  .ob-1 .mascot { font-size: 110px; filter: drop-shadow(3px 3px 0 #2A1810); transform: rotate(-5deg); }
+  .ob-1 .speech { position: absolute; top: 28px; left: 18px; background: white; border: 2px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; border-radius: 14px 14px 14px 4px; padding: 4px 10px; font-size: 10px; font-weight: 800; color: #2A1810; transform: rotate(-4deg); }
+  .ob-1 .d-a { top: 50px; right: 18px; transform: rotate(15deg); font-size: 18px; }
+  .ob-1 .d-b { top: 150px; left: 12px; transform: rotate(-20deg); }
+  .ob-1 .d-c { top: 168px; right: 16px; transform: rotate(10deg); font-size: 15px; }
+
+  .ob-2 .scene { position: relative; width: 150px; height: 130px; display: flex; align-items: flex-end; justify-content: center; }
+  .ob-2 .mascot { font-size: 72px; filter: drop-shadow(3px 3px 0 #2A1810); }
+  .ob-2 .mini-camera { position: absolute; top: 6px; right: 4px; width: 54px; height: 72px; background: #2A1810; border: 2px solid #2A1810; box-shadow: 2px 2px 0 #FFD66B; border-radius: 10px; transform: rotate(8deg); display: flex; align-items: center; justify-content: center; }
+  .ob-2 .mini-camera::after { content: ''; width: 26px; height: 26px; border-radius: 50%; background: #FFD66B; border: 2px solid #2A1810; }
+  .ob-2 .gesture { position: absolute; top: 92px; left: 12px; background: white; border: 1.5px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; border-radius: 999px; padding: 3px 8px; font-size: 9px; font-weight: 800; color: #2A1810; transform: rotate(-4deg); white-space: nowrap; }
+  .ob-2 .gesture-2 { position: absolute; top: 112px; right: 8px; background: #7FD7B5; border: 1.5px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; border-radius: 999px; padding: 3px 8px; font-size: 9px; font-weight: 800; color: #2A1810; transform: rotate(5deg); white-space: nowrap; }
+
+  .ob-3 .scene { position: relative; width: 170px; height: 140px; display: flex; align-items: center; justify-content: center; }
+  .ob-3 .mascot { font-size: 56px; filter: drop-shadow(2px 2px 0 #2A1810); position: absolute; left: -4px; bottom: 4px; transform: rotate(-8deg); }
+  .ob-3 .phone-frame { width: 88px; height: 135px; background: linear-gradient(180deg, #ff96b6 0%, #c2547a 100%); border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; border-radius: 13px; position: relative; overflow: hidden; transform: rotate(4deg); margin-left: 26px; }
+  .ob-3 .phone-frame .progress { position: absolute; top: 5px; left: 4px; right: 4px; height: 2.5px; background: rgba(0,0,0,0.2); border-radius: 99px; overflow: hidden; display: flex; gap: 1.5px; }
+  .ob-3 .phone-frame .progress > div { flex: 1; background: #FFD66B; border-radius: 99px; }
+  .ob-3 .phone-frame .progress > div:nth-child(3) { background: linear-gradient(90deg, #FFD66B 50%, rgba(255,255,255,0.3) 50%); }
+  .ob-3 .phone-frame .progress > div:nth-child(4) { background: rgba(255,255,255,0.3); }
+  .ob-3 .phone-frame .chip { position: absolute; top: 15px; left: 8px; right: 8px; background: #FFD66B; border: 1.3px solid #2A1810; border-radius: 999px; text-align: center; font-size: 7px; font-weight: 800; color: #2A1810; padding: 1.5px 0; }
+  .ob-3 .phone-frame .cap { position: absolute; bottom: 8px; left: 6px; right: 6px; background: white; border: 1.3px solid #2A1810; border-radius: 5px; padding: 3px; font-size: 7px; font-weight: 700; color: #2A1810; text-align: center; }
+  .ob-3 .play-arrow { position: absolute; top: 50%; right: -6px; transform: translateY(-50%); background: #FFD66B; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #2A1810; }
+
+  .ob-4 .scene { position: relative; width: 180px; height: 130px; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+  .ob-4 .m { filter: drop-shadow(3px 3px 0 #2A1810); }
+  .ob-4 .m-1 { font-size: 64px; transform: rotate(-5deg); }
+  .ob-4 .m-2 { font-size: 56px; transform: rotate(3deg); margin-bottom: 4px; }
+  .ob-4 .m-3 { font-size: 48px; transform: rotate(-3deg); margin-bottom: 8px; }
+  .ob-4 .heart { position: absolute; font-size: 18px; }
+  .ob-4 .h-1 { top: 12px; left: 22px; transform: rotate(-12deg); }
+  .ob-4 .h-2 { top: 22px; right: 18px; transform: rotate(10deg); font-size: 15px; }
+  .ob-4 .h-3 { top: 46px; left: 50%; transform: translateX(-50%) rotate(2deg); font-size: 13px; }
+
+  /* Sign-in */
+  .signin { background: linear-gradient(180deg, #FFE9A8 0%, #FFC3D9 100%); height: 100%; position: relative; }
+  .signin .hero-mascot { position: absolute; top: 42px; left: 50%; transform: translateX(-50%) rotate(-3deg); font-size: 80px; filter: drop-shadow(3px 3px 0 #2A1810); }
+  .signin .logo { position: absolute; top: 56%; left: 50%; transform: translateX(-50%) rotate(-2deg); font-family: 'Comic Sans MS', cursive; font-weight: 800; font-size: 22px; color: #2A1810; background: #FFD66B; border: 2px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; padding: 4px 14px; border-radius: 10px; white-space: nowrap; }
+  .signin .tagline { position: absolute; top: 70%; left: 0; right: 0; text-align: center; font-size: 10px; font-weight: 600; color: #2A1810; }
+  .signin .btn { position: absolute; left: 16px; right: 16px; border: 2px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; border-radius: 10px; padding: 7px 0; font-weight: 800; font-size: 10px; text-align: center; }
+  .signin .btn.apple { bottom: 56px; background: #2A1810; color: white; }
+  .signin .btn.google { bottom: 22px; background: white; color: #2A1810; }
+  .signin .doodle-1 { top: 24px; left: 16px; transform: rotate(-15deg); }
+  .signin .doodle-2 { top: 36px; right: 20px; transform: rotate(20deg); }
+
+  /* ═══════════════════════════════════════════════
+     CAPTURE FLOW
+     ═══════════════════════════════════════════════ */
+  /* Home */
+  .home { height: 100%; position: relative; }
+  .home .head { padding: 18px 12px 6px; display: flex; align-items: center; gap: 6px; }
+  .home .mascot-h { font-size: 22px; transform: rotate(-8deg); }
+  .home .title { font-family: 'Comic Sans MS', cursive; font-weight: 800; font-size: 19px; color: #2A1810; text-shadow: 2px 2px 0 #FFD66B; flex: 1; }
+  .home .menu { width: 26px; height: 26px; border-radius: 7px; background: white; border: 2px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; color: #2A1810; }
+  .home .row { display: flex; align-items: center; gap: 7px; background: white; margin: 6px 10px; border-radius: 11px; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 6px 8px; }
+  .home .row:nth-of-type(1) { transform: rotate(-0.6deg); }
+  .home .row:nth-of-type(2) { transform: rotate(0.5deg); }
+  .home .row:nth-of-type(3) { transform: rotate(-0.3deg); }
+  .home .row .thumb { width: 36px; height: 36px; border-radius: 7px; background: #FF8FB0; border: 1.5px solid #2A1810; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .home .row:nth-of-type(2) .thumb { background: #7FD7B5; }
+  .home .row:nth-of-type(3) .thumb { background: #7FB7FA; }
+  .home .row .nm { font-size: 11px; font-weight: 700; color: #2A1810; flex: 1; }
+  .home .row .count { background: #FFD66B; color: #2A1810; border: 1.3px solid #2A1810; font-size: 9px; font-weight: 800; padding: 1.5px 6px; border-radius: 999px; transform: rotate(3deg); }
+  .home .pill { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); background: #FF7AA8; color: white; border: 2px solid #2A1810; padding: 7px 18px; border-radius: 999px; font-size: 11px; font-weight: 800; box-shadow: 3px 3px 0 #2A1810; white-space: nowrap; }
+
+  /* Camera */
+  .camera { background: #000; height: 100%; position: relative; }
+  .camera::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, #2a201a 0%, #000 75%); }
+  .camera .topbar { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 14px 12px; z-index: 2; }
+  .camera .icon { width: 26px; height: 26px; border-radius: 7px; background: #FFF6E0; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; color: #2A1810; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+  .camera .timesticker { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%) rotate(-3deg); background: #FFD66B; color: #2A1810; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 7px 16px; border-radius: 999px; font-weight: 800; font-size: 15px; z-index: 2; }
+  .camera .hint { position: absolute; top: 62%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.55); color: white; padding: 3px 9px; border-radius: 999px; font-size: 8px; font-weight: 600; z-index: 2; }
+  .camera .shutter { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); width: 56px; height: 56px; border-radius: 50%; background: #FFF6E0; border: 2.5px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; display: flex; align-items: center; justify-content: center; z-index: 2; }
+  .camera .shutter::after { content: ''; width: 38px; height: 38px; border-radius: 50%; background: #FF7AA8; border: 1.5px solid #2A1810; }
+
+  /* Photo Review */
+  .review { background: linear-gradient(135deg, #FFB89C, #FF8E66); height: 100%; position: relative; }
+  .review .topbar { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 14px 12px; z-index: 2; }
+  .review .topbar .icon { width: 26px; height: 26px; border-radius: 7px; background: #FFF6E0; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; color: #2A1810; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .review .retake { background: #FFD66B; color: #2A1810; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; padding: 4px 10px; border-radius: 999px; font-weight: 800; font-size: 9px; }
+  .review .timesticker { position: absolute; top: 22%; left: 50%; transform: translate(-50%, -50%) rotate(-3deg); background: #FFD66B; color: #2A1810; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 4px 11px; border-radius: 999px; font-weight: 800; font-size: 12px; z-index: 2; }
+  .review .caption-edit { position: absolute; top: 32%; left: 12px; right: 12px; background: white; color: #2A1810; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 6px 10px; border-radius: 9px; font-size: 9px; font-weight: 700; min-height: 24px; z-index: 2; }
+  .review .chips { position: absolute; bottom: 52px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 2; }
+  .review .chip { background: white; color: #2A1810; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; padding: 3px 8px; border-radius: 999px; font-size: 9px; font-weight: 800; }
+  .review .chip.sel { background: #FF7AA8; color: white; }
+  .review .save { position: absolute; bottom: 14px; left: 12px; right: 12px; background: #2A1810; color: #FFF6E0; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #FFD66B; padding: 7px 0; border-radius: 10px; font-weight: 800; font-size: 11px; text-align: center; z-index: 2; }
+
+  /* ═══════════════════════════════════════════════
+     BROWSE & MEMORY
+     ═══════════════════════════════════════════════ */
+  /* Day Grid */
+  .grid-screen { padding: 40px 10px 10px; height: 100%; position: relative; }
+  .grid-screen .head { position: absolute; top: 0; left: 0; right: 0; padding: 16px 12px 0; display: flex; align-items: center; gap: 5px; }
+  .grid-screen .back, .grid-screen .menu { width: 24px; height: 24px; border-radius: 7px; background: white; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; color: #2A1810; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .grid-screen .name { flex: 1; text-align: center; font-family: 'Comic Sans MS', cursive; font-size: 13px; font-weight: 800; color: #2A1810; }
+  .grid-screen .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid-screen .cell { background: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 3px 3px 5px; }
+  .grid-screen .cell:nth-child(1) { transform: rotate(-1deg); }
+  .grid-screen .cell:nth-child(2) { transform: rotate(1deg); margin-top: 8px; }
+  .grid-screen .cell:nth-child(3) { transform: rotate(0.8deg); }
+  .grid-screen .cell:nth-child(4) { transform: rotate(-0.8deg); margin-top: 8px; }
+  .grid-screen .cell .ph { width: 100%; height: 68px; background: #FF8FB0; border: 1.2px solid #2A1810; position: relative; }
+  .grid-screen .cell:nth-child(2) .ph { background: #7FD7B5; height: 84px; }
+  .grid-screen .cell:nth-child(3) .ph { background: #FFD66B; height: 84px; }
+  .grid-screen .cell:nth-child(4) .ph { background: #7FB7FA; }
+  .grid-screen .cell .ph .vid { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.6); color: white; padding: 1px 4px; border-radius: 3px; font-size: 7px; font-weight: 800; }
+  .grid-screen .cell .date { font-family: 'Comic Sans MS', cursive; font-size: 9px; font-weight: 800; color: #2A1810; text-align: center; margin-top: 3px; }
+
+  /* Story Viewer */
+  .story { background: linear-gradient(180deg, #ff96b6 0%, #c2547a 100%); height: 100%; position: relative; }
+  .story .progress { position: absolute; top: 11px; left: 10px; right: 10px; height: 4px; background: rgba(0,0,0,0.18); border-radius: 99px; overflow: hidden; border: 1.2px solid #2A1810; display: flex; gap: 2px; }
+  .story .progress > div { flex: 1; background: rgba(255,255,255,0.3); border-radius: 99px; }
+  .story .progress > div:nth-child(1) { background: #FFD66B; }
+  .story .progress > div:nth-child(2) { background: #FFD66B; }
+  .story .progress > div:nth-child(3) { background: linear-gradient(90deg, #FFD66B 40%, rgba(255,255,255,0.3) 40%); }
+  .story .topbar { position: absolute; top: 22px; left: 0; right: 0; display: flex; align-items: center; padding: 0 10px; gap: 6px; }
+  .story .back, .story .menu { width: 24px; height: 24px; border-radius: 7px; background: white; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; color: #2A1810; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .story .datechip { flex: 1; text-align: center; font-weight: 800; font-size: 11px; color: #2A1810; background: #FFD66B; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; padding: 4px 0; border-radius: 999px; transform: rotate(-1.5deg); font-family: 'Comic Sans MS', cursive; }
+  .story .timesticker { position: absolute; top: 66px; left: 12px; background: #2A1810; color: #FFD66B; padding: 2px 7px; border-radius: 3px; font-size: 9px; font-weight: 800; transform: rotate(-2deg); }
+  .story .caption { position: absolute; bottom: 22px; left: 12px; right: 12px; background: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; border-radius: 11px; padding: 7px 12px; color: #2A1810; font-weight: 700; font-size: 10px; text-align: center; transform: rotate(-0.5deg); }
+  .story .react { position: absolute; bottom: 86px; right: 12px; background: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+
+  /* Photo Detail */
+  .photodetail { background: linear-gradient(160deg, #7FB7FA, #4A8FCA); height: 100%; position: relative; }
+  .photodetail .topbar { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 14px 10px; z-index: 2; }
+  .photodetail .icon { width: 26px; height: 26px; border-radius: 7px; background: #FFF6E0; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; color: #2A1810; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .photodetail .datechip { position: absolute; top: 14px; left: 50%; transform: translateX(-50%) rotate(-2deg); background: #FFD66B; color: #2A1810; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; padding: 3px 12px; border-radius: 999px; font-size: 10px; font-weight: 800; font-family: 'Comic Sans MS', cursive; z-index: 2; }
+  .photodetail .reactrow { position: absolute; bottom: 70px; left: 12px; right: 12px; display: flex; gap: 6px; justify-content: center; z-index: 2; }
+  .photodetail .reactrow .r { width: 30px; height: 30px; border-radius: 50%; background: white; border: 2px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .photodetail .reactrow .r.has { background: #FFD66B; }
+  .photodetail .reactrow .r.has::after { content: '2'; position: absolute; bottom: -4px; right: -4px; background: #FF7AA8; color: white; border: 1.2px solid #2A1810; border-radius: 999px; padding: 0 4px; font-size: 7px; font-weight: 800; }
+  .photodetail .caption { position: absolute; bottom: 20px; left: 12px; right: 12px; background: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; border-radius: 10px; padding: 6px 10px; font-size: 10px; font-weight: 700; color: #2A1810; text-align: center; transform: rotate(-0.5deg); }
+
+  /* ═══════════════════════════════════════════════
+     SETTINGS & SHARING
+     ═══════════════════════════════════════════════ */
+  .settings { padding: 18px 0 0; height: 100%; position: relative; }
+  .settings .head { padding: 0 12px 10px; display: flex; align-items: center; gap: 7px; }
+  .settings .back { width: 24px; height: 24px; border-radius: 7px; background: white; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; color: #2A1810; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .settings .head-title { font-family: 'Comic Sans MS', cursive; font-weight: 800; font-size: 15px; color: #2A1810; flex: 1; }
+  .settings .profile { background: white; margin: 0 10px 10px; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; border-radius: 12px; padding: 8px; display: flex; align-items: center; gap: 9px; transform: rotate(-0.5deg); }
+  .settings .profile .av { width: 36px; height: 36px; border-radius: 50%; background: #FF7AA8; border: 1.8px solid #2A1810; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .settings .profile .nm { font-weight: 800; font-size: 11px; color: #2A1810; }
+  .settings .profile .em { font-size: 8px; color: rgba(0,0,0,0.5); font-weight: 600; }
+  .settings .row { background: white; margin: 5px 10px; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; border-radius: 10px; padding: 6px 8px; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 10px; color: #2A1810; }
+  .settings .row .ic { width: 22px; height: 22px; border-radius: 6px; background: #FFD66B; border: 1.3px solid #2A1810; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .settings .row:nth-child(4) .ic { background: #7FD7B5; }
+  .settings .row:nth-child(5) .ic { background: #7FB7FA; }
+  .settings .row:nth-child(6) .ic { background: #FF8E66; }
+  .settings .row .lbl { flex: 1; }
+  .settings .row .ch { color: #2A1810; opacity: 0.5; }
+
+  /* Profile screen */
+  .profile-s { padding: 18px 0 0; height: 100%; position: relative; }
+  .profile-s .head { padding: 0 12px 12px; display: flex; align-items: center; gap: 7px; }
+  .profile-s .back { width: 24px; height: 24px; border-radius: 7px; background: white; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; color: #2A1810; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .profile-s .head-title { font-family: 'Comic Sans MS', cursive; font-weight: 800; font-size: 15px; color: #2A1810; flex: 1; }
+  .profile-s .av-big { width: 78px; height: 78px; border-radius: 50%; background: #FF7AA8; border: 2.5px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; margin: 12px auto 14px; display: flex; align-items: center; justify-content: center; font-size: 38px; position: relative; }
+  .profile-s .av-big .cam { position: absolute; bottom: -4px; right: -4px; background: #FFD66B; border: 1.8px solid #2A1810; box-shadow: 1.5px 1.5px 0 #2A1810; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .profile-s .field { margin: 0 12px 8px; }
+  .profile-s .lbl { font-size: 8px; font-weight: 800; color: #2A1810; opacity: 0.6; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; }
+  .profile-s .input { background: white; border: 2px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; border-radius: 8px; padding: 6px 9px; font-size: 11px; font-weight: 700; color: #2A1810; }
+  .profile-s .save { position: absolute; bottom: 18px; left: 14px; right: 14px; background: #FF7AA8; color: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 8px 0; border-radius: 11px; font-weight: 800; font-size: 11px; text-align: center; }
+
+  /* Invite sheet (as full-screen for clarity) */
+  .invite { height: 100%; position: relative; background: rgba(0,0,0,0.4); }
+  .invite .sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #FFF6E0; border-top-left-radius: 22px; border-top-right-radius: 22px; border-top: 2px solid #2A1810; border-left: 2px solid #2A1810; border-right: 2px solid #2A1810; padding: 14px 0 18px; height: 78%; }
+  .invite .handle { width: 36px; height: 4px; border-radius: 999px; background: #2A1810; opacity: 0.3; margin: 0 auto 10px; }
+  .invite .stitle { text-align: center; font-family: 'Comic Sans MS', cursive; font-weight: 800; font-size: 14px; color: #2A1810; margin-bottom: 12px; }
+  .invite .qr { width: 100px; height: 100px; margin: 0 auto; background: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 6px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 1px; }
+  .invite .qr div { background: #2A1810; }
+  .invite .qr div.w { background: transparent; }
+  .invite .link { margin: 12px 14px 8px; background: white; border: 1.8px solid #2A1810; box-shadow: 2px 2px 0 #2A1810; border-radius: 8px; padding: 5px 8px; font-size: 9px; font-weight: 700; color: #2A1810; display: flex; align-items: center; gap: 4px; }
+  .invite .link .lnk { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .invite .link .copy { background: #FFD66B; border: 1.3px solid #2A1810; padding: 1px 6px; border-radius: 999px; font-size: 8px; font-weight: 800; }
+  .invite .share-btn { margin: 0 14px; background: #FF7AA8; color: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 7px 0; border-radius: 11px; font-weight: 800; font-size: 11px; text-align: center; }
+
+  /* Members sheet */
+  .members { height: 100%; position: relative; background: rgba(0,0,0,0.4); }
+  .members .sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #FFF6E0; border-top-left-radius: 22px; border-top-right-radius: 22px; border-top: 2px solid #2A1810; border-left: 2px solid #2A1810; border-right: 2px solid #2A1810; padding: 14px 0 18px; height: 82%; }
+  .members .handle { width: 36px; height: 4px; border-radius: 999px; background: #2A1810; opacity: 0.3; margin: 0 auto 10px; }
+  .members .stitle { text-align: center; font-family: 'Comic Sans MS', cursive; font-weight: 800; font-size: 14px; color: #2A1810; margin-bottom: 10px; }
+  .members .m { margin: 5px 14px; background: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; border-radius: 11px; padding: 6px 8px; display: flex; align-items: center; gap: 8px; }
+  .members .m .av { width: 30px; height: 30px; border-radius: 50%; background: #FF7AA8; border: 1.5px solid #2A1810; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .members .m:nth-child(4) .av { background: #7FD7B5; }
+  .members .m:nth-child(5) .av { background: #7FB7FA; }
+  .members .m .nm { font-size: 10px; font-weight: 800; color: #2A1810; flex: 1; }
+  .members .m .badge { background: #FFD66B; border: 1.3px solid #2A1810; padding: 1px 6px; border-radius: 999px; font-size: 8px; font-weight: 800; color: #2A1810; }
+  .members .m .x { width: 18px; height: 18px; background: white; border: 1.3px solid #2A1810; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: #2A1810; }
+  .members .invite-cta { position: absolute; bottom: 16px; left: 14px; right: 14px; background: #FF7AA8; color: white; border: 2px solid #2A1810; box-shadow: 3px 3px 0 #2A1810; padding: 7px 0; border-radius: 11px; font-weight: 800; font-size: 11px; text-align: center; }
+</style>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="group-title">①&nbsp;&nbsp;Onboarding &amp; Auth</div>
+<div class="group-grid">
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">1 · Welcome</div>
+    <div class="scrn">
+      <div class="ob ob-1">
+        <div class="skip">Bỏ qua</div>
+        <div class="doodle d-a">✨</div>
+        <div class="doodle d-b">🌸</div>
+        <div class="doodle d-c">⭐</div>
+        <div class="hero">
+          <div class="speech">Xin chào!</div>
+          <div class="mascot">🐱</div>
+        </div>
+        <div class="title">Chào mừng đến Nhật ký!</div>
+        <div class="body">Cuốn nhật ký hình ảnh<br>của cả nhà bạn 🌷</div>
+        <div class="dots"><div class="d on"></div><div class="d"></div><div class="d"></div><div class="d"></div></div>
+        <div class="cta">Tiếp →</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">2 · Capture</div>
+    <div class="scrn">
+      <div class="ob ob-2">
+        <div class="skip">Bỏ qua</div>
+        <div class="hero">
+          <div class="scene">
+            <div class="mascot">🐱</div>
+            <div class="mini-camera"></div>
+            <div class="gesture">📷 Chạm = ảnh</div>
+            <div class="gesture-2">🎥 Giữ = video</div>
+          </div>
+        </div>
+        <div class="title">Mỗi ngày<br>một khoảnh khắc</div>
+        <div class="body">Chạm để chụp,<br>giữ để quay video ngắn</div>
+        <div class="dots"><div class="d"></div><div class="d on"></div><div class="d"></div><div class="d"></div></div>
+        <div class="cta">Tiếp →</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">3 · Stories</div>
+    <div class="scrn">
+      <div class="ob ob-3">
+        <div class="skip">Bỏ qua</div>
+        <div class="hero">
+          <div class="scene">
+            <div class="phone-frame">
+              <div class="progress"><div></div><div></div><div></div><div></div></div>
+              <div class="chip">11.06.2026</div>
+              <div class="cap">Bé cười cả ngày 🌷</div>
+            </div>
+            <div class="play-arrow">▶</div>
+            <div class="mascot">🐱</div>
+          </div>
+        </div>
+        <div class="title">Xem lại như story</div>
+        <div class="body">Mỗi ngày là một story riêng,<br>tự chạy như Instagram</div>
+        <div class="dots"><div class="d"></div><div class="d"></div><div class="d on"></div><div class="d"></div></div>
+        <div class="cta">Tiếp →</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">4 · Family</div>
+    <div class="scrn">
+      <div class="ob ob-4">
+        <div class="hero">
+          <div class="scene">
+            <div class="heart h-1">💛</div>
+            <div class="heart h-2">💖</div>
+            <div class="heart h-3">✨</div>
+            <div class="m m-1">🐱</div>
+            <div class="m m-2">🐶</div>
+            <div class="m m-3">🐤</div>
+          </div>
+        </div>
+        <div class="title">Cùng cả nhà<br>lưu giữ kỉ niệm</div>
+        <div class="body">Mời người thân vào album<br>để cùng ghi lại từng ngày</div>
+        <div class="dots"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d on"></div></div>
+        <div class="cta wide">🚀 Bắt đầu nào</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">5 · Sign-in</div>
+    <div class="scrn">
+      <div class="signin">
+        <div class="doodle doodle-1">✨</div>
+        <div class="doodle doodle-2">🌸</div>
+        <div class="hero-mascot">🐱</div>
+        <div class="logo">Nhật ký</div>
+        <div class="tagline">cuốn nhật ký của gia đình</div>
+        <div class="btn apple"> Đăng nhập với Apple</div>
+        <div class="btn google">G Đăng nhập với Google</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="group-title">②&nbsp;&nbsp;Capture flow</div>
+<div class="group-grid">
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">6 · Home / Albums</div>
+    <div class="scrn">
+      <div class="home">
+        <div class="head">
+          <div class="mascot-h">🐱</div>
+          <div class="title">Nhật ký</div>
+          <div class="menu">⋯</div>
+        </div>
+        <div class="row"><div class="thumb">🌸</div><div class="nm">Bé Mây</div><div class="count">128</div></div>
+        <div class="row"><div class="thumb">🍃</div><div class="nm">Cuối tuần</div><div class="count">42</div></div>
+        <div class="row"><div class="thumb">⛰️</div><div class="nm">Đà Lạt</div><div class="count">16</div></div>
+        <div class="pill">📷 Chụp ảnh</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">7 · Camera</div>
+    <div class="scrn">
+      <div class="camera">
+        <div class="topbar"><div class="icon">✕</div><div class="icon">⟲</div></div>
+        <div class="timesticker">14:32</div>
+        <div class="hint">Chạm = chụp · giữ = quay</div>
+        <div class="shutter"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">8 · Photo review</div>
+    <div class="scrn">
+      <div class="review">
+        <div class="topbar"><div class="icon">✕</div><div class="retake">Chụp lại</div></div>
+        <div class="timesticker">14:32</div>
+        <div class="caption-edit">Sáng nay bé cười cả ngày...</div>
+        <div class="chips">
+          <div class="chip sel">✓ Bé Mây 🌸</div>
+          <div class="chip">Cuối tuần</div>
+          <div class="chip sel">✓ Đà Lạt</div>
+        </div>
+        <div class="save">Lưu vào nhật ký</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="group-title">③&nbsp;&nbsp;Browse &amp; memory</div>
+<div class="group-grid">
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">9 · Day grid</div>
+    <div class="scrn">
+      <div class="grid-screen">
+        <div class="head"><div class="back">‹</div><div class="name">Bé Mây 🌸</div><div class="menu">⋯</div></div>
+        <div class="grid">
+          <div class="cell"><div class="ph"></div><div class="date">Thứ 5 · 11.06</div></div>
+          <div class="cell"><div class="ph"><div class="vid">▶</div></div><div class="date">Thứ 3 · 09.06</div></div>
+          <div class="cell"><div class="ph"></div><div class="date">CN · 07.06</div></div>
+          <div class="cell"><div class="ph"></div><div class="date">Thứ 6 · 05.06</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">10 · Story viewer</div>
+    <div class="scrn">
+      <div class="story">
+        <div class="progress"><div></div><div></div><div></div><div></div></div>
+        <div class="topbar"><div class="back">‹</div><div class="datechip">11.06.2026</div><div class="menu">⋯</div></div>
+        <div class="timesticker">14:32</div>
+        <div class="react">💖</div>
+        <div class="caption">Sáng nay bé cười cả ngày 🌷</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">11 · Photo detail</div>
+    <div class="scrn">
+      <div class="photodetail">
+        <div class="topbar"><div class="icon">‹</div><div class="icon">⋯</div></div>
+        <div class="datechip">11.06.2026</div>
+        <div class="reactrow">
+          <div class="r has">💖</div>
+          <div class="r">😊</div>
+          <div class="r">👏</div>
+          <div class="r">🌷</div>
+        </div>
+        <div class="caption">Một buổi sáng thật đẹp ☀️</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="group-title">④&nbsp;&nbsp;Settings &amp; sharing</div>
+<div class="group-grid">
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">12 · Settings</div>
+    <div class="scrn">
+      <div class="settings">
+        <div class="head"><div class="back">‹</div><div class="head-title">Cài đặt</div></div>
+        <div class="profile">
+          <div class="av">🐱</div>
+          <div>
+            <div class="nm">Mai Anh</div>
+            <div class="em">maianh@gmail.com</div>
+          </div>
+        </div>
+        <div class="row"><div class="ic">👤</div><div class="lbl">Hồ sơ</div><div class="ch">›</div></div>
+        <div class="row"><div class="ic">🌐</div><div class="lbl">Ngôn ngữ</div><div class="ch">VI ›</div></div>
+        <div class="row"><div class="ic">🔔</div><div class="lbl">Thông báo</div><div class="ch">›</div></div>
+        <div class="row"><div class="ic">💬</div><div class="lbl">Góp ý</div><div class="ch">›</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">13 · Profile</div>
+    <div class="scrn">
+      <div class="profile-s">
+        <div class="head"><div class="back">‹</div><div class="head-title">Hồ sơ</div></div>
+        <div class="av-big">🐱<div class="cam">📷</div></div>
+        <div class="field">
+          <div class="lbl">Tên hiển thị</div>
+          <div class="input">Mai Anh</div>
+        </div>
+        <div class="field">
+          <div class="lbl">Email</div>
+          <div class="input">maianh@gmail.com</div>
+        </div>
+        <div class="save">Lưu thay đổi</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">14 · Members sheet</div>
+    <div class="scrn">
+      <div class="members">
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="stitle">👥 Thành viên · Bé Mây</div>
+          <div class="m"><div class="av">🐱</div><div class="nm">Mai Anh (bạn)</div><div class="badge">CHỦ</div></div>
+          <div class="m"><div class="av">🐶</div><div class="nm">Anh Tuấn</div><div class="x">✕</div></div>
+          <div class="m"><div class="av">🐤</div><div class="nm">Bà ngoại</div><div class="x">✕</div></div>
+          <div class="m"><div class="av">🦊</div><div class="nm">Cô Linh</div><div class="x">✕</div></div>
+          <div class="invite-cta">+ Mời thêm người</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrn-wrap">
+    <div class="scrn-label">15 · Invite sheet</div>
+    <div class="scrn">
+      <div class="invite">
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="stitle">📨 Mời vào album</div>
+          <div class="qr">
+            <div></div><div></div><div></div><div class="w"></div><div></div><div></div><div></div><div></div>
+            <div></div><div class="w"></div><div></div><div></div><div class="w"></div><div></div><div class="w"></div><div></div>
+            <div></div><div></div><div></div><div class="w"></div><div></div><div class="w"></div><div></div><div></div>
+            <div class="w"></div><div></div><div class="w"></div><div></div><div></div><div></div><div class="w"></div><div></div>
+            <div></div><div class="w"></div><div></div><div></div><div class="w"></div><div></div><div></div><div class="w"></div>
+            <div></div><div></div><div></div><div class="w"></div><div></div><div></div><div></div><div></div>
+            <div></div><div class="w"></div><div></div><div></div><div></div><div class="w"></div><div></div><div></div>
+            <div></div><div></div><div class="w"></div><div></div><div></div><div></div><div></div><div></div>
+          </div>
+          <div class="link"><div class="lnk">nhatky.app/j/abc123</div><div class="copy">Sao chép</div></div>
+          <div class="share-btn">📤 Chia sẻ link</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:24px;padding:14px 16px;background:#FFF6E0;border:2.5px solid #2A1810;box-shadow:4px 4px 0 #2A1810;border-radius:14px;font-size:13px;color:#2A1810;line-height:1.55">
+  <strong>15 screens, one consistent vocabulary:</strong>
+  <br>• 2.5px ink border + 3-4px offset shadow (no blur) on every interactive surface.
+  <br>• 🐱 mascot is on sign-in, home header, settings avatar, empty states, onboarding.
+  <br>• Tilted cards (-1° to +1°) on lists and grids — sparingly, not chaotic.
+  <br>• Sticker chips for state: counts, dates, "Chủ" badge, video markers, selected filters.
+  <br>• Comic-cursive headlines, Baloo 2 for body. All Vietnamese-first.
+  <br>
+  <br>
+  <strong>Ready to write the spec?</strong> If the big picture feels right, I'll commit a design doc to <code>docs/superpowers/specs/</code> and we can move to the implementation plan. Or tell me which screens need a closer look first.
+</div>
+
+    </div>
+  </div>
+
+  <div class="indicator-bar">
+    <span id="indicator-text">Click an option above, then return to the terminal</span>
+  </div>
+
+<script>
+(function() {
+  const WS_URL = 'ws://' + window.location.host;
+  let ws = null;
+  let eventQueue = [];
+
+  function connect() {
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      eventQueue.forEach(e => ws.send(JSON.stringify(e)));
+      eventQueue = [];
+    };
+
+    ws.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.type === 'reload') {
+        window.location.reload();
+      }
+    };
+
+    ws.onclose = () => {
+      setTimeout(connect, 1000);
+    };
+  }
+
+  function sendEvent(event) {
+    event.timestamp = Date.now();
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(event));
+    } else {
+      eventQueue.push(event);
+    }
+  }
+
+  // Capture clicks on choice elements
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-choice]');
+    if (!target) return;
+
+    sendEvent({
+      type: 'click',
+      text: target.textContent.trim(),
+      choice: target.dataset.choice,
+      id: target.id || null
+    });
+
+    // Update indicator bar (defer so toggleSelect runs first)
+    setTimeout(() => {
+      const indicator = document.getElementById('indicator-text');
+      if (!indicator) return;
+      const container = target.closest('.options') || target.closest('.cards');
+      const selected = container ? container.querySelectorAll('.selected') : [];
+      if (selected.length === 0) {
+        indicator.textContent = 'Click an option above, then return to the terminal';
+      } else if (selected.length === 1) {
+        const label = selected[0].querySelector('h3, .content h3, .card-body h3')?.textContent?.trim() || selected[0].dataset.choice;
+        indicator.innerHTML = '<span class="selected-text">' + label + ' selected</span> — return to terminal to continue';
+      } else {
+        indicator.innerHTML = '<span class="selected-text">' + selected.length + ' selected</span> — return to terminal to continue';
+      }
+    }, 0);
+  });
+
+  // Frame UI: selection tracking
+  window.selectedChoice = null;
+
+  window.toggleSelect = function(el) {
+    const container = el.closest('.options') || el.closest('.cards');
+    const multi = container && container.dataset.multiselect !== undefined;
+    if (container && !multi) {
+      container.querySelectorAll('.option, .card').forEach(o => o.classList.remove('selected'));
+    }
+    if (multi) {
+      el.classList.toggle('selected');
+    } else {
+      el.classList.add('selected');
+    }
+    window.selectedChoice = el.dataset.choice;
+  };
+
+  // Expose API for explicit use
+  window.brainstorm = {
+    send: sendEvent,
+    choice: (value, metadata = {}) => sendEvent({ type: 'choice', value, ...metadata })
+  };
+
+  connect();
+})();
+
+</script>
+
+
+</body></html>

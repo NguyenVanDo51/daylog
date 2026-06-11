@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { SheetModal } from '@/components/ui/SheetModal';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerButton } from '@/components/ui/StickerButton';
 import { api } from '@/lib/api';
 import { useAlbumStore } from '@/stores/albumStore';
-import { colors, fonts, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { success } from '@/lib/haptics';
 
@@ -46,32 +46,48 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
 
   return (
     <SheetModal visible={visible} onClose={onClose}>
-      <Text style={styles.eyebrow}>{t('invite.sheet_eyebrow')}</Text>
       <Text style={styles.heading}>{t('family.invite_title')}</Text>
 
-      <Card style={styles.linkCard}>
+      <StickerCard style={styles.linkCard}>
         <Text style={styles.linkLabel}>{t('invite.link_label')}</Text>
         <Text style={styles.linkValue} numberOfLines={1}>{loading ? '...' : (link ?? '—')}</Text>
-      </Card>
+      </StickerCard>
 
-      {qrCode && <Image source={{ uri: qrCode }} style={styles.qr} />}
+      {qrCode && (
+        <StickerCard style={styles.qrCard}>
+          <Image source={{ uri: qrCode }} style={styles.qr} />
+        </StickerCard>
+      )}
 
       <Text style={styles.expires}>{t('invite.expires')}</Text>
 
-      <View style={{ gap: spacing.md, marginTop: spacing.lg }}>
-        <Button label={copied ? t('invite.copied') : t('family.copy_link')} onPress={handleCopyLink} fullWidth loading={loading} disabled={!link} />
-        <Button label={t('common.done')}      onPress={onClose} variant="ghost" fullWidth />
+      <View style={styles.buttons}>
+        <StickerButton
+          label={copied ? t('invite.copied') : t('family.copy_link')}
+          variant="primary"
+          fullWidth
+          loading={loading}
+          disabled={!link}
+          onPress={handleCopyLink}
+        />
+        <StickerButton
+          label={t('common.done')}
+          variant="surface"
+          fullWidth
+          onPress={onClose}
+        />
       </View>
     </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  eyebrow:   { ...typography.handAccent, color: colors.pink },
-  heading:   { ...typography.heading, color: colors.ink, marginBottom: spacing.md },
-  linkCard:  { gap: 4 },
-  linkLabel: { ...typography.caption },
-  linkValue: { fontFamily: fonts.medium, fontSize: 14, color: colors.inkSoft },
-  expires:   { fontFamily: fonts.medium, fontSize: 14, color: colors.inkMuted, textAlign: 'center', marginTop: spacing.sm },
-  qr:        { width: 180, height: 180, alignSelf: 'center' },
+  heading:   { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, textAlign: 'center', marginBottom: spacing.sm },
+  linkCard:  { padding: spacing.md, gap: spacing.xs },
+  linkLabel: { ...typography.caption, color: theme.colors.textMuted },
+  linkValue: { ...typography.body, color: theme.colors.textSecondary, fontFamily: theme.fonts.medium },
+  qrCard:    { alignSelf: 'center', padding: spacing.sm },
+  qr:        { width: 180, height: 180 },
+  expires:   { ...typography.body, color: theme.colors.textMuted, textAlign: 'center', marginTop: spacing.xs },
+  buttons:   { gap: spacing.md, marginTop: spacing.lg },
 });

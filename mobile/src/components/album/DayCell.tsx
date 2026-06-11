@@ -1,60 +1,75 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import { Images, Play } from 'phosphor-react-native';
-import { API_URL } from '@/constants/api';
-import { colors, spacing, typography } from '@/constants/theme';
+import { Images } from 'phosphor-react-native';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
+import { theme, spacing, typography } from '@/constants/theme';
 
 interface Props {
   date: string;
-  thumbnailPhotoId: string | null;
+  thumbnailUrl: string | null;
   hasVideo: boolean;
   tall: boolean;
+  index: number;
   onPress: () => void;
 }
 
-export function DayCell({ date, thumbnailPhotoId, hasVideo, tall, onPress }: Props) {
+const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']; // Vietnamese short weekdays, Sunday=0
+
+export function DayCell({ date, thumbnailUrl, hasVideo, tall, index, onPress }: Props) {
   const { width } = useWindowDimensions();
   const colWidth = (width - spacing['2xl'] * 2 - spacing.sm) / 2;
-  const cellHeight = tall ? colWidth * 1.4 : colWidth * 0.85;
+  const thumbHeight = tall ? colWidth * 1.2 : colWidth * 0.75;
 
   const parts = date.split('-'); // ['YYYY', 'MM', 'DD']
-  const label = `${parts[2]}/${parts[1]}`;
+  const dayNum = parts[2];
+  const monthNum = parts[1];
+  const weekday = WEEKDAYS[new Date(date).getDay()] ?? '';
+  const label = `${weekday} · ${dayNum}.${monthNum}`;
 
   return (
     <TouchableOpacity
       testID={`day-cell-${date}`}
       onPress={onPress}
       activeOpacity={0.85}
-      style={[styles.cell, { width: colWidth, height: cellHeight }]}
+      style={{ width: colWidth }}
     >
-      {thumbnailPhotoId ? (
-        <Image
-          source={{ uri: `${API_URL}/photos/${thumbnailPhotoId}/thumb` }}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-        />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
-          <Images size={28} color={colors.inkMuted} />
+      <StickerCard tilt="default" flip={index % 2 === 1} style={styles.card}>
+        <View style={[styles.thumbWrap, { height: thumbHeight }]}>
+          {thumbnailUrl ? (
+            <Image
+              source={{ uri: thumbnailUrl }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
+              <Images size={28} color={theme.colors.textMuted} />
+            </View>
+          )}
+          {hasVideo && (
+            <View style={styles.videoBadge} testID="video-badge">
+              <StickerChip label="▶" variant="ink" />
+            </View>
+          )}
         </View>
-      )}
-      <View style={styles.overlay}>
         <Text style={styles.dateLabel}>{label}</Text>
-      </View>
-      {hasVideo && (
-        <View style={styles.videoBadge} testID="video-badge">
-          <Play size={10} color={colors.white} weight="fill" />
-        </View>
-      )}
+      </StickerCard>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  cell:        { borderRadius: 10, overflow: 'hidden', backgroundColor: colors.borderSoft },
+  card:        { padding: spacing.xs, overflow: 'hidden' },
+  thumbWrap:   {
+    width: '100%',
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.borderSoft,
+    overflow: 'hidden',
+  },
   placeholder: { alignItems: 'center', justifyContent: 'center' },
-  overlay:     { position: 'absolute', top: spacing.sm, left: spacing.sm, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  dateLabel:   { ...typography.caption, color: colors.white, fontWeight: '700', fontSize: 11 },
-  videoBadge:  { position: 'absolute', bottom: spacing.sm, right: spacing.sm, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 99, width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
+  videoBadge:  { position: 'absolute', top: spacing.xs, right: spacing.xs },
+  dateLabel:   { ...typography.displayCute, fontSize: 13, textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.xs },
 });

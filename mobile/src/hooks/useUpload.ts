@@ -64,11 +64,11 @@ export function useUpload() {
 
     async function uploadOne(asset: PendingAsset): Promise<void> {
       try {
-        const { data: presign } = await api.post('/photos/presign', { album_id: albumId });
+        const { data: presign } = await api.post('/photos/presign');
         const compressedUri = await compressToWebP(asset.uri);
         const compressedBytes = await putLocalFile(presign.url, compressedUri, 'image/webp');
         await api.post('/photos', {
-          album_id: albumId,
+          album_ids: [albumId],
           r2_key: presign.key,
           taken_at: asset.takenAt ?? new Date().toISOString(),
           caption: caption || null,

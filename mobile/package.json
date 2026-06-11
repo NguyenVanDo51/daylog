@@ -36,6 +36,7 @@
     "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
+    "expo-system-ui": "~56.0.5",
     "expo-updates": "~56.0.18",
     "expo-video": "~56.1.2",
     "expo-video-thumbnails": "~56.0.3",
@@ -70,7 +71,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "bundle": "git bundle create family-guy.bundle --all"
   },
   "private": true
 }

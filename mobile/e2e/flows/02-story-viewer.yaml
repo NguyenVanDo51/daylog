@@ -1,0 +1,35 @@
+appId: com.andynguyen.daylog
+---
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "menu-btn"
+    timeout: 8000
+- tapOn:
+    id: "album-row-.*"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "day-cell-.*"
+    timeout: 6000
+- tapOn:
+    id: "day-cell-.*"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "story-back"
+    timeout: 6000
+- assertVisible:
+    id: "story-date-chip"
+- swipe:
+    direction: LEFT
+    duration: 400
+- assertVisible:
+    id: "story-back"
+- tapOn:
+    id: "story-back"
+- extendedWaitUntil:
+    visible:
+      id: "day-cell-.*"
+    timeout: 4000

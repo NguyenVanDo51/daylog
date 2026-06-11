@@ -33,10 +33,9 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+.env.e2e
 
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# generated native folders (tracked — run `npx expo prebuild` to regenerate)

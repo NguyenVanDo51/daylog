@@ -1,16 +1,16 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, useWindowDimensions, StatusBar } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, useWindowDimensions, StatusBar, Text } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import { X } from 'phosphor-react-native';
-import { BlurView } from 'expo-blur';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useTimeline } from '@/hooks/useTimeline';
-import { API_URL } from '@/constants/api';
-import { colors, spacing, typography } from '@/constants/theme';
 import { useSharedTransition } from '@/lib/sharedElement';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { formatVnDate } from '@/lib/format';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
 
 export default function PhotoViewer() {
   const params = useLocalSearchParams<{ id: string; srcX?: string; srcY?: string; srcW?: string; srcH?: string }>();
@@ -26,7 +26,7 @@ export default function PhotoViewer() {
   const style = useSharedTransition(source, width, height, true);
 
   const isVideo = (photo as any)?.media_type === 'video';
-  const videoUri = isVideo ? `${API_URL}/photos/${photo?.id}/full` : '';
+  const videoUri = isVideo ? ((photo as any)?.photo_url ?? '') : '';
   const player = useVideoPlayer(videoUri, (p) => {
     p.loop = true;
   });
@@ -38,6 +38,7 @@ export default function PhotoViewer() {
   if (!photo) return null;
   const taken = (photo as any).taken_at as string;
   const counter = t('photo.counter', { i: idx + 1, n: photos.length });
+  const dateLabel = formatVnDate(new Date(taken));
 
   return (
     <View style={styles.container}>
@@ -53,28 +54,48 @@ export default function PhotoViewer() {
             />
           </Animated.View>
         )
-        : <Animated.Image source={{ uri: `${API_URL}/photos/${photo.id}/full` }} style={[style]} resizeMode="contain" />
+        : <Animated.Image source={{ uri: (photo as any).photo_url }} style={[style]} resizeMode="contain" />
       }
 
-      <BlurView intensity={30} tint="dark" style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-          <X size={22} color={colors.white} />
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+          <StickerCard style={styles.iconBtn}>
+            <X size={18} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
         </TouchableOpacity>
-        <Text style={styles.meta}>{counter} · {formatVnDate(new Date(taken))}</Text>
+        <View style={styles.chipWrap}>
+          <StickerChip label={`${counter} · ${dateLabel}`} variant="yellow" tilt="default" flip />
+        </View>
         <View style={styles.iconBtn} />
-      </BlurView>
+      </View>
 
       {(photo as any).caption && (
-        <Text style={styles.caption}>{(photo as any).caption}</Text>
+        <View style={styles.captionWrap}>
+          <StickerCard tilt="subtle" flip style={styles.captionCard}>
+            <Text style={styles.captionText}>{(photo as any).caption}</Text>
+          </StickerCard>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1A1A1A' },
-  topBar:    { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 50, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  meta:      { ...typography.bodySmall, color: colors.white },
-  iconBtn:   { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-  caption:   { ...typography.handAccent, color: colors.white, fontSize: 18, position: 'absolute', bottom: 60, left: spacing.lg, right: spacing.lg, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 6 },
+  container:   { flex: 1, backgroundColor: theme.overlays.cameraBg },
+  topBar:      {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    paddingTop: 50,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  iconBtn:     { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
+  chipWrap:    { flex: 1, alignItems: 'center' },
+  captionWrap: { position: 'absolute', bottom: 60, left: spacing.lg, right: spacing.lg, alignItems: 'center' },
+  captionCard: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+  captionText: { ...typography.body, color: theme.colors.textPrimary, textAlign: 'center' },
 });

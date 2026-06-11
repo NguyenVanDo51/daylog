@@ -52,6 +52,12 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return;
   }
 
+  // Reject API calls from soft-deleted accounts.
+  if (found[0].deletedAt !== null) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
   req.user = found[0];
   Sentry.setUser({ id: found[0].id });
   next();

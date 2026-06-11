@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { PhotoCell } from '@/components/ui/PhotoCell';
-import { API_URL } from '@/constants/api';
 import { spacing } from '@/constants/theme';
 import type { TimelinePhoto } from '@/hooks/useTimeline';
 
@@ -21,7 +20,7 @@ export function PhotoRow({ photos, rowIndex = 0 }: PhotoRowProps) {
       {photos.slice(0, count).map((p, i) => (
         <PhotoCell
           key={p.id}
-          uri={`${API_URL}/photos/${p.id}/thumb`}
+          uri={p.thumb_url ?? undefined}
           caption={p.caption}
           size={cellSize}
           index={rowIndex * 2 + i}
