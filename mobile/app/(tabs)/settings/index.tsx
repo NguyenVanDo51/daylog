@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Switch, Alert, TouchableOpacity } from 'react-native';
-import { CaretLeft, ArrowSquareOut, CaretRight } from 'phosphor-react-native';
+import { CaretLeft, ArrowSquareOut, CaretRight, Bell, Globe, DownloadSimple, Trash, ShieldCheck, FileText, User } from 'phosphor-react-native';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
@@ -9,12 +9,20 @@ import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
 import { api } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { QuietHeader } from '@/components/ui/QuietHeader';
+import { Mascot } from '@/components/ui/Mascot';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerButton } from '@/components/ui/StickerButton';
 import { registerPushToken, hasPushPermission } from '@/lib/notifications';
-import { colors, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t, getCurrentLanguage, AppLanguage } from '@/lib/i18n';
+
+type IconBgKey = 'accent1' | 'accent2' | 'accent3' | 'accent4';
+
+function RowIcon({ icon, bg }: { icon: React.ReactNode; bg: IconBgKey }) {
+  return (
+    <View style={[styles.rowIcon, { backgroundColor: theme.colors[bg] }]}>{icon}</View>
+  );
+}
 
 export default function SettingsTab() {
   const { user, clearAuth } = useAuthStore();
@@ -91,79 +99,99 @@ export default function SettingsTab() {
 
   return (
     <View style={styles.container}>
-      <QuietHeader>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.backBtn} testID="settings-back">
-            <CaretLeft size={24} color={colors.ink} />
-          </TouchableOpacity>
-          <Text style={styles.heading}>{t('settings.title')}</Text>
-          <View style={styles.backBtn} />
-        </View>
-      </QuietHeader>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8} testID="settings-back">
+          <StickerCard style={styles.iconBtn}>
+            <CaretLeft size={18} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
+        </TouchableOpacity>
+        <Text style={styles.heading}>{t('settings.title')}</Text>
+        <View style={styles.iconBtn} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Profile */}
         {user && (
           <TouchableOpacity onPress={() => router.push('/settings/profile')}>
-            <Card tier="quiet" style={styles.profileCard}>
-              <Avatar src={user.avatar_url} size={56} bgColor="accent1" />
+            <StickerCard tilt="subtle" flip style={styles.profileCard}>
+              <Avatar src={user.avatar_url} size={48} bgColor="primary" />
               <View style={styles.profileInfo}>
                 <Text style={styles.name}>{user.display_name}</Text>
                 <Text style={styles.email}>{user.email}</Text>
               </View>
-              <CaretRight size={18} color={colors.inkMuted} />
-            </Card>
+              <CaretRight size={18} color={theme.colors.textMuted} />
+            </StickerCard>
           </TouchableOpacity>
         )}
 
         {/* Notifications */}
-        <Card tier="quiet" style={styles.section}>
+        <StickerCard style={styles.rowCard}>
           <View style={styles.row}>
+            <RowIcon icon={<Bell size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent1" />
             <Text style={styles.rowLabel}>{t('settings.push_label')}</Text>
-            <Switch value={notifEnabled} onValueChange={toggleNotifications}
-              trackColor={{ true: colors.pink, false: colors.borderSoft }} disabled={notifLoading} />
+            <Switch
+              value={notifEnabled}
+              onValueChange={toggleNotifications}
+              trackColor={{ true: theme.colors.primary, false: theme.colors.borderSoft }}
+              disabled={notifLoading}
+            />
           </View>
-        </Card>
+        </StickerCard>
 
         {/* App preferences */}
-        <Card tier="quiet" style={styles.section}>
-          <Text style={styles.sectionHeader}>{t('settings.app_section')}</Text>
+        <Text style={styles.sectionHeader}>{t('settings.app_section')}</Text>
+        <StickerCard style={styles.rowCard}>
           <TouchableOpacity style={styles.row} onPress={() => router.push('/settings/language')}>
+            <RowIcon icon={<Globe size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent2" />
             <Text style={styles.rowLabel}>{t('settings.language')}</Text>
             <View style={styles.rowRight}>
               <Text style={styles.rowValue}>{langLabel}</Text>
-              <CaretRight size={16} color={colors.inkMuted} />
+              <CaretRight size={16} color={theme.colors.textMuted} />
             </View>
           </TouchableOpacity>
-        </Card>
+        </StickerCard>
 
         {/* Account */}
-        <Card tier="quiet" style={styles.section}>
-          <Text style={styles.sectionHeader}>{t('settings.account_section')}</Text>
+        <Text style={styles.sectionHeader}>{t('settings.account_section')}</Text>
+        <StickerCard style={styles.rowCard}>
           <TouchableOpacity style={styles.row} onPress={handleDownloadData}>
+            <RowIcon icon={<DownloadSimple size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent3" />
             <Text style={styles.rowLabel}>{t('settings.download_data')}</Text>
+            <CaretRight size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+        </StickerCard>
+        <StickerCard style={styles.rowCard}>
           <TouchableOpacity style={styles.row} onPress={handleDeleteAccount}>
+            <RowIcon icon={<Trash size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent4" />
             <Text style={[styles.rowLabel, styles.danger]}>{t('settings.delete_account')}</Text>
+            <CaretRight size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
-        </Card>
+        </StickerCard>
 
         {/* Legal */}
-        <Card tier="quiet" style={styles.section}>
-          <Text style={styles.sectionHeader}>{t('settings.legal_section')}</Text>
+        <Text style={styles.sectionHeader}>{t('settings.legal_section')}</Text>
+        <StickerCard style={styles.rowCard}>
           <TouchableOpacity style={styles.row} onPress={() => Linking.openURL(PRIVACY_URL)} testID="settings-privacy">
+            <RowIcon icon={<ShieldCheck size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent1" />
             <Text style={styles.rowLabel}>{t('settings.privacy_policy')}</Text>
-            <ArrowSquareOut size={18} color={colors.inkMuted} />
+            <ArrowSquareOut size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+        </StickerCard>
+        <StickerCard style={styles.rowCard}>
           <TouchableOpacity style={styles.row} onPress={() => Linking.openURL(TERMS_URL)} testID="settings-terms">
+            <RowIcon icon={<FileText size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent2" />
             <Text style={styles.rowLabel}>{t('settings.terms')}</Text>
-            <ArrowSquareOut size={18} color={colors.inkMuted} />
+            <ArrowSquareOut size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
-        </Card>
+        </StickerCard>
 
-        <Button label={t('settings.signout')} onPress={handleSignOut} variant="ghost" tier="quiet" fullWidth />
+        <StickerButton
+          label={t('settings.signout')}
+          variant="danger"
+          fullWidth
+          onPress={handleSignOut}
+          testID="settings-signout"
+        />
         <Text style={styles.version}>{t('settings.version', { v: '0.1.0' })}</Text>
       </ScrollView>
     </View>
@@ -171,22 +199,22 @@ export default function SettingsTab() {
 }
 
 const styles = StyleSheet.create({
-  container:     { flex: 1, backgroundColor: colors.cream },
-  headerRow:     { flexDirection: 'row', alignItems: 'center' },
-  backBtn:       { width: 32 },
-  heading:       { ...typography.heading, color: colors.ink, flex: 1, textAlign: 'center' },
-  content:       { padding: spacing['2xl'], gap: spacing.md },
-  profileCard:   { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
+  container:     { flex: 1, backgroundColor: theme.colors.background },
+  header:        { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  iconBtn:       { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
+  heading:       { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, flex: 1, textAlign: 'center' },
+  content:       { padding: spacing['2xl'], gap: spacing.md, paddingBottom: spacing['4xl'] },
+  profileCard:   { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, padding: spacing.md },
   profileInfo:   { flex: 1 },
-  name:          { ...typography.title, color: colors.ink },
-  email:         { ...typography.bodySmall, color: colors.inkSoft },
-  section:       { gap: spacing.md },
-  sectionHeader: { ...typography.caption, color: colors.inkMuted, marginBottom: spacing.xs },
-  row:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  name:          { ...typography.title, color: theme.colors.textPrimary },
+  email:         { ...typography.bodySmall, color: theme.colors.textSecondary },
+  rowCard:       { padding: 0 },
+  row:           { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, justifyContent: 'space-between' },
+  rowIcon:       { width: 28, height: 28, borderRadius: theme.radii.sm, borderWidth: theme.border.thin, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },
   rowRight:      { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  rowLabel:      { ...typography.body, color: colors.ink },
-  rowValue:      { ...typography.bodySmall, color: colors.inkSoft },
-  danger:        { color: colors.error },
-  divider:       { height: 1, backgroundColor: colors.borderSoft },
-  version:       { ...typography.caption, color: colors.inkMuted, textAlign: 'center', marginTop: spacing.lg },
+  rowLabel:      { ...typography.body, color: theme.colors.textPrimary, flex: 1, marginLeft: spacing.sm },
+  rowValue:      { ...typography.bodySmall, color: theme.colors.textSecondary },
+  sectionHeader: { ...typography.caption, color: theme.colors.textMuted, marginTop: spacing.lg, paddingHorizontal: spacing.xs },
+  danger:        { color: theme.colors.error },
+  version:       { ...typography.caption, color: theme.colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
 });
