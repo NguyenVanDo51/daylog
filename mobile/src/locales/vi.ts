@@ -10,6 +10,9 @@ export const vi = {
     private:   'Cá nhân',
     new_album: 'Album mới',
     empty:     'Chưa có album nào',
+    empty_cta: 'Tạo album đầu tiên',
+    create_error: 'Không thể tạo album.',
+    rename_ph: 'Tên album...',
   },
   greeting: {
     morning:   'Chào buổi sáng',

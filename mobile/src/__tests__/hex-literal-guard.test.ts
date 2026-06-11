@@ -10,6 +10,7 @@ const THEME_CLEAN_FILES = [
   'src/components/ui/StickerChip.tsx',
   'src/components/ui/StickerButton.tsx',
   'src/components/ui/Avatar.tsx',
+  'src/components/tabs/AlbumsPage.tsx',
 ];
 
 const HEX_OR_RGBA = /#[0-9a-fA-F]{3,8}\b|rgba?\s*\(/;

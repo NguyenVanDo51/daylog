@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert, TextInput, Modal,
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { DotsThree, PlusCircle, Images, CaretRight, Camera } from 'phosphor-react-native';
+import { DotsThree, PlusCircle, Camera, CaretRight } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAlbums, Album } from '@/hooks/useAlbums';
 import { useAlbumStore } from '@/stores/albumStore';
 import { SettingsSheet } from './SettingsSheet';
 import { api } from '@/lib/api';
-import { colors, fonts, spacing, typography } from '@/constants/theme';
+import { theme, colors, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
+import { Mascot } from '@/components/ui/Mascot';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
+import { StickerButton } from '@/components/ui/StickerButton';
+import { Avatar } from '@/components/ui/Avatar';
 
 interface Props {
   onCameraPress: () => void;
@@ -45,7 +49,7 @@ export function AlbumsPage({ onCameraPress }: Props) {
       setAlbum(data);
       router.push(`/albums/${data.id}`);
     } catch {
-      Alert.alert(t('common.error'), 'Không thể tạo album.');
+      Alert.alert(t('common.error'), t('albums.create_error'));
     } finally {
       setCreating(false);
     }
@@ -55,16 +59,18 @@ export function AlbumsPage({ onCameraPress }: Props) {
     ? [...albums.filter((a) => a.is_private), ...albums.filter((a) => !a.is_private)]
     : [];
 
+  const SWATCHES = theme.colors.swatch;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Modal visible={showInput} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <StickerCard shadow="heavy" style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t('albums.new_album')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Tên album..."
-              placeholderTextColor={colors.inkMuted}
+              placeholder={t('albums.rename_ph')}
+              placeholderTextColor={theme.colors.textMuted}
               value={newName}
               onChangeText={setNewName}
               autoFocus
@@ -77,23 +83,33 @@ export function AlbumsPage({ onCameraPress }: Props) {
                 <Text style={styles.modalBtnConfirm}>{creating ? '...' : t('common.done')}</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </StickerCard>
         </View>
       </Modal>
 
       <View style={styles.header}>
+        <Mascot size={24} tilt="playful" flip />
         <Text style={styles.heading}>Nhật ký</Text>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuBtn} testID="menu-btn">
-          <DotsThree size={22} color={colors.ink} />
+          <DotsThree size={22} color={theme.colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.pink} />
+          <ActivityIndicator color={theme.colors.primary} />
         </View>
       ) : sorted.length === 0 ? (
-        <Text style={styles.empty}>{t('albums.empty')}</Text>
+        <View style={styles.emptyWrap}>
+          <Mascot size={80} tilt="default" />
+          <Text style={styles.empty}>{t('albums.empty')}</Text>
+          <StickerButton
+            label={t('albums.empty_cta')}
+            variant="primary"
+            onPress={() => { setNewName(''); setShowInput(true); }}
+            testID="create-album-empty-btn"
+          />
+        </View>
       ) : (
         <FlatList
           data={sorted}
@@ -105,46 +121,54 @@ export function AlbumsPage({ onCameraPress }: Props) {
               onPress={() => { setNewName(''); setShowInput(true); }}
               testID="create-album-btn"
             >
-              <PlusCircle size={20} color={colors.pink} />
-              <Text style={styles.createBtnText}>Tạo album mới</Text>
+              <PlusCircle size={20} color={theme.colors.primary} />
+              <Text style={styles.createBtnText}>{t('albums.new_album')}</Text>
             </TouchableOpacity>
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity
+          renderItem={({ item, index }) => (
+            <StickerCard
+              tilt="subtle"
+              flip={index % 2 === 1}
               style={styles.row}
-              onPress={() => handleAlbumPress(item)}
-              activeOpacity={0.75}
               testID={`album-row-${item.id}`}
             >
-              {item.cover_thumb_url ? (
-                <Image
-                  source={{ uri: item.cover_thumb_url }}
-                  style={styles.thumb}
+              <TouchableOpacity
+                onPress={() => handleAlbumPress(item)}
+                activeOpacity={0.85}
+                style={styles.rowInner}
+              >
+                <Avatar
+                  size={48}
+                  src={item.cover_thumb_url ?? null}
+                  bgColor={(['accent1','accent2','accent3','accent4'] as const)[index % 4]}
                 />
-              ) : (
-                <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                  <Images size={22} color={colors.inkMuted} />
+                <View style={styles.rowInfo}>
+                  <Text style={styles.albumName} numberOfLines={1}>{item.name}</Text>
                 </View>
-              )}
-              <View style={styles.rowInfo}>
-                <Text style={styles.albumName} numberOfLines={1}>{item.name}</Text>
-              </View>
-              <CaretRight size={18} color={colors.inkMuted} />
-            </TouchableOpacity>
+                {typeof (item as any).photo_count === 'number' && (
+                  <StickerChip
+                    label={String((item as any).photo_count)}
+                    variant="yellow"
+                    tilt="default"
+                    flip
+                  />
+                )}
+                <CaretRight size={18} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            </StickerCard>
           )}
         />
       )}
 
       <View style={[styles.bottomArea, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <TouchableOpacity
-          testID="camera-pill-btn"
-          style={styles.cameraPill}
+        <StickerButton
+          label="Chụp ảnh"
+          variant="primary"
+          shadow="heavy"
+          icon={<Camera size={18} color={theme.colors.textOnPrimary} weight="fill" />}
           onPress={onCameraPress}
-          activeOpacity={0.85}
-        >
-          <Camera size={18} color={colors.white} weight="fill" />
-          <Text style={styles.cameraPillText}>Chụp ảnh</Text>
-        </TouchableOpacity>
+          testID="camera-pill-btn"
+        />
       </View>
 
       <SettingsSheet visible={menuVisible} onClose={() => setMenuVisible(false)} />
@@ -153,29 +177,27 @@ export function AlbumsPage({ onCameraPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container:       { flex: 1, backgroundColor: colors.cream },
+  container:       { flex: 1, backgroundColor: theme.colors.background },
   center:          { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing['2xl'], paddingVertical: spacing.lg },
-  heading:         { ...typography.heading, color: colors.ink },
+  header:          { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing['2xl'], paddingVertical: spacing.lg },
+  heading:         { ...typography.displayCute, flex: 1 },
   menuBtn:         { padding: spacing.sm },
-  empty:           { ...typography.body, color: colors.inkMuted, textAlign: 'center', marginTop: spacing['4xl'] },
+  emptyWrap:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg, paddingHorizontal: spacing['3xl'] },
+  empty:           { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center' },
   list:            { paddingHorizontal: spacing['2xl'], gap: spacing.md, paddingBottom: spacing['2xl'] },
-  row:             { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, borderRadius: 12, padding: spacing.md, gap: spacing.md, minHeight: 72 },
-  thumb:           { width: 56, height: 56, borderRadius: 8, overflow: 'hidden' },
-  thumbPlaceholder:{ backgroundColor: colors.borderSoft, alignItems: 'center', justifyContent: 'center' },
+  row:             { marginBottom: spacing.sm },
+  rowInner:        { flexDirection: 'row', alignItems: 'center', padding: spacing.md, gap: spacing.md, minHeight: 64 },
   rowInfo:         { flex: 1 },
-  albumName:       { ...typography.body, color: colors.ink, fontWeight: '600' },
+  albumName:       { ...typography.title, color: theme.colors.textPrimary },
   bottomArea:      { alignItems: 'center', paddingTop: spacing.md },
-  cameraPill:      { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.pink, borderRadius: 9999, borderWidth: 2, borderColor: colors.ink, shadowColor: colors.ink, shadowOffset: { width: 3, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4, paddingVertical: spacing.md, paddingHorizontal: spacing['2xl'] },
-  cameraPillText:  { fontFamily: fonts.semiBold, fontSize: 18, color: colors.white },
   createBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md },
-  createBtnText:   { ...typography.body, color: colors.pink },
-  modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  modalCard:       { backgroundColor: colors.white, borderRadius: 16, padding: spacing['2xl'], width: '80%', gap: spacing.lg },
-  modalTitle:      { ...typography.title, color: colors.ink },
-  input:           { ...typography.body, color: colors.ink, borderBottomWidth: 1, borderBottomColor: colors.borderSoft, paddingVertical: spacing.sm },
+  createBtnText:   { ...typography.body, color: theme.colors.primary },
+  modalOverlay:    { flex: 1, backgroundColor: theme.overlays.scrim, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['2xl'] },
+  modalCard:       { width: '100%', padding: spacing['2xl'], gap: spacing.lg },
+  modalTitle:      { ...typography.title, color: theme.colors.textPrimary },
+  input:           { ...typography.body, color: theme.colors.textPrimary, borderBottomWidth: theme.border.hairline, borderBottomColor: theme.colors.borderSoft, paddingVertical: spacing.sm },
   modalActions:    { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.lg },
   modalBtn:        { padding: spacing.sm },
-  modalBtnCancel:  { ...typography.body, color: colors.inkMuted },
-  modalBtnConfirm: { ...typography.body, color: colors.pink },
+  modalBtnCancel:  { ...typography.body, color: theme.colors.textMuted },
+  modalBtnConfirm: { ...typography.body, color: theme.colors.primary },
 });
