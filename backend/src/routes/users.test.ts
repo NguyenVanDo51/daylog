@@ -8,6 +8,8 @@ import { db } from '../db';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { createTestUser, authHeader } from '../../tests/setup';
+import { getPresignedPutUrl } from '../services/r2';
+const mockPut = getPresignedPutUrl as jest.Mock;
 const app = require('../app');
 
 describe('GET /users/me', () => {
@@ -36,5 +38,57 @@ describe('GET /users/me', () => {
     const res = await request(app).get('/users/me').set(authHeader(user));
     expect(res.status).toBe(200);
     expect(res.body.avatar_url).toBe('https://lh3.googleusercontent.com/a/photo.jpg');
+  });
+});
+
+describe('PATCH /users/me', () => {
+  it('updates display_name', async () => {
+    const user = await createTestUser({ display_name: 'Old Name' });
+    const res = await request(app).patch('/users/me').set(authHeader(user)).send({ display_name: 'New Name' });
+    expect(res.status).toBe(200);
+    expect(res.body.display_name).toBe('New Name');
+  });
+
+  it('updates avatar_url key', async () => {
+    const user = await createTestUser();
+    const res = await request(app).patch('/users/me').set(authHeader(user)).send({ avatar_url: 'avatars/uuid.jpg' });
+    expect(res.status).toBe(200);
+    expect(res.body.avatar_url).toBe('https://r2.example.com/avatar.jpg');
+    // Verify key stored in DB
+    const [row] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(row.avatarUrl).toBe('avatars/uuid.jpg');
+  });
+
+  it('still updates push_token', async () => {
+    const user = await createTestUser();
+    const res = await request(app).patch('/users/me').set(authHeader(user)).send({ push_token: 'ExponentPushToken[abc]' });
+    expect(res.status).toBe(200);
+    const [row] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(row.pushToken).toBe('ExponentPushToken[abc]');
+  });
+
+  it('returns 204 with empty body', async () => {
+    const user = await createTestUser();
+    const res = await request(app).patch('/users/me').set(authHeader(user)).send({});
+    expect(res.status).toBe(204);
+  });
+});
+
+describe('POST /users/me/avatar-presign', () => {
+  beforeEach(() => {
+    mockPut.mockResolvedValue({ url: 'https://r2.example.com/put/avatars/uuid.jpg', key: 'avatars/uuid.jpg' });
+  });
+
+  it('returns upload_url and key', async () => {
+    const user = await createTestUser();
+    const res = await request(app).post('/users/me/avatar-presign').set(authHeader(user));
+    expect(res.status).toBe(200);
+    expect(res.body.upload_url).toBe('https://r2.example.com/put/avatars/uuid.jpg');
+    expect(res.body.key).toBe('avatars/uuid.jpg');
+  });
+
+  it('returns 401 without auth', async () => {
+    const res = await request(app).post('/users/me/avatar-presign');
+    expect(res.status).toBe(401);
   });
 });
