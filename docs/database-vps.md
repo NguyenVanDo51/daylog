@@ -16,7 +16,7 @@ Deploy lần đầu và kiến trúc: xem [deploy-vps.md](./deploy-vps.md).
 5. [Backup & restore](#5-backup--restore)
 6. [Reset schema](#6-reset-schema)
 7. [Reset hoàn toàn (xóa volume)](#7-reset-hoàn-toàn-xóa-volume)
-8. [Cron backup](#8-cron-backup)
+8. [Cron backup (tuỳ chọn)](#8-cron-backup-tuỳ-chọn)
 9. [Troubleshooting](#9-troubleshooting)
 
 ---
@@ -135,18 +135,31 @@ docker compose logs migrate
 
 ## 5. Backup & restore
 
-### Backup
+> **Mặc định không tự động.** Lệnh backup chỉ chạy khi bạn SSH vào VPS và gõ tay. GitHub Actions deploy **không** backup DB. Muốn chạy hàng ngày → cấu hình cron ở [mục 8](#8-cron-backup-tuỳ-chọn).
+
+Chạy trên VPS (`ssh deploy@<IP_VPS>`), trong thư mục `/opt/daylog`.
+
+### Backup thủ công
 
 ```bash
 cd /opt/daylog
-docker compose exec postgres pg_dump -U daylog daylog > ~/backup_$(date +%F).sql
+mkdir -p ~/backups
+docker compose exec postgres pg_dump -U daylog daylog > ~/backups/backup_$(date +%F).sql
+```
+
+File lưu tại `~/backups/` (vd. `/home/deploy/backups/backup_2026-06-10.sql`).
+
+Kiểm tra:
+
+```bash
+ls -lh ~/backups/backup_*.sql
 ```
 
 ### Restore
 
 ```bash
 cd /opt/daylog
-cat ~/backup_2026-06-09.sql | docker compose exec -T postgres psql -U daylog daylog
+cat ~/backups/backup_2026-06-09.sql | docker compose exec -T postgres psql -U daylog daylog
 ```
 
 ---
@@ -161,7 +174,7 @@ Backup trước (khuyến nghị):
 
 ```bash
 cd /opt/daylog
-docker compose exec postgres pg_dump -U daylog daylog > ~/backup_$(date +%F).sql
+docker compose exec postgres pg_dump -U daylog daylog > ~/backups/backup_$(date +%F).sql
 ```
 
 Reset:
@@ -207,16 +220,30 @@ docker compose up -d api
 
 ---
 
-## 8. Cron backup
+## 8. Cron backup (tuỳ chọn)
+
+Chỉ chạy tự động **sau khi** bạn cấu hình cron trên VPS — không có sẵn khi deploy.
 
 ```bash
+ssh deploy@<IP_VPS>
+mkdir -p ~/backups
 crontab -e
 ```
 
-Thêm dòng (3h sáng mỗi ngày):
+Thêm dòng (3h sáng mỗi ngày, **giữ 7 bản gần nhất** ≈ 1 tuần):
 
 ```cron
-0 3 * * * cd /opt/daylog && docker compose exec -T postgres pg_dump -U daylog daylog > /home/deploy/backups/daylog_$(date +\%F).sql
+0 3 * * * cd /opt/daylog && docker compose exec -T postgres pg_dump -U daylog daylog > /home/deploy/backups/daylog_$(date +\%F).sql && ls -t /home/deploy/backups/daylog_*.sql 2>/dev/null | tail -n +8 | xargs -r rm --
+```
+
+Phần sau `&&` xóa file cũ hơn 7 bản (sắp xếp theo thời gian sửa đổi).
+
+Đổi số bản giữ lại: `tail -n +8` = giữ 7, `+4` = giữ 3, `+6` = giữ 5 (`+N` = giữ **N − 1** bản).
+
+Kiểm tra cron đã cài:
+
+```bash
+crontab -l
 ```
 
 ---
