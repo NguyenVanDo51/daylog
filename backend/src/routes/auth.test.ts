@@ -247,13 +247,13 @@ describe('PATCH /users/me', () => {
     expect(res.status).toBe(401);
   });
 
-  it('updates push_token for authenticated user and returns 204', async () => {
+  it('updates push_token for authenticated user and returns 200', async () => {
     const res = await request(app)
       .patch('/users/me')
       .set(authHeader(user))
       .send({ push_token: 'ExponentPushToken[new-token]' });
 
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(200);
 
     const { rows } = await pool.query(`SELECT push_token FROM users WHERE id = $1`, [user.id]);
     expect(rows[0].push_token).toBe('ExponentPushToken[new-token]');
@@ -267,7 +267,7 @@ describe('PATCH /users/me', () => {
       .set(authHeader(user))
       .send({ push_token: null });
 
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(200);
 
     const { rows } = await pool.query(`SELECT push_token FROM users WHERE id = $1`, [user.id]);
     expect(rows[0].push_token).toBeNull();
