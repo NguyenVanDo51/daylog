@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { CaretLeft, Check } from 'phosphor-react-native';
+import { CaretLeft } from 'phosphor-react-native';
 import { router } from 'expo-router';
-import { colors, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t, setLanguage, getCurrentLanguage, AppLanguage } from '@/lib/i18n';
-import { Card } from '@/components/ui/Card';
-import { QuietHeader } from '@/components/ui/QuietHeader';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
 
-const OPTIONS: { value: AppLanguage; labelKey: string }[] = [
-  { value: 'device', labelKey: 'language.device' },
-  { value: 'vi',     labelKey: 'language.vi' },
-  { value: 'en',     labelKey: 'language.en' },
+const OPTIONS: { value: AppLanguage; labelKey: string; flag: string }[] = [
+  { value: 'device', labelKey: 'language.device', flag: '📱' },
+  { value: 'vi',     labelKey: 'language.vi',     flag: '🇻🇳' },
+  { value: 'en',     labelKey: 'language.en',     flag: '🇬🇧' },
 ];
 
 export default function LanguageScreen() {
@@ -26,41 +26,41 @@ export default function LanguageScreen() {
 
   return (
     <View style={styles.container}>
-      <QuietHeader>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-            <CaretLeft size={24} color={colors.ink} />
-          </TouchableOpacity>
-          <Text style={styles.heading}>{t('language.title')}</Text>
-          <View style={styles.backBtn} />
-        </View>
-      </QuietHeader>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+          <StickerCard style={styles.iconBtn}>
+            <CaretLeft size={18} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
+        </TouchableOpacity>
+        <Text style={styles.heading}>{t('language.title')}</Text>
+        <View style={styles.iconBtn} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Card tier="quiet" style={styles.section}>
-          {OPTIONS.map((opt, i) => (
-            <View key={opt.value}>
-              {i > 0 && <View style={styles.divider} />}
-              <TouchableOpacity style={styles.row} onPress={() => select(opt.value)}>
+        {OPTIONS.map((opt) => {
+          const active = current === opt.value;
+          return (
+            <TouchableOpacity key={opt.value} onPress={() => select(opt.value)}>
+              <StickerCard style={styles.row}>
+                <Text style={styles.flag}>{opt.flag}</Text>
                 <Text style={styles.rowLabel}>{t(opt.labelKey)}</Text>
-                {current === opt.value && <Check size={20} color={colors.pink} weight="bold" />}
-              </TouchableOpacity>
-            </View>
-          ))}
-        </Card>
+                {active && <StickerChip label="✓" variant="yellow" />}
+              </StickerCard>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: colors.cream },
-  headerRow:  { flexDirection: 'row', alignItems: 'center' },
-  backBtn:    { width: 32 },
-  heading:    { ...typography.heading, color: colors.ink, flex: 1, textAlign: 'center' },
-  content:    { padding: spacing['2xl'], gap: spacing.md },
-  section:    { gap: spacing.md },
-  row:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.xs },
-  rowLabel:   { ...typography.body, color: colors.ink },
-  divider:    { height: 1, backgroundColor: colors.borderSoft },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header:    { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  iconBtn:   { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
+  heading:   { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, flex: 1, textAlign: 'center' },
+  content:   { padding: spacing['2xl'], gap: spacing.md },
+  row:       { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
+  flag:      { fontSize: 22 },
+  rowLabel:  { ...typography.body, color: theme.colors.textPrimary, flex: 1 },
 });

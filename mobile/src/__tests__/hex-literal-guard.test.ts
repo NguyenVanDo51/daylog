@@ -26,6 +26,8 @@ const THEME_CLEAN_APP_FILES = [
   'app/photo/[id].tsx',
   'app/story/[albumId]/[date]/manage.tsx',
   'app/(tabs)/settings/index.tsx',
+  'app/(tabs)/settings/profile.tsx',
+  'app/(tabs)/settings/language.tsx',
 ];
 
 const HEX_OR_RGBA = /#[0-9a-fA-F]{3,8}\b|rgba?\s*\(/;
