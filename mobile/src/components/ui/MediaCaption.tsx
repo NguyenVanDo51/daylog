@@ -1,16 +1,16 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { PlayIcon, PauseIcon } from 'phosphor-react-native';
-import { colors, fonts, spacing } from '@/constants/theme';
+import { View, Text, TextInput, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { spacing, typography } from '@/constants/theme';
+import { OutlinedText } from '@/components/ui/OutlinedText';
 
 interface Props {
   time: string;
-  caption?: string;
+  caption?: React.ReactNode;
   editable?: boolean;
   onCaptionChange?: (v: string) => void;
-  showPlayIcon?: boolean;
-  isPaused?: boolean;
+  placeholder?: string;
   testID?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function MediaCaption({
@@ -18,99 +18,70 @@ export function MediaCaption({
   caption,
   editable = false,
   onCaptionChange,
-  showPlayIcon = false,
-  isPaused = false,
+  placeholder,
   testID,
+  style,
 }: Props) {
   return (
     <View
-      style={styles.container}
+      style={[styles.container, style]}
       pointerEvents={editable ? 'box-none' : 'none'}
       testID={!editable ? testID : undefined}
     >
       <View style={styles.timeRow}>
-        {showPlayIcon && (
-          isPaused
-            ? <PauseIcon size={16} color={colors.pink} weight="fill" />
-            : <PlayIcon size={16} color={colors.pink} weight="fill" />
-        )}
-        <Text testID="media-caption-time" style={styles.time}>{time}</Text>
+        <OutlinedText size={20} testID="media-caption-time">{time}</OutlinedText>
       </View>
-      {editable ? (
-        <>
+
+      <View style={styles.captionContainer}>
+        {editable ? (
           <TextInput
             testID={testID}
-            style={styles.captionInput}
-            placeholder="Thêm ghi chú..."
-            placeholderTextColor="rgba(255,255,255,0.5)"
-            value={caption}
-            onChangeText={onCaptionChange ?? (() => {})}
+            style={[styles.caption, styles.captionInput]}
+            placeholder={placeholder}
+            placeholderTextColor="rgba(255,255,255,0.55)"
+            value={typeof caption === 'string' ? caption : ''}
+            onChangeText={onCaptionChange ?? (() => { })}
             multiline
-            maxLength={200}
-            autoFocus
+            maxLength={50}
             textAlign="center"
-            selectionColor={colors.pink}
           />
-          <View style={styles.captionUnderline} />
-        </>
-      ) : caption ? (
-        <Text testID="media-caption-text" style={styles.captionText}>{caption}</Text>
-      ) : null}
+        ) : (
+          <Text testID="media-caption-text" style={[styles.caption, styles.captionText]}>{caption ?? ''}</Text>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: '38%',
-    left: 0,
-    right: 0,
-    zIndex: 10,
+    flex: 1,
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    gap: spacing.sm,
   },
   timeRow: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     gap: 6,
-    marginBottom: spacing.sm,
   },
-  time: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    color: colors.pink,
-    letterSpacing: 1,
-    textShadowColor: 'rgba(255,122,168,0.5)',
+  captionContainer: {
+    height: 60,
+    textAlignVertical: 'top',
+  },
+  caption: {
+    ...typography.body,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.85)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 6,
-  },
-  captionText: {
     fontSize: 18,
-    fontFamily: fonts.regular,
-    color: colors.white,
-    fontStyle: 'italic',
-    lineHeight: 26,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
   },
   captionInput: {
-    fontFamily: fonts.regular,
-    fontSize: 18,
-    color: colors.white,
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowRadius: 12,
-    textShadowOffset: { width: 0, height: 0 },
-    width: '82%',
-    textAlign: 'center',
+    alignSelf: 'stretch',
   },
-  captionUnderline: {
-    width: 50,
-    height: 2,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    borderRadius: 1,
-    marginTop: 6,
+  captionText: {
+    textAlign: 'center',
   },
 });

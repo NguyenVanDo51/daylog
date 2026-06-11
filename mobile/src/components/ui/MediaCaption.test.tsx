@@ -1,5 +1,3 @@
-jest.mock('phosphor-react-native', () => new Proxy({}, { get: (_, name) => String(name) }));
-
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MediaCaption } from '@/components/ui/MediaCaption';
@@ -15,9 +13,9 @@ describe('MediaCaption', () => {
     expect(getByTestId('media-caption-text').props.children).toBe('Buổi sáng');
   });
 
-  it('renders nothing for caption when editable=false and caption is absent', () => {
-    const { queryByTestId } = render(<MediaCaption time="14:32" />);
-    expect(queryByTestId('media-caption-text')).toBeNull();
+  it('renders an empty caption Text when editable=false and caption is absent', () => {
+    const { getByTestId } = render(<MediaCaption time="14:32" />);
+    expect(getByTestId('media-caption-text').props.children).toBe('');
   });
 
   it('renders a TextInput with testID forwarded when editable=true', () => {

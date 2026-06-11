@@ -280,7 +280,7 @@ export const stickerWorld: Theme = {
     scrim:         'rgba(0,0,0,0.4)',
     scrimDeep:     'rgba(0,0,0,0.82)',
     scrimSoft:     'rgba(0,0,0,0.55)',
-    surfaceOnDark: 'rgba(255,255,255,0.12)',
+    surfaceOnDark: 'rgba(255,255,255,0.22)',
     borderOnDark:  'rgba(255,255,255,0.22)',
     cameraBg:      '#000000',
   },

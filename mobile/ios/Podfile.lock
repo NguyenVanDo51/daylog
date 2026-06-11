@@ -160,6 +160,8 @@ PODS:
     - ExpoModulesCore
   - ExpoSymbols (56.0.6):
     - ExpoModulesCore
+  - ExpoSystemUI (56.0.5):
+    - ExpoModulesCore
   - ExpoUI (56.0.16):
     - ExpoModulesCore
     - ExpoModulesWorklets
@@ -2311,7 +2313,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSentry (8.13.0):
+  - RNSentry (7.11.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2333,7 +2335,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - Sentry (= 9.15.0)
+    - Sentry/HybridSDK (= 8.58.0)
     - Yoga
   - RNSVG (15.15.4):
     - hermes-engine
@@ -2473,9 +2475,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - Sentry (9.15.0):
-    - Sentry/Core (= 9.15.0)
-  - Sentry/Core (9.15.0)
+  - Sentry/HybridSDK (8.58.0)
   - SwiftUIIntrospect (1.3.0)
   - Yoga (0.0.0)
 
@@ -2518,6 +2518,7 @@ DEPENDENCIES:
   - ExpoSecureStore (from `../node_modules/expo-secure-store/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
+  - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
   - "ExpoUI (from `../node_modules/@expo/ui/ios`)"
   - ExpoVideo (from `../node_modules/expo-video/ios/ExpoVideo.podspec`)
   - ExpoVideoThumbnails (from `../node_modules/expo-video-thumbnails/ios`)
@@ -2703,6 +2704,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-splash-screen/ios"
   ExpoSymbols:
     :path: "../node_modules/expo-symbols/ios"
+  ExpoSystemUI:
+    :path: "../node_modules/expo-system-ui/ios"
   ExpoUI:
     :path: "../node_modules/@expo/ui/ios"
   ExpoVideo:
@@ -2932,6 +2935,7 @@ SPEC CHECKSUMS:
   ExpoSecureStore: f1bd083c1b7b8d4142013ffcc0082d377d9f49f4
   ExpoSplashScreen: 3fe3a57d56d7242a9109d9714a6f9fa1e256538b
   ExpoSymbols: 377747de25bcb1ab68ec68f23d81fb81d43eae83
+  ExpoSystemUI: 8f4fb641c6a6ebe2a01dda0fbd3fdd952ab5823a
   ExpoUI: 87bfd96f91fce59e1cfc1ed166dd7a6331aff2f9
   ExpoVideo: 8ebbbf65778c5f986d65fc17bb60b79e9d7624e6
   ExpoVideoThumbnails: 116c2563d2bd3a1e98326a267020e25fea8af79e
@@ -3026,11 +3030,11 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 0d72ae233fe10522497424748acf00fcc1ed2ee7
   RNReanimated: f735b1747a7a93bda7ca102c6d37a3cf54b6d5e8
   RNScreens: f94000b3cb1eb14cbb8d08dd6074fdd6ccf0e6b0
-  RNSentry: ce1f0007dac49bd8277c97599859e2a373f1ec94
+  RNSentry: c2b739c5dbdd77f439fbd197d1d45724b22a0437
   RNSVG: 04044c3abcf177fd674a1a3d13097efa1adebcbe
   RNTrueSheet: ea66ad78382f49ecac16b615268831eda395206e
   RNWorklets: 4931990f73bc8f347586918b2e13f11dfadf3b75
-  Sentry: d5b72948d692d369ded835e2e77baadcd3c492dd
+  Sentry: d587a8fe91ca13503ecd69a1905f3e8a0fcf61be
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   Yoga: 77dfa8673de2874e1855002ae59c68b8be9b007b
 

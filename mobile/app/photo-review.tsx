@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Image, TouchableOpacity, TouchableWithoutFeedback,
   StyleSheet, StatusBar, Alert,
-  KeyboardAvoidingView, Platform, Keyboard, TextInput,
+  KeyboardAvoidingView, Platform, Keyboard,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -14,10 +14,11 @@ import { useCapture, type UploadResult } from '@/hooks/useCapture';
 import { useAlbums } from '@/hooks/useAlbums';
 import { useLastAlbumSelection } from '@/hooks/useLastAlbumSelection';
 import { Confetti } from '@/components/ui/Confetti';
+import { MediaCaption } from '@/components/ui/MediaCaption';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerChip } from '@/components/ui/StickerChip';
 import { StickerButton } from '@/components/ui/StickerButton';
-import { theme, spacing, typography } from '@/constants/theme';
+import { theme, spacing } from '@/constants/theme';
 import { success } from '@/lib/haptics';
 import { t } from '@/lib/i18n';
 
@@ -116,31 +117,17 @@ export default function PhotoReviewScreen() {
                   <XIcon size={20} color={theme.colors.textPrimary} weight="bold" />
                 </StickerCard>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { clear(); router.back(); }} testID="review-retake">
-                <StickerChip label={t('capture.retake')} variant="yellow" />
-              </TouchableOpacity>
             </View>
           </LinearGradient>
 
-          <View style={styles.timeArea} pointerEvents="box-none">
-            {timeStr ? (
-              <StickerChip label={timeStr} variant="yellow" tilt="playful" flip />
-            ) : null}
-          </View>
-
-          <View style={styles.captionArea}>
-            <StickerCard style={styles.captionCard}>
-              <TextInput
-                testID="review-note-input"
-                style={styles.captionInput}
-                value={caption}
-                onChangeText={setCaption}
-                placeholder={t('photo_review.note_ph')}
-                placeholderTextColor={theme.colors.textMuted}
-                multiline
-              />
-            </StickerCard>
-          </View>
+          <MediaCaption
+            time={timeStr}
+            editable
+            caption={caption}
+            onCaptionChange={setCaption}
+            placeholder={t('photo_review.note_ph')}
+            testID="review-note-input"
+          />
 
           <LinearGradient
             colors={['transparent', theme.overlays.scrimDeep]}
@@ -197,7 +184,6 @@ const styles = StyleSheet.create({
   },
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.md,
   },
@@ -206,26 +192,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 0,
-  },
-  timeArea: {
-    position: 'absolute',
-    top: '22%',
-    left: 0, right: 0,
-    alignItems: 'center',
-  },
-  captionArea: {
-    position: 'absolute',
-    top: '32%',
-    left: spacing['2xl'], right: spacing['2xl'],
-  },
-  captionCard: {
-    padding: spacing.md,
-  },
-  captionInput: {
-    ...typography.body,
-    color: theme.colors.textPrimary,
-    minHeight: 36,
-    maxHeight: 96,
   },
   gradientBottom: {
     position: 'absolute',

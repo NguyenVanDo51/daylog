@@ -6,14 +6,15 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { CaretLeftIcon, PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon, DotsThree } from 'phosphor-react-native';
+import { PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon, DotsThreeIcon } from 'phosphor-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useDayPhotos } from '@/hooks/useDayPhotos';
 import { useAlbumDays } from '@/hooks/useAlbumDays';
 import { useStoryExport } from '@/hooks/useStoryExport';
 import { theme, spacing, typography } from '@/constants/theme';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
-import { StickerChip } from '@/components/ui/StickerChip';
+import { OutlinedText } from '@/components/ui/OutlinedText';
 import { PhotoItem, VlogOverlay } from './_components';
 
 export default function StoryScreen() {
@@ -150,6 +151,20 @@ export default function StoryScreen() {
       <View style={styles.container}>
         <StatusBar hidden />
 
+        <ScreenHeader
+          style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}
+          onBack={() => router.back()}
+          backTestID="story-back"
+          title={<OutlinedText size={18} testID="story-date-chip">{dateChip}</OutlinedText>}
+          right={
+            <TouchableOpacity onPress={() => setMenuOpen(true)} testID="story-menu-btn" hitSlop={8}>
+              <StickerCard style={styles.topIconBtn}>
+                <DotsThreeIcon size={16} color={theme.colors.textPrimary} weight="bold" />
+              </StickerCard>
+            </TouchableOpacity>
+          }
+        />
+
         {/* Single persistent video view — hidden until first frame is ready */}
         <VideoView
           player={videoPlayer}
@@ -162,33 +177,11 @@ export default function StoryScreen() {
         {(!isVideo || !videoReady) && (
           <PhotoItem
             photo={current}
-            onEnd={!isVideo ? goNext : () => {}}
+            onEnd={!isVideo ? goNext : () => { }}
             isPaused={isPaused || isVideo}
-            onProgress={!isVideo ? setPhotoProgress : () => {}}
+            onProgress={!isVideo ? setPhotoProgress : () => { }}
           />
         )}
-
-        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-          <TouchableOpacity onPress={() => router.back()} testID="story-back" hitSlop={8}>
-            <StickerCard style={styles.topIconBtn}>
-              <CaretLeftIcon size={16} color={theme.colors.textPrimary} weight="bold" />
-            </StickerCard>
-          </TouchableOpacity>
-          <View style={styles.dateChipWrap}>
-            <StickerChip
-              label={dateChip}
-              variant="yellow"
-              tilt="default"
-              flip
-              testID="story-date-chip"
-            />
-          </View>
-          <TouchableOpacity onPress={() => setMenuOpen(true)} testID="story-menu-btn" hitSlop={8}>
-            <StickerCard style={styles.topIconBtn}>
-              <DotsThree size={16} color={theme.colors.textPrimary} weight="bold" />
-            </StickerCard>
-          </TouchableOpacity>
-        </View>
 
         {menuOpen && (
           <TouchableOpacity
@@ -246,16 +239,6 @@ export default function StoryScreen() {
           <TouchableOpacity style={styles.tapRight} onPress={goNext} testID="story-next" />
         </View>
 
-        <View style={styles.progressLine} pointerEvents="none" testID="story-progress-line">
-          <View
-            style={[
-              styles.progressFill,
-              isPaused ? styles.progressFillPaused : styles.progressFillPlaying,
-              { width: `${photoProgress * 100}%` },
-            ]}
-          />
-        </View>
-
         <VlogOverlay
           key={current.id}
           photo={current}
@@ -264,6 +247,16 @@ export default function StoryScreen() {
           bottomInset={insets.bottom}
           isPaused={isPaused}
         />
+
+        <View style={styles.progressLine} pointerEvents="none" testID="story-progress-line">
+          <View
+            style={[
+              styles.progressFill,
+              isPaused ? styles.progressFillPaused : styles.progressFillPlaying,
+              { width: `${photos.length > 0 ? ((currentIndex + photoProgress) / photos.length) * 100 : 0}%` },
+            ]}
+          />
+        </View>
       </View>
     </GestureDetector>
   );
@@ -281,7 +274,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     padding: 0,
   },
-  dateChipWrap: { flex: 1, alignItems: 'center' },
 
   tapAreas: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
   tapLeft: { flex: 3 },
@@ -298,7 +290,7 @@ const styles = StyleSheet.create({
   },
   progressFill: { height: '100%' },
   progressFillPlaying: { backgroundColor: theme.colors.surface },
-  progressFillPaused:  { backgroundColor: theme.colors.accent1 },
+  progressFillPaused: { backgroundColor: theme.colors.accent1 },
 
   menuBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
   menuDropdown: {

@@ -14,6 +14,7 @@ import * as SecureStore from 'expo-secure-store';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerChip } from '@/components/ui/StickerChip';
 import { StickerButton } from '@/components/ui/StickerButton';
+import { MediaCaption } from '@/components/ui/MediaCaption';
 
 const HINT_KEY = 'capture.hint_seen';
 
@@ -158,9 +159,7 @@ export function CameraPage({ onTabPress }: Props) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.clockArea} pointerEvents="none">
-        <StickerChip label={clock} variant="yellow" tilt="playful" flip />
-      </View>
+      <MediaCaption time={clock} style={styles.clockArea} />
 
       {showHint && (
         <View style={styles.hintArea} pointerEvents="none">

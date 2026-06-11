@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { CaretLeft } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { theme, spacing, typography } from '@/constants/theme';
 import { t, setLanguage, getCurrentLanguage, AppLanguage } from '@/lib/i18n';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerChip } from '@/components/ui/StickerChip';
 
@@ -26,15 +26,10 @@ export default function LanguageScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <StickerCard style={styles.iconBtn}>
-            <CaretLeft size={18} color={theme.colors.textPrimary} weight="bold" />
-          </StickerCard>
-        </TouchableOpacity>
-        <Text style={styles.heading}>{t('language.title')}</Text>
-        <View style={styles.iconBtn} />
-      </View>
+      <ScreenHeader
+        onBack={() => router.back()}
+        title={t('language.title')}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         {OPTIONS.map((opt) => {
@@ -56,9 +51,6 @@ export default function LanguageScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  header:    { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  iconBtn:   { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
-  heading:   { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, flex: 1, textAlign: 'center' },
   content:   { padding: spacing['2xl'], gap: spacing.md },
   row:       { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
   flag:      { fontSize: 22 },

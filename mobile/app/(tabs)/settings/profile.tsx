@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { CaretLeft } from 'phosphor-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerButton } from '@/components/ui/StickerButton';
 import { theme, spacing, typography } from '@/constants/theme';
@@ -66,15 +66,10 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <StickerCard style={styles.iconBtn}>
-            <CaretLeft size={18} color={theme.colors.textPrimary} weight="bold" />
-          </StickerCard>
-        </TouchableOpacity>
-        <Text style={styles.heading}>{t('settings.edit_profile')}</Text>
-        <View style={styles.iconBtn} />
-      </View>
+      <ScreenHeader
+        onBack={() => router.back()}
+        title={t('settings.edit_profile')}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.avatarWrap}>
@@ -115,9 +110,6 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container:        { flex: 1, backgroundColor: theme.colors.background },
-  header:           { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  iconBtn:          { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
-  heading:          { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, flex: 1, textAlign: 'center' },
   content:          { padding: spacing['2xl'], gap: spacing.lg, alignItems: 'stretch' },
   avatarWrap:       { alignItems: 'center', marginBottom: spacing.md },
   uploadingOverlay: {

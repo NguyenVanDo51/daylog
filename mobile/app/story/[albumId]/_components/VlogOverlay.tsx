@@ -1,9 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  cancelAnimation,
+  Easing,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { DayPhoto } from '@/hooks/useDayPhotos';
 import { theme, spacing } from '@/constants/theme';
 import { MediaCaption } from '@/components/ui/MediaCaption';
+
+const CHAR_STAGGER_MS = 20;
+const CHAR_FADE_MS = 40;
+
+function TypingChar({
+  children,
+  startMs,
+  elapsed,
+}: {
+  children: string;
+  startMs: number;
+  elapsed: SharedValue<number>;
+}) {
+  const style = useAnimatedStyle(() => {
+    const t = (elapsed.value - startMs) / CHAR_FADE_MS;
+    return { opacity: t < 0 ? 0 : t > 1 ? 1 : t };
+  });
+  return <Animated.Text style={style}>{children}</Animated.Text>;
+}
 
 export function VlogOverlay({
   photo,
@@ -21,31 +48,46 @@ export function VlogOverlay({
   const dt = new Date(photo.taken_at);
   const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
   const caption = photo.caption?.trim() ?? '';
+  const chars = caption ? Array.from(caption) : [];
+  const totalMs = chars.length > 0 ? (chars.length - 1) * CHAR_STAGGER_MS + CHAR_FADE_MS : 0;
 
-  const [displayedCaption, setDisplayedCaption] = useState('');
+  const elapsed = useSharedValue(0);
+  const [done, setDone] = useState(chars.length === 0);
 
   useEffect(() => {
-    if (!caption) return;
-    let capInterval: ReturnType<typeof setInterval>;
-    const words = caption.split(' ');
-    const capAvailableMs = 1000;
-    const capIntervalMs = Math.max(10, Math.floor(capAvailableMs / words.length));
-    let wordIdx = 0;
-    capInterval = setInterval(() => {
-      wordIdx++;
-      setDisplayedCaption(words.slice(0, wordIdx).join(' '));
-      if (wordIdx >= words.length) clearInterval(capInterval);
-    }, capIntervalMs);
-    return () => clearInterval(capInterval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (chars.length === 0 || done) return;
+
+    if (isPaused) {
+      cancelAnimation(elapsed);
+      return;
+    }
+
+    const remaining = Math.max(0, totalMs - elapsed.value);
+    if (remaining === 0) {
+      setDone(true);
+      return;
+    }
+
+    elapsed.value = withTiming(totalMs, { duration: remaining, easing: Easing.linear });
+    const doneTimer = setTimeout(() => setDone(true), remaining);
+    return () => clearTimeout(doneTimer);
+  }, [isPaused, done, totalMs, chars.length, elapsed]);
+
+  let captionNode: React.ReactNode | undefined;
+  if (chars.length > 0) {
+    captionNode = done
+      ? caption
+      : chars.map((c, i) => (
+        <TypingChar key={i} startMs={i * CHAR_STAGGER_MS} elapsed={elapsed}>{c}</TypingChar>
+      ));
+  }
 
   return (
     <>
+
       <MediaCaption
         time={timeStr}
-        caption={displayedCaption || undefined}
-        showPlayIcon
-        isPaused={isPaused}
+        caption={captionNode}
       />
 
       <LinearGradient
@@ -68,6 +110,13 @@ export function VlogOverlay({
 }
 
 const styles = StyleSheet.create({
+  captionPosition: {
+    position: 'absolute',
+    top: '38%',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
   container: {
     position: 'absolute',
     bottom: 0,
@@ -83,14 +132,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dot: {
-    width: 5,
-    height: 5,
+    width: 4,
+    height: 4,
     borderRadius: 2.5,
     backgroundColor: theme.overlays.surfaceOnDark,
   },
   dotActive: {
     width: 18,
-    height: 5,
+    height: 4,
     borderRadius: 3,
     backgroundColor: theme.colors.surface,
   },

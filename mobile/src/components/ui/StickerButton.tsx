@@ -44,7 +44,7 @@ export function StickerButton({
     gap:             theme.spacing.sm,
     ...(shadow === 'heavy' ? theme.shadows.stickerHeavy : v.shadow),
     ...(fullWidth && { alignSelf: 'stretch' }),
-    ...(blocked && { opacity: 0.5 }),
+    ...(blocked && { opacity: 0.65 }),
   };
   const labelStyle: TextStyle = {
     ...theme.typography.body,

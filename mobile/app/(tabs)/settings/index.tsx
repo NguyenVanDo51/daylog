@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Switch, Alert, TouchableOpacity } from 'react-native';
-import { CaretLeft, ArrowSquareOut, CaretRight, Bell, Globe, DownloadSimple, Trash, ShieldCheck, FileText } from 'phosphor-react-native';
+import { ArrowSquareOut, CaretRight, Bell, Globe, DownloadSimple, Trash, ShieldCheck, FileText } from 'phosphor-react-native';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
 import { api } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerButton } from '@/components/ui/StickerButton';
 import { registerPushToken, hasPushPermission } from '@/lib/notifications';
@@ -98,15 +99,11 @@ export default function SettingsTab() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8} testID="settings-back">
-          <StickerCard style={styles.iconBtn}>
-            <CaretLeft size={18} color={theme.colors.textPrimary} weight="bold" />
-          </StickerCard>
-        </TouchableOpacity>
-        <Text style={styles.heading}>{t('settings.title')}</Text>
-        <View style={styles.iconBtn} />
-      </View>
+      <ScreenHeader
+        onBack={() => router.back()}
+        backTestID="settings-back"
+        title={t('settings.title')}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Profile */}
@@ -199,9 +196,6 @@ export default function SettingsTab() {
 
 const styles = StyleSheet.create({
   container:     { flex: 1, backgroundColor: theme.colors.background },
-  header:        { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  iconBtn:       { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
-  heading:       { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, flex: 1, textAlign: 'center' },
   content:       { padding: spacing['2xl'], gap: spacing.md, paddingBottom: spacing['4xl'] },
   profileCard:   { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, padding: spacing.md },
   profileInfo:   { flex: 1 },

@@ -58,13 +58,13 @@ export default function OnboardingScreen() {
   const isLast = active === PAGES - 1;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       <TouchableOpacity
         testID="onboarding-skip"
         onPress={finish}
-        style={[styles.skip, { top: insets.top + spacing.md }]}
+        style={[styles.skip, { top: spacing.md }]}
         hitSlop={12}
       >
         <Text style={styles.skipText}>{t('onboarding.skip')}</Text>

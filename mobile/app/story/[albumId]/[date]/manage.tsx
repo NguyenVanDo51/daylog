@@ -4,13 +4,13 @@ import {
   StyleSheet, Alert, Image, Dimensions,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CaretLeftIcon, TrashIcon, PencilSimpleIcon } from 'phosphor-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TrashIcon, PencilSimpleIcon } from 'phosphor-react-native';
 import { useDayPhotos, DayPhoto } from '@/hooks/useDayPhotos';
 import { useDeletePhoto, useUpdateCaption } from '@/hooks/usePhotoActions';
 import { useAuthStore } from '@/stores/authStore';
 import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerChip } from '@/components/ui/StickerChip';
 
@@ -18,7 +18,6 @@ const IMAGE_HEIGHT = Math.round((Dimensions.get('window').width - spacing.lg * 2
 
 export default function ManageScreen() {
   const { albumId, date } = useLocalSearchParams<{ albumId: string; date: string }>();
-  const insets = useSafeAreaInsets();
   const { data: serverPhotos } = useDayPhotos(albumId ?? null, date ?? null);
   const currentUserId = useAuthStore((s) => s.user?.id);
 
@@ -85,21 +84,18 @@ export default function ManageScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
-          <StickerCard style={styles.iconBtn}>
-            <CaretLeftIcon size={18} color={theme.colors.textPrimary} weight="bold" />
-          </StickerCard>
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.title}>{t('manage.title', { date: dateLabel })}</Text>
-          {photos.length > 0 && (
-            <Text style={styles.photoCount}>{photos.length} ảnh</Text>
-          )}
-        </View>
-        <View style={styles.iconBtn} />
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader
+        onBack={() => router.back()}
+        title={
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>{t('manage.title', { date: dateLabel })}</Text>
+            {photos.length > 0 && (
+              <Text style={styles.photoCount}>{photos.length} ảnh</Text>
+            )}
+          </View>
+        }
+      />
 
       <FlatList
         data={photos}
@@ -151,7 +147,7 @@ export default function ManageScreen() {
                     placeholder={t('manage.note_ph')}
                     placeholderTextColor={theme.colors.textMuted}
                     multiline
-                    maxLength={200}
+                    maxLength={50}
                   />
                 ) : (
                   <Text
@@ -176,15 +172,7 @@ export default function ManageScreen() {
 const styles = StyleSheet.create({
   container:    { flex: 1, backgroundColor: theme.colors.background },
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: spacing.md,
-  },
-  iconBtn:      { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
-  headerCenter: { flex: 1, alignItems: 'center' },
+  headerCenter: { alignItems: 'center' },
   title:        { ...typography.title, color: theme.colors.textPrimary },
   photoCount:   { ...typography.caption, color: theme.colors.textMuted, marginTop: 2 },
 

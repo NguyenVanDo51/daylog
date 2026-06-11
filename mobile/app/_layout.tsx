@@ -3,8 +3,9 @@ import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { theme } from '@/constants/theme';
 import * as SecureStore from 'expo-secure-store';
 import { useFonts, Baloo2_400Regular, Baloo2_500Medium, Baloo2_600SemiBold, Baloo2_700Bold } from '@expo-google-fonts/baloo-2';
 import { queryClient } from '@/lib/queryClient';
@@ -107,20 +108,35 @@ function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="albums/[id]" />
-            <Stack.Screen name="photo/[id]" options={{ presentation: 'fullScreenModal' }} />
-            <Stack.Screen name="photo-review" options={{ headerShown: false }} />
-            <Stack.Screen name="story/[albumId]/[date]" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
-            <Stack.Screen name="story/[albumId]/[date]/manage" options={{ headerShown: false, presentation: 'modal' }} />
-            <Stack.Screen name="join/[token]" />
-          </Stack>
+          <RootStack />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+// Document screens get a top safe-area inset applied via the Stack's
+// contentStyle so individual screens don't have to thread useSafeAreaInsets
+// into their containers. Immersive screens (photo viewer, photo-review,
+// story viewer) are omitted so their content stays edge-to-edge under the
+// status bar — they apply insets to their own overlay UI. The (tabs) entry
+// is also omitted because the home tab embeds the immersive camera page;
+// safe area for the settings sub-stack is handled by its own _layout.
+function RootStack() {
+  const insets = useSafeAreaInsets();
+  const docContent = { paddingTop: insets.top, backgroundColor: theme.colors.background };
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" options={{ contentStyle: docContent }} />
+      <Stack.Screen name="onboarding" options={{ gestureEnabled: false, contentStyle: docContent }} />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="albums/[id]" options={{ contentStyle: docContent }} />
+      <Stack.Screen name="photo/[id]" options={{ presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="photo-review" />
+      <Stack.Screen name="story/[albumId]/[date]" options={{ presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="story/[albumId]/[date]/manage" options={{ presentation: 'modal', contentStyle: docContent }} />
+      <Stack.Screen name="join/[token]" options={{ contentStyle: docContent }} />
+    </Stack>
   );
 }
 

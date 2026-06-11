@@ -3,7 +3,6 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CaretLeft, DotsThree, Archive } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -21,7 +20,6 @@ import { StickerCard } from '@/components/ui/StickerCard';
 import { StickerChip } from '@/components/ui/StickerChip';
 
 export default function AlbumScreen() {
-  const insets = useSafeAreaInsets();
   const albumId    = useAlbumStore((s) => s.albumId);
   const albumName  = useAlbumStore((s) => s.albumName);
   const archivedAt = useAlbumStore((s) => s.archivedAt);
@@ -133,7 +131,7 @@ export default function AlbumScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <Modal visible={renameOpen} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <StickerCard shadow="heavy" style={styles.modalCard}>
