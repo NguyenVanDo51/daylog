@@ -28,6 +28,32 @@ function signJwt(userId: string): string {
   return jwt.sign({ userId }, secret, { expiresIn: '7d' });
 }
 
+function signRestoreJwt(userId: string): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET env var is required');
+  return jwt.sign({ userId, purpose: 'restore' }, secret, { expiresIn: '30m' });
+}
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function checkPendingDeletion(user: typeof users.$inferSelect, res: Response): boolean {
+  if (!user.deletedAt) return false;
+  const msSinceDelete = Date.now() - user.deletedAt.getTime();
+  if (msSinceDelete >= SEVEN_DAYS_MS) {
+    // Past the restore window — treat as not found.
+    res.status(401).json({ error: 'Unauthorized' });
+    return true;
+  }
+  const daysRemaining = Math.ceil((SEVEN_DAYS_MS - msSinceDelete) / (24 * 60 * 60 * 1000));
+  res.json({
+    status: 'account_pending_deletion',
+    deleted_at: user.deletedAt.toISOString(),
+    days_remaining: daysRemaining,
+    restore_token: signRestoreJwt(user.id),
+  });
+  return true;
+}
+
 async function toSnakeUser(u: typeof users.$inferSelect) {
   return {
     id: u.id,
@@ -92,6 +118,7 @@ router.post('/apple', async (req: Request, res: Response, next: NextFunction) =>
       user = upserted;
     }
 
+    if (checkPendingDeletion(user, res)) return;
     await ensureDefaultAlbum(user.id);
     res.json({ token: signJwt(user.id), user: await toSnakeUser(user) });
   } catch (err) {
@@ -153,6 +180,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
       user = upserted;
     }
 
+    if (checkPendingDeletion(user, res)) return;
     await ensureDefaultAlbum(user.id);
     res.json({ token: signJwt(user.id), user: await toSnakeUser(user) });
   } catch (err) {
