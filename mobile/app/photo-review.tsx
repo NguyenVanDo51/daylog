@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, Image, TouchableOpacity, TouchableWithoutFeedback,
-  StyleSheet, StatusBar, useWindowDimensions, Alert,
+  View, Image, TouchableOpacity, TouchableWithoutFeedback,
+  StyleSheet, StatusBar, Alert,
   KeyboardAvoidingView, Platform, Keyboard, TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,7 +34,6 @@ function VideoPreview({ uri }: { uri: string }) {
 }
 
 export default function PhotoReviewScreen() {
-  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const assets = usePhotoReviewStore((s) => s.assets);
   const clear = usePhotoReviewStore((s) => s.clear);

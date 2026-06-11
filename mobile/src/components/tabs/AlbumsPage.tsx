@@ -11,7 +11,7 @@ import { useAlbums, Album } from '@/hooks/useAlbums';
 import { useAlbumStore } from '@/stores/albumStore';
 import { SettingsSheet } from './SettingsSheet';
 import { api } from '@/lib/api';
-import { theme, colors, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { Mascot } from '@/components/ui/Mascot';
 import { StickerCard } from '@/components/ui/StickerCard';
@@ -58,8 +58,6 @@ export function AlbumsPage({ onCameraPress }: Props) {
   const sorted = albums
     ? [...albums.filter((a) => a.is_private), ...albums.filter((a) => !a.is_private)]
     : [];
-
-  const SWATCHES = theme.colors.swatch;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
