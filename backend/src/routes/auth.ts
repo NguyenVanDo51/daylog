@@ -6,7 +6,7 @@ import { users, albums, albumMembers } from '../db/schema';
 import { verifyAppleToken } from '../services/appleAuth';
 import { verifyGoogleToken } from '../services/googleAuth';
 import { requireAuth } from '../middleware/auth';
-import { getPresignedGetUrl } from '../services/r2';
+import { resolveAvatarUrl } from '../lib/mediaUtils';
 
 const router = Router();
 
@@ -29,17 +29,13 @@ function signJwt(userId: string): string {
 }
 
 async function toSnakeUser(u: typeof users.$inferSelect) {
-  let avatarUrl = u.avatarUrl;
-  if (avatarUrl && !avatarUrl.startsWith('https://')) {
-    avatarUrl = await getPresignedGetUrl(avatarUrl, 3600);
-  }
   return {
     id: u.id,
     apple_sub: u.appleSub,
     google_sub: u.googleSub,
     display_name: u.displayName,
     email: u.email ?? '',
-    avatar_url: avatarUrl,
+    avatar_url: await resolveAvatarUrl(u.avatarUrl),
     push_token: u.pushToken,
     created_at: u.createdAt,
   };

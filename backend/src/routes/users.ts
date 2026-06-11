@@ -3,14 +3,9 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
-import { getPresignedGetUrl, getPresignedPutUrl } from '../services/r2';
+import { resolveAvatarUrl } from '../lib/mediaUtils';
 
 const router = Router();
-
-async function resolveAvatarUrl(url: string | null): Promise<string | null> {
-  if (!url || url.startsWith('https://')) return url;
-  return getPresignedGetUrl(url, 3600);
-}
 
 async function toClientUser(u: typeof users.$inferSelect) {
   return {
