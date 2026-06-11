@@ -2,20 +2,23 @@ appId: com.andynguyen.daylog
 ---
 - launchApp:
     clearState: false
-- assertVisible:
-    id: "menu-btn"
+- extendedWaitUntil:
+    visible:
+      id: "menu-btn"
     timeout: 8000
 - tapOn:
     id: "album-row-.*"
     index: 0
-- assertVisible:
-    id: "day-cell-.*"
+- extendedWaitUntil:
+    visible:
+      id: "day-cell-.*"
     timeout: 6000
 - tapOn:
     id: "day-cell-.*"
     index: 0
-- assertVisible:
-    id: "story-back"
+- extendedWaitUntil:
+    visible:
+      id: "story-back"
     timeout: 6000
 - assertVisible:
     id: "story-date-chip"
@@ -26,6 +29,7 @@ appId: com.andynguyen.daylog
     id: "story-back"
 - tapOn:
     id: "story-back"
-- assertVisible:
-    id: "day-cell-.*"
+- extendedWaitUntil:
+    visible:
+      id: "day-cell-.*"
     timeout: 4000

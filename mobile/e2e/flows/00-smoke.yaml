@@ -2,6 +2,7 @@ appId: com.andynguyen.daylog
 ---
 - launchApp:
     clearState: false
-- assertVisible:
-    id: "menu-btn"
+- extendedWaitUntil:
+    visible:
+      id: "menu-btn"
     timeout: 8000
