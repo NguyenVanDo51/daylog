@@ -24,6 +24,7 @@ const THEME_CLEAN_APP_FILES = [
   'app/story/[albumId]/[date].tsx',
   'app/story/[albumId]/_components/VlogOverlay.tsx',
   'app/photo/[id].tsx',
+  'app/story/[albumId]/[date]/manage.tsx',
 ];
 
 const HEX_OR_RGBA = /#[0-9a-fA-F]{3,8}\b|rgba?\s*\(/;

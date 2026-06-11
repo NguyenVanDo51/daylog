@@ -9,8 +9,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDayPhotos, DayPhoto } from '@/hooks/useDayPhotos';
 import { useDeletePhoto, useUpdateCaption } from '@/hooks/usePhotoActions';
 import { useAuthStore } from '@/stores/authStore';
-import { colors, spacing, typography, radii, shadows } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
 
 const IMAGE_HEIGHT = Math.round((Dimensions.get('window').width - spacing.lg * 2) * 0.75);
 
@@ -85,8 +87,10 @@ export default function ManageScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.headerBtn}>
-          <CaretLeftIcon size={24} color={colors.ink} />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+          <StickerCard style={styles.iconBtn}>
+            <CaretLeftIcon size={18} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.title}>{t('manage.title', { date: dateLabel })}</Text>
@@ -94,18 +98,23 @@ export default function ManageScreen() {
             <Text style={styles.photoCount}>{photos.length} ảnh</Text>
           )}
         </View>
-        <View style={styles.headerBtn} />
+        <View style={styles.iconBtn} />
       </View>
 
       <FlatList
         data={photos}
         keyExtractor={(p) => p.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item: photo }) => {
+        renderItem={({ item: photo, index }) => {
           const isOwner = photo.uploaded_by === currentUserId;
           const isSaving = savingIds.has(photo.id);
           return (
-            <View style={styles.card} testID={`manage-item-${photo.id}`}>
+            <StickerCard
+              tilt="subtle"
+              flip={index % 2 === 1}
+              style={styles.card}
+              testID={`manage-item-${photo.id}`}
+            >
               <View style={styles.imageContainer}>
                 <Image
                   source={{ uri: photo.thumb_url ?? undefined }}
@@ -119,14 +128,16 @@ export default function ManageScreen() {
                     hitSlop={8}
                     style={styles.deleteOverlay}
                   >
-                    <TrashIcon size={18} color={colors.ink} weight="bold" />
+                    <StickerCard style={styles.deleteBtn}>
+                      <TrashIcon size={16} color={theme.colors.textPrimary} weight="bold" />
+                    </StickerCard>
                   </TouchableOpacity>
                 )}
               </View>
 
               <View style={styles.captionSection}>
                 <View style={styles.pencilWrapper}>
-                  <PencilSimpleIcon size={14} color={colors.inkMuted} />
+                  <PencilSimpleIcon size={14} color={theme.colors.textMuted} />
                 </View>
                 {isOwner ? (
                   <TextInput
@@ -138,7 +149,7 @@ export default function ManageScreen() {
                     }
                     onBlur={() => handleCaptionBlur(photo)}
                     placeholder={t('manage.note_ph')}
-                    placeholderTextColor={colors.inkMuted}
+                    placeholderTextColor={theme.colors.textMuted}
                     multiline
                     maxLength={200}
                   />
@@ -151,10 +162,10 @@ export default function ManageScreen() {
                   </Text>
                 )}
                 {isSaving && (
-                  <Text style={styles.savingLabel}>đang lưu...</Text>
+                  <StickerChip label="đang lưu..." variant="ink" />
                 )}
               </View>
-            </View>
+            </StickerCard>
           );
         }}
       />
@@ -163,45 +174,34 @@ export default function ManageScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: colors.cream },
+  container:    { flex: 1, backgroundColor: theme.colors.background },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSoft,
+    gap: spacing.md,
   },
-  headerBtn:    { width: 36, alignItems: 'center' },
+  iconBtn:      { width: 32, height: 32, padding: 0, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
-  title:        { ...typography.title, color: colors.ink },
-  photoCount:   { ...typography.caption, color: colors.inkMuted, marginTop: 2 },
+  title:        { ...typography.title, color: theme.colors.textPrimary },
+  photoCount:   { ...typography.caption, color: theme.colors.textMuted, marginTop: 2 },
 
   list: { padding: spacing.lg, gap: spacing.lg },
 
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: radii.md,
-    borderWidth: 1.5,
-    borderColor: colors.borderSoft,
-    overflow: 'hidden',
-    ...shadows.card,
-  },
-
+  card:         { padding: 0, overflow: 'hidden' },
   imageContainer: { width: '100%', height: IMAGE_HEIGHT },
-  image:          { width: '100%', height: '100%' },
+  image:        { width: '100%', height: '100%' },
 
   deleteOverlay: {
     position: 'absolute',
     top: spacing.sm,
     right: spacing.sm,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.cream,
-    borderWidth: 1.5,
-    borderColor: colors.ink,
+  },
+  deleteBtn: {
+    width: 36, height: 36,
+    padding: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -212,18 +212,17 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSoft,
+    borderTopWidth: theme.border.hairline,
+    borderTopColor: theme.colors.borderSoft,
   },
   pencilWrapper: { marginTop: 2 },
   noteInput: {
     ...typography.body,
-    color: colors.ink,
+    color: theme.colors.textPrimary,
     flex: 1,
     minHeight: 40,
     textAlignVertical: 'top',
   },
-  noteReadOnly: { ...typography.body, color: colors.ink, flex: 1 },
-  noteEmpty:    { color: colors.inkMuted, fontStyle: 'italic' },
-  savingLabel:  { ...typography.caption, color: colors.inkMuted, alignSelf: 'center' },
+  noteReadOnly: { ...typography.body, color: theme.colors.textPrimary, flex: 1 },
+  noteEmpty:    { color: theme.colors.textMuted, fontStyle: 'italic' },
 });
