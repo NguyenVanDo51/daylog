@@ -35,56 +35,52 @@ afterEach(() => {
 });
 
 describe('VlogOverlay — static rendering', () => {
-  it('vlog-time row is present', () => {
+  it('time text is rendered with the photo time', () => {
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
     );
-    expect(getByTestId('vlog-time')).toBeTruthy();
+    expect(getByTestId('media-caption-time')).toBeTruthy();
   });
 
   it('does not render caption element when caption is null', () => {
     const { queryByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: null })} currentIndex={0} total={1} />,
     );
-    expect(queryByTestId('vlog-caption')).toBeNull();
+    expect(queryByTestId('media-caption-text')).toBeNull();
   });
 
   it('does not render caption element when caption is empty string', () => {
     const { queryByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: '' })} currentIndex={0} total={1} />,
     );
-    expect(queryByTestId('vlog-caption')).toBeNull();
+    expect(queryByTestId('media-caption-text')).toBeNull();
   });
 
-  it('renders caption element when caption is present', () => {
+  it('renders caption element when caption is present (after animation starts)', () => {
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: 'Buổi sáng' })} currentIndex={0} total={1} />,
     );
-    expect(getByTestId('vlog-caption')).toBeTruthy();
+    // capAvailableMs=1000, 2 words → interval=500ms per word; advance past first tick
+    act(() => { jest.advanceTimersByTime(600); });
+    expect(getByTestId('media-caption-text')).toBeTruthy();
   });
 });
 
 describe('VlogOverlay — typewriter animation', () => {
-  it('time text starts empty on mount', () => {
+  it('time text is non-empty on mount (static from photo.taken_at)', () => {
     const { getByTestId } = render(
       <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
     );
-    expect(getByTestId('vlog-time-text').props.children).toBe('');
+    expect(getByTestId('media-caption-time').props.children).not.toBe('');
   });
 
-  it('time text is non-empty after 500ms', () => {
-    const { getByTestId } = render(
-      <VlogOverlay photo={makePhoto()} currentIndex={0} total={1} />,
-    );
-    act(() => { jest.advanceTimersByTime(500); });
-    expect(getByTestId('vlog-time-text').props.children).not.toBe('');
-  });
-
-  it('caption starts empty on mount', () => {
-    const { getByTestId } = render(
+  it('caption node is absent on mount (animation has not started yet)', () => {
+    const { queryByTestId } = render(
       <VlogOverlay photo={makePhoto({ caption: 'Xin chào' })} currentIndex={0} total={1} />,
     );
-    expect(getByTestId('vlog-caption').props.children).toBe('');
+    // MediaCaption only renders the Text node when caption is truthy;
+    // displayedCaption starts as '' so the node should not be present yet.
+    expect(queryByTestId('media-caption-text')).toBeNull();
   });
 
   it('caption reaches full text after enough time', () => {
@@ -93,6 +89,6 @@ describe('VlogOverlay — typewriter animation', () => {
       <VlogOverlay photo={makePhoto({ caption: 'Xin chào' })} currentIndex={0} total={1} />,
     );
     act(() => { jest.advanceTimersByTime(1200); });
-    expect(getByTestId('vlog-caption').props.children).toBe('Xin chào');
+    expect(getByTestId('media-caption-text').props.children).toBe('Xin chào');
   });
 });

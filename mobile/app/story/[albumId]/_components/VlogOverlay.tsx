@@ -28,7 +28,7 @@ export function VlogOverlay({
     if (!caption) return;
     let capInterval: ReturnType<typeof setInterval>;
     const words = caption.split(' ');
-    const capAvailableMs = Math.max(50, 1000);
+    const capAvailableMs = 1000;
     const capIntervalMs = Math.max(10, Math.floor(capAvailableMs / words.length));
     let wordIdx = 0;
     capInterval = setInterval(() => {
