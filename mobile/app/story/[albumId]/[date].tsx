@@ -6,12 +6,14 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { CaretLeftIcon, PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon } from 'phosphor-react-native';
+import { CaretLeftIcon, PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon, DotsThree } from 'phosphor-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useDayPhotos } from '@/hooks/useDayPhotos';
 import { useAlbumDays } from '@/hooks/useAlbumDays';
 import { useStoryExport } from '@/hooks/useStoryExport';
-import { colors, fonts, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
 import { PhotoItem, VlogOverlay } from './_components';
 
 export default function StoryScreen() {
@@ -135,7 +137,7 @@ export default function StoryScreen() {
     return (
       <View style={styles.container}>
         <StatusBar hidden />
-        <ActivityIndicator color={colors.white} />
+        <ActivityIndicator color={theme.colors.surface} />
       </View>
     );
   }
@@ -167,12 +169,24 @@ export default function StoryScreen() {
         )}
 
         <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-          <TouchableOpacity onPress={() => router.back()} testID="story-back" style={styles.circleBtn}>
-            <CaretLeftIcon size={18} color={colors.white} />
+          <TouchableOpacity onPress={() => router.back()} testID="story-back" hitSlop={8}>
+            <StickerCard style={styles.topIconBtn}>
+              <CaretLeftIcon size={16} color={theme.colors.textPrimary} weight="bold" />
+            </StickerCard>
           </TouchableOpacity>
-          <Text style={styles.dateChip} testID="story-date-chip">{dateChip}</Text>
-          <TouchableOpacity onPress={() => setMenuOpen(true)} testID="story-menu-btn" style={styles.circleBtn}>
-            <Text style={styles.menuDots}>•••</Text>
+          <View style={styles.dateChipWrap}>
+            <StickerChip
+              label={dateChip}
+              variant="yellow"
+              tilt="default"
+              flip
+              testID="story-date-chip"
+            />
+          </View>
+          <TouchableOpacity onPress={() => setMenuOpen(true)} testID="story-menu-btn" hitSlop={8}>
+            <StickerCard style={styles.topIconBtn}>
+              <DotsThree size={16} color={theme.colors.textPrimary} weight="bold" />
+            </StickerCard>
           </TouchableOpacity>
         </View>
 
@@ -183,7 +197,7 @@ export default function StoryScreen() {
             onPress={() => setMenuOpen(false)}
             testID="story-menu-backdrop"
           >
-            <View style={styles.menuDropdown} testID="story-menu-dropdown">
+            <StickerCard shadow="heavy" style={styles.menuDropdown} testID="story-menu-dropdown">
               <TouchableOpacity
                 style={styles.menuItem}
                 testID="story-menu-edit"
@@ -192,7 +206,7 @@ export default function StoryScreen() {
                   router.push(`/story/${albumId}/${date}/manage` as any);
                 }}
               >
-                <PencilSimpleIcon size={16} color={colors.white} />
+                <PencilSimpleIcon size={16} color={theme.colors.textPrimary} />
                 <Text style={styles.menuItemText}>Sửa ghi chú</Text>
               </TouchableOpacity>
 
@@ -206,8 +220,8 @@ export default function StoryScreen() {
                 disabled={exporting}
               >
                 {exporting
-                  ? <ActivityIndicator color={colors.white} size="small" />
-                  : <ArrowCircleDownIcon size={16} color={colors.white} />}
+                  ? <ActivityIndicator color={theme.colors.textPrimary} size="small" />
+                  : <ArrowCircleDownIcon size={16} color={theme.colors.textPrimary} />}
                 <Text style={styles.menuItemText}>Lưu về máy</Text>
               </TouchableOpacity>
 
@@ -219,10 +233,10 @@ export default function StoryScreen() {
                   Alert.alert('Xoá ảnh', 'Tính năng này sẽ có sớm.');
                 }}
               >
-                <TrashIcon size={16} color={colors.error} />
-                <Text style={[styles.menuItemText, { color: colors.error }]}>Xoá ảnh</Text>
+                <TrashIcon size={16} color={theme.colors.error} />
+                <Text style={[styles.menuItemText, { color: theme.colors.error }]}>Xoá ảnh</Text>
               </TouchableOpacity>
-            </View>
+            </StickerCard>
           </TouchableOpacity>
         )}
 
@@ -256,47 +270,49 @@ export default function StoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: theme.overlays.cameraBg, alignItems: 'center', justifyContent: 'center' },
   hidden: { opacity: 0 },
   topBar: {
     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
-    paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm
+    paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
   },
-  circleBtn: {
-    width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.35)',
-    alignItems: 'center', justifyContent: 'center'
+  topIconBtn: {
+    width: 32, height: 32,
+    alignItems: 'center', justifyContent: 'center',
+    padding: 0,
   },
-  dateChip: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 7,
-    paddingVertical: 3, paddingHorizontal: 8, ...typography.caption,
-    color: colors.pink, fontFamily: fonts.medium, letterSpacing: 0.5,
-    textAlign: 'center'
-  },
-  menuDots: { color: colors.white, fontSize: 12, letterSpacing: 1, lineHeight: 14 },
+  dateChipWrap: { flex: 1, alignItems: 'center' },
+
   tapAreas: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
   tapLeft: { flex: 3 },
   tapCenter: { flex: 4 },
   tapRight: { flex: 3 },
+
   progressLine: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: 3, backgroundColor: 'rgba(255,255,255,0.12)', zIndex: 20,
+    height: 4,
+    backgroundColor: theme.overlays.surfaceOnDark,
+    borderTopWidth: theme.border.thin,
+    borderTopColor: theme.colors.border,
+    zIndex: 20,
   },
-  progressFill: { height: '100%', borderRadius: 2 },
-  progressFillPlaying: { backgroundColor: 'rgba(255,255,255,0.75)' },
-  progressFillPaused: { backgroundColor: 'rgba(255,200,68,0.85)' },
+  progressFill: { height: '100%' },
+  progressFillPlaying: { backgroundColor: theme.colors.surface },
+  progressFillPaused:  { backgroundColor: theme.colors.accent1 },
+
   menuBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
   menuDropdown: {
     position: 'absolute', top: 48, right: spacing.lg,
-    backgroundColor: 'rgba(20,20,20,0.92)', borderRadius: 12,
-    overflow: 'hidden', minWidth: 160,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+    minWidth: 160,
+    padding: 0,
+    overflow: 'hidden',
   },
   menuItem: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    paddingVertical: 12, paddingHorizontal: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.1)'
+    paddingVertical: spacing.md, paddingHorizontal: spacing.lg,
+    borderBottomWidth: theme.border.hairline,
+    borderBottomColor: theme.colors.borderSoft,
   },
   menuItemDanger: { borderBottomWidth: 0 },
-  menuItemText: { ...typography.body, color: colors.white, fontSize: 13 },
+  menuItemText: { ...typography.body, color: theme.colors.textPrimary, fontSize: 13 },
 });

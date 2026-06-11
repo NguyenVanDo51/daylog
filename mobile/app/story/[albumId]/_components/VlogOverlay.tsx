@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { DayPhoto } from '@/hooks/useDayPhotos';
-import { colors, spacing } from '@/constants/theme';
+import { theme, spacing } from '@/constants/theme';
 import { MediaCaption } from '@/components/ui/MediaCaption';
 
 export function VlogOverlay({
@@ -49,7 +49,7 @@ export function VlogOverlay({
       />
 
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.92)']}
+        colors={['transparent', theme.overlays.scrimSoft, theme.overlays.scrimDeep]}
         style={[styles.container, { paddingBottom: spacing.xl + bottomInset }]}
         pointerEvents="none"
       >
@@ -86,12 +86,12 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: theme.overlays.surfaceOnDark,
   },
   dotActive: {
     width: 18,
     height: 5,
     borderRadius: 3,
-    backgroundColor: colors.white,
+    backgroundColor: theme.colors.surface,
   },
 });
