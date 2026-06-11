@@ -57,7 +57,7 @@ describe('CameraPage', () => {
 
   it('renders clock display with HH:mm format', () => {
     const { getByTestId } = setup();
-    const clock = getByTestId('clock-display');
+    const clock = getByTestId('media-caption-time');
     expect(clock.props.children).toMatch(/^\d{2}:\d{2}$/);
   });
 

@@ -42,6 +42,12 @@ function RootLayout() {
 
   useEffect(() => {
     (async () => {
+      const e2eToken = process.env.EXPO_PUBLIC_E2E_TEST_TOKEN;
+      if (e2eToken) {
+        setAuth(e2eToken, { id: 'e2e-user', display_name: 'E2E Test', email: 'e2e@test.local', avatar_url: null });
+        setReady(true);
+        return;
+      }
       const stored = await SecureStore.getItemAsync(TOKEN_KEY);
       if (stored) {
         const cachedUser = await SecureStore.getItemAsync(USER_KEY);

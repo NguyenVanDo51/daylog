@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { X, CameraRotate } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
-import { colors, fonts, spacing, typography } from '@/constants/theme';
+import { colors, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import * as SecureStore from 'expo-secure-store';
 import { MediaCaption } from '@/components/ui/MediaCaption';
