@@ -70,9 +70,9 @@ export default function PhotoReviewScreen() {
 
   if (assets.length === 0 || !asset) return null;
 
-  const timeStr = new Date(asset.takenAt).toLocaleTimeString('vi-VN', {
-    hour: '2-digit', minute: '2-digit', hour12: false,
-  });
+  const timeStr = asset.takenAt
+    ? new Date(asset.takenAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
+    : '';
 
   function toggleAlbum(id: string) {
     setSelectedIds((prev) => {
