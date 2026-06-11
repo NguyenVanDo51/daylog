@@ -23,7 +23,11 @@ export function MediaCaption({
   testID,
 }: Props) {
   return (
-    <View style={styles.container} pointerEvents={editable ? 'box-none' : 'none'}>
+    <View
+      style={styles.container}
+      pointerEvents={editable ? 'box-none' : 'none'}
+      testID={!editable ? testID : undefined}
+    >
       <View style={styles.timeRow}>
         {showPlayIcon && (
           isPaused
@@ -40,7 +44,7 @@ export function MediaCaption({
             placeholder="Thêm ghi chú..."
             placeholderTextColor="rgba(255,255,255,0.5)"
             value={caption}
-            onChangeText={onCaptionChange}
+            onChangeText={onCaptionChange ?? (() => {})}
             multiline
             maxLength={200}
             autoFocus
