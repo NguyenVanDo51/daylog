@@ -41,7 +41,7 @@ export default function ProfileScreen() {
       setPendingKey(key);
       setAvatarUri(asset.uri);
     } catch {
-      Alert.alert(t('common.error'), 'Không thể tải ảnh lên.');
+      Alert.alert(t('common.error'), t('settings.avatar_upload_error'));
     } finally {
       setUploading(false);
     }
@@ -59,7 +59,7 @@ export default function ProfileScreen() {
       await SecureStore.setItemAsync('auth_user', JSON.stringify({ ...user, display_name: data.display_name, avatar_url: data.avatar_url }));
       router.back();
     } catch {
-      Alert.alert(t('common.error'), 'Không thể lưu thông tin.');
+      Alert.alert(t('common.error'), t('settings.save_error'));
     } finally {
       setSaving(false);
     }

@@ -34,9 +34,9 @@ export default function SettingsTab() {
     try {
       const granted = await registerPushToken();
       setNotifEnabled(granted);
-      if (!granted) Alert.alert(t('common.error'), 'Vào Cài đặt thiết bị để bật thông báo.');
+      if (!granted) Alert.alert(t('common.error'), t('settings.notif_denied'));
     } catch {
-      Alert.alert(t('common.error'), 'Không thể đăng ký thông báo.');
+      Alert.alert(t('common.error'), t('settings.notif_error'));
     } finally {
       setNotifLoading(false);
     }

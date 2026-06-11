@@ -65,6 +65,12 @@ export const vi = {
     delete_continue:    'Tiếp tục',
     delete_confirm2:    'Nhập email để xác nhận',
     delete_toast:       'Tài khoản của bạn sẽ bị xoá sau 7 ngày. Đăng nhập lại để huỷ.',
+    // notifications
+    notif_denied:       'Vào Cài đặt thiết bị để bật thông báo.',
+    notif_error:        'Không thể đăng ký thông báo.',
+    // profile errors
+    avatar_upload_error:'Không thể tải ảnh lên.',
+    save_error:         'Không thể lưu thông tin.',
   },
   language: {
     title:        'Ngôn ngữ',
@@ -77,6 +83,7 @@ export const vi = {
     body:        'Tài khoản của bạn sẽ bị xoá sau {{days}} ngày nữa.',
     cta:         'Khôi phục tài khoản',
     confirm_del: 'Xác nhận xoá',
+    error:       'Không thể khôi phục tài khoản.',
   },
   signin: {
     tagline:    'lưu giữ từng khoảnh khắc bé yêu',

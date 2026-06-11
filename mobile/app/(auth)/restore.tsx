@@ -27,7 +27,7 @@ export default function RestoreScreen() {
       setAuth(data.token, data.user);
       router.replace('/(tabs)');
     } catch {
-      Alert.alert(t('common.error'), 'Không thể khôi phục tài khoản.');
+      Alert.alert(t('common.error'), t('restore.error'));
     } finally {
       setLoading(false);
     }
