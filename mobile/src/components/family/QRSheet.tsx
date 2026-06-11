@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Button } from '@/components/ui/Button';
 import { SheetModal } from '@/components/ui/SheetModal';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerButton } from '@/components/ui/StickerButton';
 import { api } from '@/lib/api';
 import { useAlbumStore } from '@/stores/albumStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { colors, fonts, radii, shadows, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
 import { success } from '@/lib/haptics';
 
@@ -43,25 +44,29 @@ export function QRSheet({ visible, onClose }: QRSheetProps) {
 
   return (
     <SheetModal visible={visible} onClose={onClose} size="large">
-      <View style={styles.handle} />
-
       {!permission ? null : !permission.granted ? (
         <>
           <Text style={styles.heading}>{t('qr.perm_title')}</Text>
           <Text style={styles.body}>{t('qr.perm_body')}</Text>
-          <Button label={t('qr.perm_grant')} onPress={requestPermission} fullWidth />
-          <Button label={t('common.cancel')} onPress={onClose} variant="ghost" fullWidth />
+          <View style={styles.buttons}>
+            <StickerButton label={t('qr.perm_grant')} variant="primary" fullWidth onPress={requestPermission} />
+            <StickerButton label={t('common.cancel')} variant="surface" fullWidth onPress={onClose} />
+          </View>
         </>
       ) : (
         <>
-          <Text style={styles.eyebrow}>{t('qr.sheet_title')}</Text>
+          <Text style={styles.heading}>{t('qr.sheet_title')}</Text>
           {visible && (
-            <View style={styles.scannerFrame}>
-              <CameraView style={styles.scanner} onBarcodeScanned={handleBarCodeScanned} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} />
-            </View>
+            <StickerCard style={styles.scannerCard}>
+              <CameraView
+                style={styles.scanner}
+                onBarcodeScanned={handleBarCodeScanned}
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+              />
+            </StickerCard>
           )}
           <Text style={styles.validity}>{t('qr.valid_for')}</Text>
-          <Button label={t('common.cancel')} onPress={onClose} variant="ghost" fullWidth />
+          <StickerButton label={t('common.cancel')} variant="surface" fullWidth onPress={onClose} />
         </>
       )}
     </SheetModal>
@@ -69,11 +74,10 @@ export function QRSheet({ visible, onClose }: QRSheetProps) {
 }
 
 const styles = StyleSheet.create({
-  handle:       { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: colors.inkMuted, marginBottom: spacing.md },
-  eyebrow:      { ...typography.handAccent, color: colors.pink, textAlign: 'center' },
-  heading:      { ...typography.heading, color: colors.ink },
-  body:         { ...typography.body },
-  scannerFrame: { flex: 1, borderRadius: radii.md, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.ink, overflow: 'hidden', ...shadows.sticker },
-  scanner:      { flex: 1 },
-  validity:     { fontFamily: fonts.medium, fontSize: 14, color: colors.inkMuted, textAlign: 'center' },
+  heading:     { ...typography.displayCute, fontSize: 20, color: theme.colors.textPrimary, textAlign: 'center', marginBottom: spacing.sm },
+  body:        { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: spacing.md },
+  scannerCard: { flex: 1, padding: 0, overflow: 'hidden' },
+  scanner:     { flex: 1 },
+  validity:    { ...typography.body, color: theme.colors.textMuted, textAlign: 'center', marginTop: spacing.md, marginBottom: spacing.md },
+  buttons:     { gap: spacing.md, marginTop: spacing.lg },
 });

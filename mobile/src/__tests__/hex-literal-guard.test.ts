@@ -18,6 +18,8 @@ const THEME_CLEAN_FILES = [
   'src/components/ui/SheetModal.tsx',
   'src/components/family/MembersSheet.tsx',
   'src/components/family/MemberList.tsx',
+  'src/components/family/InviteSheet.tsx',
+  'src/components/family/QRSheet.tsx',
 ];
 
 // app/photo-review.tsx is at a different relative root; use the app/ prefix.
