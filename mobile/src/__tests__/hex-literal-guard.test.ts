@@ -14,22 +14,35 @@ const THEME_CLEAN_FILES = [
   'src/components/tabs/CameraPage.tsx',
 ];
 
+// app/photo-review.tsx is at a different relative root; use the app/ prefix.
+const THEME_CLEAN_APP_FILES = [
+  'app/photo-review.tsx',
+];
+
 const HEX_OR_RGBA = /#[0-9a-fA-F]{3,8}\b|rgba?\s*\(/;
 
 describe('hex-literal guard', () => {
   it.each(THEME_CLEAN_FILES)('%s contains no raw hex or rgba literals', (rel) => {
     const abs = path.resolve(__dirname, '../../', rel);
-    const src = fs.readFileSync(abs, 'utf8');
-    // Strip line comments so explanatory `// #ABC` in a comment doesn't trip the check.
-    const stripped = src.replace(/\/\/.*$/gm, '');
-    const match = stripped.match(HEX_OR_RGBA);
-    if (match) {
-      const line = stripped.slice(0, match.index).split('\n').length;
-      throw new Error(
-        `${rel}:${line} contains a raw color literal "${match[0]}". ` +
-        `All colors must come from theme.colors.* (see Theme System section ` +
-        `of docs/superpowers/specs/2026-06-11-sticker-world-redesign-design.md).`,
-      );
-    }
+    runGuard(abs, rel);
+  });
+  it.each(THEME_CLEAN_APP_FILES)('%s contains no raw hex or rgba literals', (rel) => {
+    const abs = path.resolve(__dirname, '../../', rel);
+    runGuard(abs, rel);
   });
 });
+
+function runGuard(abs: string, rel: string): void {
+  const src = fs.readFileSync(abs, 'utf8');
+  // Strip line comments so explanatory `// #ABC` in a comment doesn't trip the check.
+  const stripped = src.replace(/\/\/.*$/gm, '');
+  const match = stripped.match(HEX_OR_RGBA);
+  if (match) {
+    const line = stripped.slice(0, match.index).split('\n').length;
+    throw new Error(
+      `${rel}:${line} contains a raw color literal "${match[0]}". ` +
+      `All colors must come from theme.colors.* (see Theme System section ` +
+      `of docs/superpowers/specs/2026-06-11-sticker-world-redesign-design.md).`,
+    );
+  }
+}

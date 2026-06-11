@@ -60,6 +60,7 @@ export const en = {
     retake:     'Retake',
     upload_one: 'Upload',
     upload_n:   'Upload {{n}} photos',
+    save_error: 'Could not save photo. Please try again.',
   },
   manage: {
     title:                'Manage day {{date}}',

@@ -179,6 +179,7 @@ export const vi = {
     retake:     'Chụp lại',
     upload_one: 'Tải lên',
     upload_n:   'Tải lên {{n}} ảnh',
+    save_error: 'Không thể lưu ảnh. Thử lại nhé.',
   },
   manage: {
     title:                'Quản lý ngày {{date}}',

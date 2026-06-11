@@ -144,7 +144,7 @@ describe('PhotoReview', () => {
     const { getByTestId } = render(<PhotoReviewScreen />);
     fireEvent.press(getByTestId('album-checkbox-album-1'));
     await act(async () => { fireEvent.press(getByTestId('review-save')); });
-    expect(alertSpy).toHaveBeenCalledWith('Lỗi', expect.any(String));
+    expect(alertSpy).toHaveBeenCalledWith('Có lỗi xảy ra', expect.any(String));
     expect(mockFinishCapture).not.toHaveBeenCalled();
   });
 
@@ -154,7 +154,7 @@ describe('PhotoReview', () => {
     const { getByTestId } = render(<PhotoReviewScreen />);
     fireEvent.press(getByTestId('album-checkbox-album-1'));
     await act(async () => { fireEvent.press(getByTestId('review-save')); });
-    expect(alertSpy).toHaveBeenCalledWith('Lỗi', expect.any(String));
+    expect(alertSpy).toHaveBeenCalledWith('Có lỗi xảy ra', expect.any(String));
   });
 
   it('close button discards and navigates back', () => {
