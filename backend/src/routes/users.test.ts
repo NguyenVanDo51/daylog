@@ -92,3 +92,60 @@ describe('POST /users/me/avatar-presign', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('DELETE /users/me', () => {
+  it('soft-deletes the user (sets deleted_at)', async () => {
+    const user = await createTestUser();
+    const res = await request(app).delete('/users/me').set(authHeader(user));
+    expect(res.status).toBe(204);
+    const [row] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(row.deletedAt).not.toBeNull();
+  });
+
+  it('returns 401 without auth', async () => {
+    const res = await request(app).delete('/users/me');
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('POST /users/me/restore', () => {
+  it('clears deleted_at and returns token + user', async () => {
+    const user = await createTestUser();
+    await db.update(users).set({ deletedAt: new Date() }).where(eq(users.id, user.id));
+    const restoreToken = require('jsonwebtoken').sign(
+      { userId: user.id, purpose: 'restore' },
+      process.env.JWT_SECRET || 'test-secret',
+      { expiresIn: '30m' }
+    );
+    const res = await request(app).post('/users/me/restore').send({ restore_token: restoreToken });
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeTruthy();
+    expect(res.body.user.id).toBe(user.id);
+    const [row] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(row.deletedAt).toBeNull();
+  });
+
+  it('returns 401 for invalid restore token', async () => {
+    const res = await request(app).post('/users/me/restore').send({ restore_token: 'bad.token.here' });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 for regular auth token (wrong purpose)', async () => {
+    const user = await createTestUser();
+    const regularToken = require('jsonwebtoken').sign(
+      { userId: user.id },
+      process.env.JWT_SECRET || 'test-secret'
+    );
+    const res = await request(app).post('/users/me/restore').send({ restore_token: regularToken });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /users/me/export', () => {
+  it('returns 202 with message', async () => {
+    const user = await createTestUser();
+    const res = await request(app).get('/users/me/export').set(authHeader(user));
+    expect(res.status).toBe(202);
+    expect(res.body.message).toBeTruthy();
+  });
+});

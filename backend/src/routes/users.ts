@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { eq } from 'drizzle-orm';
+import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
@@ -16,6 +17,18 @@ async function toClientUser(u: typeof users.$inferSelect) {
     avatar_url: await resolveAvatarUrl(u.avatarUrl),
     push_token: u.pushToken,
   };
+}
+
+function signJwt(userId: string): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET env var is required');
+  return jwt.sign({ userId }, secret, { expiresIn: '7d' });
+}
+
+function signRestoreJwt(userId: string): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET env var is required');
+  return jwt.sign({ userId, purpose: 'restore' }, secret, { expiresIn: '30m' });
 }
 
 router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
@@ -49,6 +62,46 @@ router.post('/me/avatar-presign', requireAuth, async (req: Request, res: Respons
   try {
     const { url, key } = await getPresignedPutUrl('image/jpeg');
     res.json({ upload_url: url, key });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await db.update(users).set({ deletedAt: new Date() }).where(eq(users.id, req.user!.id));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/me/restore', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { restore_token } = req.body ?? {};
+    if (!restore_token) return res.status(401).json({ error: 'Unauthorized' });
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return res.status(500).json({ error: 'Server misconfigured' });
+    let claims: { userId: string; purpose: string };
+    try {
+      claims = jwt.verify(restore_token, secret) as { userId: string; purpose: string };
+    } catch {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (claims.purpose !== 'restore') return res.status(401).json({ error: 'Unauthorized' });
+    const [found] = await db.select().from(users).where(eq(users.id, claims.userId)).limit(1);
+    if (!found) return res.status(401).json({ error: 'Unauthorized' });
+    const [updated] = await db.update(users).set({ deletedAt: null }).where(eq(users.id, claims.userId)).returning();
+    res.json({ token: signJwt(updated.id), user: await toClientUser(updated) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/me/export', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // TODO: integrate email service to send actual data export link
+    res.status(202).json({ message: `Export request received. We will email ${req.user!.email ?? 'you'} a download link.` });
   } catch (err) {
     next(err);
   }
