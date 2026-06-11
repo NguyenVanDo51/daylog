@@ -2,18 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, Image, TouchableOpacity, TouchableWithoutFeedback,
   StyleSheet, StatusBar, useWindowDimensions, Alert,
-  TextInput, KeyboardAvoidingView, Platform, Keyboard,
+  KeyboardAvoidingView, Platform, Keyboard,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { router } from 'expo-router';
-import { X, Check } from 'phosphor-react-native';
+import { XIcon, CheckIcon } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePhotoReviewStore } from '@/stores/photoReviewStore';
 import { useCapture, type UploadResult } from '@/hooks/useCapture';
 import { useAlbums } from '@/hooks/useAlbums';
 import { useLastAlbumSelection } from '@/hooks/useLastAlbumSelection';
 import { Confetti } from '@/components/ui/Confetti';
+import { MediaCaption } from '@/components/ui/MediaCaption';
 import { colors, spacing, fonts, radii, shadows } from '@/constants/theme';
 import { success } from '@/lib/haptics';
 
@@ -42,7 +43,7 @@ export default function PhotoReviewScreen() {
   const [saving, setSaving] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
 
-  const uploadPromiseRef = useRef<Promise<UploadResult>>();
+  const uploadPromiseRef = useRef<Promise<UploadResult> | undefined>(undefined);
   const { savedIds, persist } = useLastAlbumSelection();
   const initializedRef = useRef(false);
 
@@ -68,6 +69,10 @@ export default function PhotoReviewScreen() {
   }, [savedIds, albums]);
 
   if (assets.length === 0 || !asset) return null;
+
+  const timeStr = new Date(asset.takenAt).toLocaleTimeString('vi-VN', {
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  });
 
   function toggleAlbum(id: string) {
     setSelectedIds((prev) => {
@@ -114,7 +119,7 @@ export default function PhotoReviewScreen() {
           >
             <View style={styles.topBar}>
               <TouchableOpacity onPress={() => { clear(); router.back(); }} testID="review-close">
-                <X size={26} color={colors.white} />
+                <XIcon size={26} color={colors.white} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => { clear(); router.back(); }} testID="review-retake">
                 <Text style={styles.retakeText}>Chụp lại</Text>
@@ -122,23 +127,13 @@ export default function PhotoReviewScreen() {
             </View>
           </LinearGradient>
 
-          {/* Layer 3: caption overlay — vertically centered on screen */}
-          <View style={styles.captionZone} pointerEvents="box-none">
-            <TextInput
-              testID="review-note-input"
-              style={styles.captionInput}
-              placeholder="Thêm ghi chú..."
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              value={caption}
-              onChangeText={setCaption}
-              multiline
-              maxLength={200}
-              autoFocus
-              textAlign="center"
-              selectionColor={colors.pink}
-            />
-            <View style={styles.captionUnderline} />
-          </View>
+          <MediaCaption
+            time={timeStr}
+            caption={caption}
+            editable
+            onCaptionChange={setCaption}
+            testID="review-note-input"
+          />
 
           {/* Layer 4: bottom gradient + album tiles + save */}
           <LinearGradient
@@ -161,7 +156,7 @@ export default function PhotoReviewScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={[styles.tileCheckbox, selected && styles.tileCheckboxSelected]}>
-                      {selected && <Check size={9} color={colors.white} weight="bold" />}
+                      {selected && <CheckIcon size={9} color={colors.white} weight="bold" />}
                     </View>
                     <Text
                       style={[styles.tileName, selected && styles.tileNameSelected]}
@@ -214,29 +209,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 14,
     color: 'rgba(255,255,255,0.85)',
-  },
-  captionZone: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  captionInput: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: colors.white,
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowRadius: 12,
-    textShadowOffset: { width: 0, height: 0 },
-    width: '82%',
-    textAlign: 'center',
-  },
-  captionUnderline: {
-    width: 50,
-    height: 2,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    borderRadius: 1,
-    marginTop: 6,
   },
   gradientBottom: {
     position: 'absolute',
