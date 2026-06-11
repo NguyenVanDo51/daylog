@@ -9,6 +9,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useFonts, Baloo2_400Regular, Baloo2_500Medium, Baloo2_600SemiBold, Baloo2_700Bold } from '@expo-google-fonts/baloo-2';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
+import { useOnboardingStore } from '@/stores/onboardingStore';
 import { api } from '@/lib/api';
 import { API_URL } from '@/constants/api';
 import { registerPushToken } from '@/lib/notifications';
@@ -28,9 +29,11 @@ Sentry.init({
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
+const ONBOARDING_KEY = 'onboarding.seen';
 
 function RootLayout() {
   const { setAuth, clearAuth } = useAuthStore();
+  const setSeen = useOnboardingStore((s) => s.setSeen);
   const [ready, setReady] = useState(false);
   const updateStatus = useAppUpdate();
   const [fontsLoaded] = useFonts({
@@ -45,10 +48,20 @@ function RootLayout() {
       const e2eToken = process.env.EXPO_PUBLIC_E2E_TEST_TOKEN;
       if (e2eToken) {
         setAuth(e2eToken, { id: 'e2e-user', display_name: 'E2E Test', email: 'e2e@test.local', avatar_url: null });
+        setSeen(true); // E2E tests skip onboarding.
         setReady(true);
         return;
       }
-      const stored = await SecureStore.getItemAsync(TOKEN_KEY);
+
+      // Onboarding: read the flag in parallel with token load. Mark seen if a
+      // token is found (existing user) so they don't see onboarding after a
+      // future sign-out.
+      const [obFlag, stored] = await Promise.all([
+        SecureStore.getItemAsync(ONBOARDING_KEY),
+        SecureStore.getItemAsync(TOKEN_KEY),
+      ]);
+      let obSeen = obFlag === '1';
+
       if (stored) {
         const cachedUser = await SecureStore.getItemAsync(USER_KEY);
         try {
@@ -66,7 +79,16 @@ function RootLayout() {
             Sentry.setUser(null);
           }
         }
+
+        // Existing user — backfill the onboarding-seen flag if missing so a
+        // future sign-out doesn't replay onboarding.
+        if (!obSeen) {
+          await SecureStore.setItemAsync(ONBOARDING_KEY, '1');
+          obSeen = true;
+        }
       }
+
+      setSeen(obSeen);
       setReady(true);
     })();
   }, []);
@@ -87,6 +109,7 @@ function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
+            <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="albums/[id]" />
             <Stack.Screen name="photo/[id]" options={{ presentation: 'fullScreenModal' }} />

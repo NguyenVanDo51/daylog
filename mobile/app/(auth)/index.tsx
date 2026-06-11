@@ -12,6 +12,7 @@ import { colors, shadows, spacing, typography } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useAlbumStore } from '@/stores/albumStore';
+import { useOnboardingStore } from '@/stores/onboardingStore';
 import { Button } from '@/components/ui/Button';
 import { registerPushToken } from '@/lib/notifications';
 import { t } from '@/lib/i18n';
@@ -37,9 +38,11 @@ function FloatingDot({ x, y, size, color, delay }: { x: string; y: number; size:
 export default function SignInScreen() {
   const { token, setAuth } = useAuthStore();
   const { setAlbum } = useAlbumStore();
+  const seen = useOnboardingStore((s) => s.seen);
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
 
   if (token) return <Redirect href="/(tabs)" />;
+  if (seen === false) return <Redirect href="/onboarding" />;
 
   async function handleApple() {
     try {
