@@ -12,6 +12,7 @@ const THEME_CLEAN_FILES = [
   'src/components/ui/Avatar.tsx',
   'src/components/tabs/AlbumsPage.tsx',
   'src/components/tabs/CameraPage.tsx',
+  'src/components/album/DayCell.tsx',
 ];
 
 // app/photo-review.tsx is at a different relative root; use the app/ prefix.
@@ -19,6 +20,7 @@ const THEME_CLEAN_APP_FILES = [
   'app/photo-review.tsx',
   'app/onboarding.tsx',
   'app/(auth)/index.tsx',
+  'app/albums/[id].tsx',
 ];
 
 const HEX_OR_RGBA = /#[0-9a-fA-F]{3,8}\b|rgba?\s*\(/;

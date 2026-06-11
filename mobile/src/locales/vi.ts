@@ -13,6 +13,12 @@ export const vi = {
     empty_cta: 'Tạo album đầu tiên',
     create_error: 'Không thể tạo album.',
     rename_ph: 'Tên album...',
+    day_grid_empty:       'Chưa có khoảnh khắc nào',
+    day_grid_empty_hint:  'Vuốt sang tab Camera để chụp ảnh đầu tiên',
+    rename_error:         'Không thể đổi tên album.',
+    archive_error:        'Không thể lưu trữ album.',
+    delete_error:         'Không thể xóa album.',
+    leave_error:          'Không thể rời album.',
   },
   greeting: {
     morning:   'Chào buổi sáng',

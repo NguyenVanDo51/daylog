@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, TextInput, Modal, useWindowDimensions,
+  ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CaretLeft, DotsThree, Archive } from 'phosphor-react-native';
@@ -14,12 +14,14 @@ import { AlbumMenuSheet } from '@/components/family/AlbumMenuSheet';
 import { InviteSheet } from '@/components/family/InviteSheet';
 import { MembersSheet } from '@/components/family/MembersSheet';
 import { api } from '@/lib/api';
-import { colors, spacing, typography } from '@/constants/theme';
+import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
+import { Mascot } from '@/components/ui/Mascot';
+import { StickerCard } from '@/components/ui/StickerCard';
+import { StickerChip } from '@/components/ui/StickerChip';
 
 export default function AlbumScreen() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const albumId    = useAlbumStore((s) => s.albumId);
   const albumName  = useAlbumStore((s) => s.albumName);
   const archivedAt = useAlbumStore((s) => s.archivedAt);
@@ -54,7 +56,7 @@ export default function AlbumScreen() {
       await qc.invalidateQueries({ queryKey: ['albums'] });
       setRenameOpen(false);
     } catch {
-      Alert.alert(t('common.error'), 'Không thể đổi tên album.');
+      Alert.alert(t('common.error'), t('albums.rename_error'));
     } finally {
       setRenaming(false);
     }
@@ -75,7 +77,7 @@ export default function AlbumScreen() {
               setArchivedAt(data.archived_at);
               await qc.invalidateQueries({ queryKey: ['albums'] });
             } catch {
-              Alert.alert(t('common.error'), 'Không thể lưu trữ album.');
+              Alert.alert(t('common.error'), t('albums.archive_error'));
             }
           },
         },
@@ -99,7 +101,7 @@ export default function AlbumScreen() {
               await qc.invalidateQueries({ queryKey: ['albums'] });
               router.back();
             } catch {
-              Alert.alert(t('common.error'), 'Không thể xóa album.');
+              Alert.alert(t('common.error'), t('albums.delete_error'));
             }
           },
         },
@@ -122,7 +124,7 @@ export default function AlbumScreen() {
               await qc.invalidateQueries({ queryKey: ['albums'] });
               router.back();
             } catch {
-              Alert.alert(t('common.error'), 'Không thể rời album.');
+              Alert.alert(t('common.error'), t('albums.leave_error'));
             }
           },
         },
@@ -134,7 +136,7 @@ export default function AlbumScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Modal visible={renameOpen} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <StickerCard shadow="heavy" style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t('album_menu.rename_title')}</Text>
             <TextInput
               style={styles.input}
@@ -142,6 +144,7 @@ export default function AlbumScreen() {
               onChangeText={setRenameText}
               autoFocus
               selectTextOnFocus
+              placeholderTextColor={theme.colors.textMuted}
             />
             <View style={styles.modalActions}>
               <TouchableOpacity onPress={() => setRenameOpen(false)} style={styles.modalBtn}>
@@ -151,35 +154,43 @@ export default function AlbumScreen() {
                 <Text style={styles.modalBtnConfirm}>{renaming ? '...' : t('common.done')}</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </StickerCard>
         </View>
       </Modal>
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <CaretLeft size={24} color={colors.ink} />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+          <StickerCard style={styles.iconBtn}>
+            <CaretLeft size={18} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{albumName ?? ''}</Text>
-        <TouchableOpacity onPress={() => setMenuOpen(true)} hitSlop={8} style={styles.backBtn}>
-          <DotsThree size={24} color={colors.ink} />
+        <TouchableOpacity onPress={() => setMenuOpen(true)} hitSlop={8}>
+          <StickerCard style={styles.iconBtn}>
+            <DotsThree size={18} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
         </TouchableOpacity>
       </View>
 
       {isArchived && (
-        <View style={styles.archivedBanner}>
-          <Archive size={14} color={colors.inkMuted} />
-          <Text style={styles.archivedText}>{t('album_menu.archived_banner')}</Text>
+        <View style={styles.archivedWrap}>
+          <StickerChip
+            label={t('album_menu.archived_banner')}
+            variant="ink"
+            icon={<Archive size={12} color={theme.colors.accent1} />}
+          />
         </View>
       )}
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.pink} />
+          <ActivityIndicator color={theme.colors.primary} />
         </View>
       ) : !days || days.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.empty}>Chưa có khoảnh khắc nào</Text>
-          <Text style={styles.emptySub}>Vuốt sang tab Camera để chụp ảnh đầu tiên</Text>
+        <View style={styles.emptyWrap}>
+          <Mascot size={80} tilt="default" />
+          <Text style={styles.empty}>{t('albums.day_grid_empty')}</Text>
+          <Text style={styles.emptySub}>{t('albums.day_grid_empty_hint')}</Text>
         </View>
       ) : (
         <FlatList
@@ -193,6 +204,7 @@ export default function AlbumScreen() {
                 thumbnailUrl={left.thumb_url}
                 hasVideo={left.has_video}
                 tall={index % 2 === 0}
+                index={index * 2}
                 onPress={() => router.push(`/story/${albumId}/${left.date}`)}
               />
               {right && (
@@ -201,6 +213,7 @@ export default function AlbumScreen() {
                   thumbnailUrl={right.thumb_url}
                   hasVideo={right.has_video}
                   tall={index % 2 !== 0}
+                  index={index * 2 + 1}
                   onPress={() => router.push(`/story/${albumId}/${right.date}`)}
                 />
               )}
@@ -230,23 +243,23 @@ export default function AlbumScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:       { flex: 1, backgroundColor: colors.cream },
-  center:          { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  header:          { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
-  backBtn:         { width: 32 },
-  title:           { ...typography.title, color: colors.ink, flex: 1, textAlign: 'center' },
-  archivedBanner:  { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.borderSoft },
-  archivedText:    { ...typography.caption, color: colors.inkMuted },
-  empty:           { ...typography.body, color: colors.inkMuted },
-  emptySub:        { ...typography.caption, color: colors.inkMuted, textAlign: 'center', paddingHorizontal: spacing['2xl'] },
-  grid:            { padding: spacing['2xl'], gap: spacing.sm },
+  container:       { flex: 1, backgroundColor: theme.colors.background },
+  center:          { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  header:          { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  iconBtn:         { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', padding: 0 },
+  title:           { ...typography.title, color: theme.colors.textPrimary, flex: 1, textAlign: 'center' },
+  archivedWrap:    { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, alignItems: 'flex-start' },
+  emptyWrap:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, paddingHorizontal: spacing['3xl'] },
+  empty:           { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center', fontFamily: theme.fonts.semiBold },
+  emptySub:        { ...typography.caption, color: theme.colors.textMuted, textAlign: 'center' },
+  grid:            { padding: spacing['2xl'], gap: spacing.md },
   row:             { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
-  modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  modalCard:       { backgroundColor: colors.white, borderRadius: 16, padding: spacing['2xl'], width: '80%', gap: spacing.lg },
-  modalTitle:      { ...typography.title, color: colors.ink },
-  input:           { ...typography.body, color: colors.ink, borderBottomWidth: 1, borderBottomColor: colors.borderSoft, paddingVertical: spacing.sm },
+  modalOverlay:    { flex: 1, backgroundColor: theme.overlays.scrim, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['2xl'] },
+  modalCard:       { width: '100%', padding: spacing['2xl'], gap: spacing.lg },
+  modalTitle:      { ...typography.title, color: theme.colors.textPrimary },
+  input:           { ...typography.body, color: theme.colors.textPrimary, borderBottomWidth: theme.border.hairline, borderBottomColor: theme.colors.borderSoft, paddingVertical: spacing.sm },
   modalActions:    { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.lg },
   modalBtn:        { padding: spacing.sm },
-  modalBtnCancel:  { ...typography.body, color: colors.inkMuted },
-  modalBtnConfirm: { ...typography.body, color: colors.pink },
+  modalBtnCancel:  { ...typography.body, color: theme.colors.textMuted },
+  modalBtnConfirm: { ...typography.body, color: theme.colors.primary },
 });

@@ -1,6 +1,6 @@
 export const en = {
   tabs:    { albums: 'Albums', moments: 'Moments', family: 'Family', me: 'Me' },
-  albums:  { title: 'My Albums', private: 'Personal', new_album: 'New Album', empty: 'No albums yet', empty_cta: 'Create your first album', create_error: 'Cannot create album.', rename_ph: 'Album name…' },
+  albums:  { title: 'My Albums', private: 'Personal', new_album: 'New Album', empty: 'No albums yet', empty_cta: 'Create your first album', create_error: 'Cannot create album.', rename_ph: 'Album name…', day_grid_empty: 'No moments yet', day_grid_empty_hint: 'Swipe to the Camera tab to take your first photo', rename_error: 'Cannot rename album.', archive_error: 'Cannot archive album.', delete_error: 'Cannot delete album.', leave_error: 'Cannot leave album.' },
   greeting:{ morning: 'Good morning', noon: 'Good afternoon', afternoon: 'Good afternoon', evening: 'Good evening', night: 'Good night' },
   home:    { album_default: "Baby's Album", badge_age: '{{months}} months', badge_members: '{{count}} family', badge_photos: '{{count}} photos', empty_message: 'No photos yet — add your first memory!' },
   moments: { title: 'Moments 🌟', eyebrow: '~ moments to remember ~', empty_message: 'No milestones yet — record your first one ✦' },
