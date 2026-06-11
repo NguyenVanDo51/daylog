@@ -763,6 +763,8 @@ import { StickerChip } from '@/components/ui/StickerChip';
 import { StickerButton } from '@/components/ui/StickerButton';
 import { registerPushToken } from '@/lib/notifications';
 import { t } from '@/lib/i18n';
+// Apple's HIG requires using their native button for Sign In with Apple.
+// We keep AppleAuthenticationButton instead of substituting StickerButton.
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
@@ -874,12 +876,11 @@ export default function SignInScreen() {
 
       <View style={styles.bottom}>
         <View style={styles.buttons}>
-          <StickerButton
-            label={t('signin.apple')}
-            variant="inverted"
-            shadow="heavy"
-            fullWidth
-            loading={loading === 'apple'}
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+            cornerRadius={theme.radii.md}
+            style={styles.appleBtn}
             onPress={handleApple}
           />
           <StickerButton
@@ -907,12 +908,14 @@ const styles = StyleSheet.create({
   subCopy:   { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center', fontSize: 13 },
   bottom:    { backgroundColor: theme.colors.background, paddingHorizontal: spacing['3xl'], paddingTop: spacing['3xl'], paddingBottom: spacing['4xl'] },
   buttons:   { gap: spacing.md },
+  appleBtn:  { height: 52, width: '100%' },
   privacy:   { ...typography.caption, color: theme.colors.textMuted, marginTop: spacing['3xl'], textAlign: 'center' },
 });
 ```
 
 **Notes on the rewrite:**
-- The `Button` component (the old generic CTA) is replaced by `StickerButton` for both Apple and Google buttons. The Apple flow no longer uses `expo-apple-authentication`'s `AppleAuthenticationButton` because the sticker style takes precedence; the auth flow is unchanged (`handleApple` still does the proper `signInAsync`).
+- The Apple button stays as Apple's native `AppleAuthenticationButton` (Apple HIG / App Store policy preference). It does not visually match Sticker World, but the rounded ink-black look reads as an "inverted" sibling at a glance and the auth flow is unchanged. Corner radius now reads from `theme.radii.md` so a future theme can adjust it.
+- The Google button uses `<StickerButton variant="surface" />` — white with ink border and shadow.
 - The 👶 emoji and the giant pink gradient hero are replaced with a smaller hero composed of mascot + sticker-chip logo + tagline. The background gradient is now warm butter tones (`backgroundHighlight → background`) instead of pink-to-cream.
 - `FloatingDot` count drops from 6 to 4. The dots use theme accent colors.
 - The redirect to `/onboarding` is preserved from Task 3.
@@ -954,10 +957,12 @@ git commit -m "$(cat <<'EOF'
 refactor(signin): migrate to Sticker World components
 
 Replaces the 👶 emoji + giant gradient hero with a Mascot + yellow
-StickerChip logo. Apple button uses StickerButton variant="inverted"
-with heavy shadow; Google button uses variant="surface". FloatingDot
-count reduced from 6 to 4 per spec. Background gradient switched to
-warm butter tones. (auth)/index.tsx joins THEME_CLEAN_APP_FILES.
+StickerChip logo. Apple button stays as the native
+AppleAuthenticationButton (Apple HIG / App Store policy) with corner
+radius now driven by theme.radii.md. Google button uses StickerButton
+variant="surface". FloatingDot count reduced from 6 to 4 per spec.
+Background gradient switched to warm butter tones. (auth)/index.tsx
+joins THEME_CLEAN_APP_FILES.
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 EOF
