@@ -49,6 +49,10 @@ export default function SignInScreen() {
       });
       if (!cred.identityToken) throw new Error('Apple không trả về identity token');
       const { data } = await api.post('/auth/apple', { idToken: cred.identityToken, fullName: cred.fullName });
+      if (data.status === 'account_pending_deletion') {
+        handlePendingDeletion(data);
+        return;
+      }
       await finishAuth(data.token, data.user);
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('signin.failed'), e.message);
@@ -65,6 +69,10 @@ export default function SignInScreen() {
       const idToken = response.data.idToken;
       if (!idToken) throw new Error('No idToken returned from Google');
       const { data } = await api.post('/auth/google', { idToken });
+      if (data.status === 'account_pending_deletion') {
+        handlePendingDeletion(data);
+        return;
+      }
       await finishAuth(data.token, data.user);
     } catch (e: any) {
       if (e.code === statusCodes.SIGN_IN_CANCELLED) return;
@@ -84,6 +92,13 @@ export default function SignInScreen() {
       if (albums[0]) setAlbum(albums[0]);
     } catch {}
     router.replace('/(tabs)');
+  }
+
+  function handlePendingDeletion(data: { restore_token: string; days_remaining: number }) {
+    router.replace({
+      pathname: '/(auth)/restore',
+      params: { restore_token: data.restore_token, days_remaining: String(data.days_remaining) },
+    });
   }
 
   return (
