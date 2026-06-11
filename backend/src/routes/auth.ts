@@ -6,6 +6,7 @@ import { users, albums, albumMembers } from '../db/schema';
 import { verifyAppleToken } from '../services/appleAuth';
 import { verifyGoogleToken } from '../services/googleAuth';
 import { requireAuth } from '../middleware/auth';
+import { getPresignedGetUrl } from '../services/r2';
 
 const router = Router();
 
@@ -27,13 +28,18 @@ function signJwt(userId: string): string {
   return jwt.sign({ userId }, secret, { expiresIn: '7d' });
 }
 
-function toSnakeUser(u: typeof users.$inferSelect) {
+async function toSnakeUser(u: typeof users.$inferSelect) {
+  let avatarUrl = u.avatarUrl;
+  if (avatarUrl && !avatarUrl.startsWith('https://')) {
+    avatarUrl = await getPresignedGetUrl(avatarUrl, 3600);
+  }
   return {
     id: u.id,
     apple_sub: u.appleSub,
     google_sub: u.googleSub,
     display_name: u.displayName,
-    avatar_url: u.avatarUrl,
+    email: u.email ?? '',
+    avatar_url: avatarUrl,
     push_token: u.pushToken,
     created_at: u.createdAt,
   };
@@ -91,7 +97,7 @@ router.post('/apple', async (req: Request, res: Response, next: NextFunction) =>
     }
 
     await ensureDefaultAlbum(user.id);
-    res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
+    res.json({ token: signJwt(user.id), user: await toSnakeUser(user) });
   } catch (err) {
     next(err);
   }
@@ -152,7 +158,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
     }
 
     await ensureDefaultAlbum(user.id);
-    res.json({ token: signJwt(user.id), user: toSnakeUser(user) });
+    res.json({ token: signJwt(user.id), user: await toSnakeUser(user) });
   } catch (err) {
     next(err);
   }

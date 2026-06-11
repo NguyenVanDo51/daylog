@@ -3,8 +3,32 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
+import { getPresignedGetUrl, getPresignedPutUrl } from '../services/r2';
 
 const router = Router();
+
+async function resolveAvatarUrl(url: string | null): Promise<string | null> {
+  if (!url || url.startsWith('https://')) return url;
+  return getPresignedGetUrl(url, 3600);
+}
+
+async function toClientUser(u: typeof users.$inferSelect) {
+  return {
+    id: u.id,
+    display_name: u.displayName,
+    email: u.email ?? '',
+    avatar_url: await resolveAvatarUrl(u.avatarUrl),
+    push_token: u.pushToken,
+  };
+}
+
+router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json(await toClientUser(req.user!));
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.patch('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
