@@ -4,6 +4,7 @@ import { db } from '../db';
 import { albumMembers, daySoundtracks, soundtracks } from '../db/schema';
 import { requireAuth } from '../middleware/auth';
 import { isValidUUID } from '../lib/validation';
+import { isAlbumArchived } from '../lib/albumGuards';
 
 const router = express.Router({ mergeParams: true });
 router.use(requireAuth);
@@ -66,6 +67,10 @@ router.put('/:date/soundtrack', async (req: Request, res: Response, next: NextFu
       return res.status(403).json({ error: 'Forbidden' });
     }
 
+    if (await isAlbumArchived(albumId)) {
+      return res.status(409).json({ error: 'Album is archived' });
+    }
+
     const [track] = await db.select().from(soundtracks)
       .where(and(eq(soundtracks.id, soundtrackId), eq(soundtracks.isActive, true)))
       .limit(1);
@@ -100,6 +105,10 @@ router.delete('/:date/soundtrack', async (req: Request, res: Response, next: Nex
 
     if (!(await isAlbumMember(albumId, req.user!.id))) {
       return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (await isAlbumArchived(albumId)) {
+      return res.status(409).json({ error: 'Album is archived' });
     }
 
     await db.delete(daySoundtracks)
