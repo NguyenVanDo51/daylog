@@ -26,6 +26,17 @@ export interface RunStoryExportOpts {
   tempDir: string;
 }
 
+/**
+ * Orchestrates the story export pipeline
+ * Steps:
+ * 1. Download media items
+ * 2. Render all overlays
+ * 3. Run ffmpeg concat
+ * 4. Return the output path
+ * @param opts Options
+ * @param signal Abort signal
+ * @returns Path to the exported video file
+ */
 export async function runStoryExport(
   opts: RunStoryExportOpts,
   signal: AbortSignal,
@@ -99,6 +110,38 @@ export async function runStoryExport(
   }
 }
 
+/**
+ * Runs a function in parallel for each item in the list
+ * @param items Items to process
+ * @param concurrency Maximum concurrency
+ * @param fn Function to run for each item
+ * @returns Results of the function calls
+ */
+async function parallelMap<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const result: R[] = new Array(items.length);
+  let cursor = 0;
+  async function worker(): Promise<void> {
+    while (true) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      result[i] = await fn(items[i], i);
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, worker);
+  await Promise.all(workers);
+  return result;
+}
+
+/**
+ * Downloads media items to the target directory
+ * @param items Items to download
+ * @param targetDir Target directory
+ * @returns Paths to the downloaded files
+ */
 async function downloadMediaItems(
   items: StoryExportItem[],
   targetDir: string,
@@ -112,6 +155,12 @@ async function downloadMediaItems(
   });
 }
 
+/**
+ * Renders all overlays to the target directory
+ * @param items Items to render
+ * @param targetDir Target directory
+ * @returns Paths to the rendered files
+ */
 async function renderAllOverlays(
   items: StoryExportItem[],
   targetDir: string,
@@ -133,6 +182,12 @@ interface FfmpegConcatOpts {
   signal: AbortSignal;
 }
 
+/**
+ * Runs ffmpeg concat to concatenate the media items and overlays
+ * @param opts Options
+ * @param signal Abort signal
+ * @returns Path to the exported video file
+ */
 async function runFfmpegConcat(opts: FfmpegConcatOpts): Promise<void> {
   const { items, mediaPaths, overlayPaths, soundtrackFilePath, outputPath, signal } = opts;
   const n = items.length;
@@ -201,23 +256,4 @@ async function runFfmpegConcat(opts: FfmpegConcatOpts): Promise<void> {
 
 function pad3(n: number): string {
   return n.toString().padStart(3, '0');
-}
-
-async function parallelMap<T, R>(
-  items: T[],
-  concurrency: number,
-  fn: (item: T, index: number) => Promise<R>,
-): Promise<R[]> {
-  const result: R[] = new Array(items.length);
-  let cursor = 0;
-  async function worker(): Promise<void> {
-    while (true) {
-      const i = cursor++;
-      if (i >= items.length) return;
-      result[i] = await fn(items[i], i);
-    }
-  }
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, worker);
-  await Promise.all(workers);
-  return result;
 }

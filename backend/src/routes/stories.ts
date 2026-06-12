@@ -117,6 +117,7 @@ router.get('/export', async (req: Request, res: Response, next: NextFunction) =>
         return; // client closed — nothing to send
       }
 
+      // Stream the output video to the response
       const stat = await fs.promises.stat(outputPath);
       res.setHeader('Content-Type', 'video/mp4');
       res.setHeader('Content-Length', String(stat.size));

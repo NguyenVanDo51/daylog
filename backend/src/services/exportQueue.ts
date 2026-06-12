@@ -40,6 +40,11 @@ export class QueueFullError extends Error {
 let pendingCount = 0;
 let semaphore = new Semaphore(SLOTS);
 
+/**
+ * Exporting queue slot.
+ * @param fn Callback
+ * @returns Result of the callback
+ */
 export async function withExportSlot<T>(fn: () => Promise<T>): Promise<T> {
   if (pendingCount >= MAX_PENDING) {
     throw new QueueFullError();
