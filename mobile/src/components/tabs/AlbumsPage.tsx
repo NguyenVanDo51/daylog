@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAlbums, Album } from '@/hooks/useAlbums';
 import { useAlbumStore } from '@/stores/albumStore';
 import { SettingsSheet } from './SettingsSheet';
+import { FeedbackSheet } from './FeedbackSheet';
 import { api } from '@/lib/api';
 import { theme, spacing, typography } from '@/constants/theme';
 import { t } from '@/lib/i18n';
@@ -32,6 +33,7 @@ export function AlbumsPage({ onCameraPress }: Props) {
   const [newName, setNewName] = useState('');
   const [showInput, setShowInput] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
 
   function handleAlbumPress(album: Album) {
     setAlbum(album);
@@ -169,7 +171,15 @@ export function AlbumsPage({ onCameraPress }: Props) {
         />
       </View>
 
-      <SettingsSheet visible={menuVisible} onClose={() => setMenuVisible(false)} />
+      <SettingsSheet
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onOpenFeedback={() => setFeedbackVisible(true)}
+      />
+      <FeedbackSheet
+        visible={feedbackVisible}
+        onClose={() => setFeedbackVisible(false)}
+      />
     </View>
   );
 }
