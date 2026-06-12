@@ -1,4 +1,4 @@
-import { renderOverlayPng } from './exportOverlay';
+import { renderOverlayPng, wrapText } from './exportOverlay';
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
@@ -36,5 +36,36 @@ describe('exportOverlay.renderOverlayPng', () => {
       caption: null,
     });
     expect(buf.length).toBeGreaterThan(0);
+  });
+});
+
+describe('exportOverlay.wrapText', () => {
+  // Deterministic fake — every character is exactly 10px wide so we can build
+  // precise overflow scenarios without depending on real font metrics.
+  const fakeCtx = {
+    measureText: (t: string) => ({ width: t.length * 10 }),
+  };
+
+  it('keeps text on one line when it fits', () => {
+    expect(wrapText(fakeCtx, 'hi there', 200, 2)).toEqual(['hi there']);
+  });
+
+  it('wraps onto a second line without ellipsis when everything fits', () => {
+    // "aa bb" = 50px, "aa bb cc" = 80px > 50, "cc" alone is 20px
+    expect(wrapText(fakeCtx, 'aa bb cc', 50, 2)).toEqual(['aa bb', 'cc']);
+  });
+
+  it('appends ellipsis when a word is dropped on the exact-last-word overflow', () => {
+    // Regression for the corner where consumed === words.length yet content
+    // was dropped: 5 words of 2 chars each, 5-char-wide lines.
+    // Loop ends with lines=['aa bb','cc dd'], current='', consumed=5
+    // (matching words.length) — only the `truncated` flag distinguishes
+    // this from the "everything fit" case.
+    expect(wrapText(fakeCtx, 'aa bb cc dd ee', 50, 2)).toEqual(['aa bb', 'cc d…']);
+  });
+
+  it('returns an empty array for empty input', () => {
+    expect(wrapText(fakeCtx, '', 100, 2)).toEqual([]);
+    expect(wrapText(fakeCtx, '   ', 100, 2)).toEqual([]);
   });
 });

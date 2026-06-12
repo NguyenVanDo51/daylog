@@ -1,5 +1,5 @@
 import path from 'path';
-import { createCanvas, GlobalFonts, type SKRSContext2D } from '@napi-rs/canvas';
+import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 import { formatInTimeZone } from 'date-fns-tz';
 
 const W = 1080;
@@ -66,8 +66,14 @@ export async function renderOverlayPng(opts: {
   return canvas.toBuffer('image/png');
 }
 
-function wrapText(
-  ctx: SKRSContext2D,
+// Minimal subset of the canvas 2D context that wrapText needs. Lets tests
+// inject a deterministic fake without standing up a real canvas.
+export interface TextMeasurer {
+  measureText(text: string): { width: number };
+}
+
+export function wrapText(
+  ctx: TextMeasurer,
   text: string,
   maxWidth: number,
   maxLines: number,
@@ -76,6 +82,7 @@ function wrapText(
   const lines: string[] = [];
   let current = '';
   let consumed = 0;
+  let truncated = false;
 
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
@@ -89,6 +96,7 @@ function wrapText(
       consumed = i + 1;
       if (lines.length >= maxLines) {
         current = '';
+        truncated = true;
         break;
       }
     }
@@ -97,7 +105,10 @@ function wrapText(
     lines.push(current);
   }
 
-  if (consumed < words.length && lines.length > 0) {
+  // Show ellipsis whenever any word was dropped — including the corner case
+  // where the dropped word happened to be the LAST word, leaving consumed
+  // equal to words.length even though content didn't fit.
+  if ((truncated || consumed < words.length) && lines.length > 0) {
     let last = lines[lines.length - 1];
     while (last.length > 0 && ctx.measureText(`${last}…`).width > maxWidth) {
       last = last.slice(0, -1);
