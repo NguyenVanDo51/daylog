@@ -110,7 +110,7 @@ await db.execute(sql`TRUNCATE feedback, day_soundtracks, soundtracks, presign_to
 
 Run from `backend/`:
 ```bash
-npm test -- --testPathPattern=reactions
+npm test -- --testPathPatterns=reactions
 ```
 
 Expected: PASS. This confirms the schema addition + truncate change didn't break anything.
@@ -252,7 +252,7 @@ describe('POST /feedback', () => {
 - [ ] **Step 2.2: Run the new test — verify all cases fail**
 
 ```bash
-cd backend && npm test -- --testPathPattern=feedback
+cd backend && npm test -- --testPathPatterns=feedback
 ```
 
 Expected: all tests FAIL (route does not exist yet, returns 404).
@@ -349,7 +349,7 @@ app.use('/feedback', feedbackRoutes);
 - [ ] **Step 2.5: Run the test — verify all cases pass**
 
 ```bash
-cd backend && npm test -- --testPathPattern=feedback
+cd backend && npm test -- --testPathPatterns=feedback
 ```
 
 Expected: all 10 tests PASS.
@@ -511,7 +511,7 @@ describe('SettingsSheet', () => {
 - [ ] **Step 4.2: Run the test — verify it fails**
 
 ```bash
-cd mobile && npm test -- --testPathPattern=SettingsSheet
+cd mobile && npm test -- --testPathPatterns=SettingsSheet
 ```
 
 Expected: tests FAIL — current `SettingsSheet` still has the logout row and no `onOpenFeedback` prop.
@@ -586,7 +586,7 @@ What changed vs. the previous version:
 - [ ] **Step 4.4: Run the test — verify it passes**
 
 ```bash
-cd mobile && npm test -- --testPathPattern=SettingsSheet
+cd mobile && npm test -- --testPathPatterns=SettingsSheet
 ```
 
 Expected: all 4 tests PASS.
@@ -726,7 +726,7 @@ describe('FeedbackSheet', () => {
 - [ ] **Step 5.2: Run the test — verify it fails**
 
 ```bash
-cd mobile && npm test -- --testPathPattern=FeedbackSheet
+cd mobile && npm test -- --testPathPatterns=FeedbackSheet
 ```
 
 Expected: tests FAIL — `FeedbackSheet` does not exist.
@@ -869,14 +869,14 @@ Edit `mobile/src/__tests__/hex-literal-guard.test.ts`. Inside the `THEME_CLEAN_F
 - [ ] **Step 5.5: Run the tests — verify they pass**
 
 ```bash
-cd mobile && npm test -- --testPathPattern=FeedbackSheet
+cd mobile && npm test -- --testPathPatterns=FeedbackSheet
 ```
 
 Expected: all 6 tests PASS.
 
 Also run the hex-literal guard:
 ```bash
-cd mobile && npm test -- --testPathPattern=hex-literal-guard
+cd mobile && npm test -- --testPathPatterns=hex-literal-guard
 ```
 
 Expected: PASS.
@@ -935,7 +935,7 @@ cd mobile && npx tsc --noEmit
 Expected: no errors related to `AlbumsPage.tsx` or `FeedbackSheet.tsx`.
 
 ```bash
-cd mobile && npm test -- --testPathPattern="tabs/__tests__"
+cd mobile && npm test -- --testPathPatterns="tabs/__tests__"
 ```
 
 Expected: all tests in the `tabs/__tests__` directory PASS.
