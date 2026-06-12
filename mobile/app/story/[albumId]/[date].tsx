@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, StatusBar,
   ActivityIndicator, Alert,
@@ -6,16 +6,23 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon, DotsThreeIcon } from 'phosphor-react-native';
+import { PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon, DotsThreeIcon, MusicNotesIcon } from 'phosphor-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { useAudioPlayer } from 'expo-audio';
+import { Image as ExpoImage } from 'expo-image';
 import { useDayPhotos } from '@/hooks/useDayPhotos';
 import { useAlbumDays } from '@/hooks/useAlbumDays';
 import { useStoryExport } from '@/hooks/useStoryExport';
+import { useDaySoundtrack } from '@/hooks/useDaySoundtrack';
+import { ensureSoundtrackCached } from '@/hooks/useSoundtrackCache';
+import { SoundtrackPickerSheet } from '@/components/story/SoundtrackPickerSheet';
 import { theme, spacing, typography } from '@/constants/theme';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { OutlinedText } from '@/components/ui/OutlinedText';
 import { PhotoItem, VlogOverlay } from './_components';
+
+const PRELOAD_RADIUS = 2;
 
 export default function StoryScreen() {
   const { albumId, date } = useLocalSearchParams<{ albumId: string; date: string }>();
@@ -29,11 +36,21 @@ export default function StoryScreen() {
   const [isPaused, setIsPaused] = useState(false);
   const [photoProgress, setPhotoProgress] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  const { exporting, exportStory } = useStoryExport(photos ?? [], date);
+  const { data: daySoundtrack } = useDaySoundtrack(albumId, date);
+  const audioPlayer = useAudioPlayer(null);
 
-  // Single persistent video player — never remounted
-  const videoPlayer = useVideoPlayer(null, (p) => { p.muted = true; });
+  const { exporting, exportStory } = useStoryExport(photos ?? [], date, daySoundtrack?.id ?? null);
+
+  // Dual persistent video players: one playing, the other pre-buffering the next item.
+  // Per expo-video v56 docs, a VideoPlayer fills its buffers even when not attached to a VideoView.
+  const playerA = useVideoPlayer(null, (p) => { p.muted = true; });
+  const playerB = useVideoPlayer(null, (p) => { p.muted = true; });
+  const [activeKey, setActiveKey] = useState<'A' | 'B'>('A');
+  const activePlayer = activeKey === 'A' ? playerA : playerB;
+  const uriARef = useRef<string | null>(null);
+  const uriBRef = useRef<string | null>(null);
 
   const goNext = useCallback(() => {
     if (!photos) return;
@@ -85,54 +102,151 @@ export default function StoryScreen() {
     }
   }, [photos]);
 
-  // Hide video until first frame is ready to avoid black flash on source change
+  // Prefetch adjacent thumbnails so PhotoItem (used for photos and as video poster) renders instantly.
   useEffect(() => {
-    const sub = videoPlayer.addListener('statusChange', ({ status }) => {
+    if (!photos) return;
+    const urls: string[] = [];
+    for (let d = -PRELOAD_RADIUS; d <= PRELOAD_RADIUS; d++) {
+      if (d === 0) continue;
+      const idx = currentIndex + d;
+      if (idx < 0 || idx >= photos.length) continue;
+      const item = photos[idx];
+      if (item.thumb_url) urls.push(item.thumb_url);
+    }
+    if (urls.length > 0) ExpoImage.prefetch(urls, 'memory-disk').catch(() => { });
+  }, [currentIndex, photos]);
+
+  // Active player status drives videoReady (avoid black-flash on source change / swap).
+  useEffect(() => {
+    setVideoReady(activePlayer.status === 'readyToPlay');
+    const sub = activePlayer.addListener('statusChange', ({ status }) => {
       setVideoReady(status === 'readyToPlay');
     });
     return () => sub.remove();
-  }, [videoPlayer]);
+  }, [activePlayer]);
 
-  // Load / replace video source when current item changes
+  // Route the current item to a player: swap to standby if it already holds the URI, else load on active.
   useEffect(() => {
     if (!photos) return;
     const current = photos[Math.min(currentIndex, photos.length - 1)];
-    if (current.media_type === 'video') {
-      setVideoReady(false);
-      videoPlayer.replace({ uri: current.photo_url });
-      if (!isPaused) videoPlayer.play();
+
+    if (current.media_type !== 'video') {
+      playerA.pause();
+      playerB.pause();
+      return;
+    }
+
+    const target = current.photo_url;
+    const aUri = uriARef.current;
+    const bUri = uriBRef.current;
+
+    if (activeKey === 'A' && aUri === target) {
+      if (!isPaused) playerA.play();
+    } else if (activeKey === 'B' && bUri === target) {
+      if (!isPaused) playerB.play();
+    } else if (activeKey === 'A' && bUri === target) {
+      playerA.pause();
+      setActiveKey('B');
+    } else if (activeKey === 'B' && aUri === target) {
+      playerB.pause();
+      setActiveKey('A');
     } else {
-      videoPlayer.pause();
+      setVideoReady(false);
+      if (activeKey === 'A') {
+        uriARef.current = target;
+        playerA.replaceAsync({ uri: target }).catch(() => { });
+        if (!isPaused) playerA.play();
+      } else {
+        uriBRef.current = target;
+        playerB.replaceAsync({ uri: target }).catch(() => { });
+        if (!isPaused) playerB.play();
+      }
     }
   }, [currentIndex, photos]);
 
-  // Sync pause/play state with video player
+  // After swap, kick off playback on the new active player.
   useEffect(() => {
     if (!photos) return;
     const current = photos[Math.min(currentIndex, photos.length - 1)];
     if (current.media_type !== 'video') return;
-    if (isPaused) videoPlayer.pause();
-    else videoPlayer.play();
+    if (!isPaused) activePlayer.play();
+  }, [activeKey]);
+
+  // Pre-buffer the next video onto whichever player is now standby.
+  useEffect(() => {
+    if (!photos || photos.length === 0) return;
+    const nextIdx = currentIndex + 1;
+    if (nextIdx >= photos.length) return;
+    const next = photos[nextIdx];
+    if (next.media_type !== 'video') return;
+
+    const standby = activeKey === 'A' ? playerB : playerA;
+    const standbyUriRef = activeKey === 'A' ? uriBRef : uriARef;
+    if (standbyUriRef.current === next.photo_url) return;
+
+    standbyUriRef.current = next.photo_url;
+    standby.replaceAsync({ uri: next.photo_url }).catch(() => { });
+    standby.pause();
+  }, [currentIndex, photos, activeKey]);
+
+  // Sync pause/play state with active player.
+  useEffect(() => {
+    if (!photos) return;
+    const current = photos[Math.min(currentIndex, photos.length - 1)];
+    if (current.media_type !== 'video') return;
+    if (isPaused) activePlayer.pause();
+    else activePlayer.play();
   }, [isPaused]);
 
-  // Video end → advance
+  // Video end → advance (rebind to whichever player is active).
   useEffect(() => {
-    const sub = videoPlayer.addListener('playToEnd', goNext);
+    const sub = activePlayer.addListener('playToEnd', goNext);
     return () => sub.remove();
-  }, [goNext]);
+  }, [goNext, activePlayer]);
 
-  // Video progress reporting
+  // Video progress reporting from the active player.
   useEffect(() => {
     if (!photos) return;
     const current = photos[Math.min(currentIndex, photos.length - 1)];
     if (current.media_type !== 'video') return;
     const id = setInterval(() => {
-      const dur = videoPlayer.duration;
+      const dur = activePlayer.duration;
       if (!dur || isNaN(dur) || dur === 0) { setPhotoProgress(0); return; }
-      setPhotoProgress(Math.min(videoPlayer.currentTime / dur, 1));
+      setPhotoProgress(Math.min(activePlayer.currentTime / dur, 1));
     }, 200);
     return () => clearInterval(id);
-  }, [currentIndex, photos, isPaused]);
+  }, [currentIndex, photos, isPaused, activeKey]);
+
+  // Load + play day soundtrack
+  useEffect(() => {
+    if (!daySoundtrack || daySoundtrack.is_active === false) {
+      audioPlayer.pause();
+      audioPlayer.replace(null);
+      return;
+    }
+    let cancelled = false;
+    ensureSoundtrackCached(daySoundtrack.key).then((localUri) => {
+      if (cancelled) return;
+      audioPlayer.replace(localUri);
+      audioPlayer.loop = true;
+      audioPlayer.volume = 0.7;
+      if (!isPaused) audioPlayer.play();
+    }).catch(() => { });
+    return () => { cancelled = true; };
+  }, [daySoundtrack?.key, daySoundtrack?.is_active]);
+
+  // Sync audio pause/play with story pause/play
+  useEffect(() => {
+    if (!daySoundtrack || daySoundtrack.is_active === false) return;
+    if (isPaused) audioPlayer.pause();
+    else audioPlayer.play();
+  }, [isPaused, daySoundtrack?.id]);
+
+  // Cleanup audio when leaving story
+  useEffect(() => () => {
+    audioPlayer.pause();
+    audioPlayer.replace(null);
+  }, []);
 
   if (isLoading || !photos || photos.length === 0) {
     return (
@@ -165,10 +279,16 @@ export default function StoryScreen() {
           }
         />
 
-        {/* Single persistent video view — hidden until first frame is ready */}
+        {/* Dual VideoView — both mounted so standby keeps buffering; only the active one is visible. */}
         <VideoView
-          player={videoPlayer}
-          style={[StyleSheet.absoluteFill, !(isVideo && videoReady) && styles.hidden]}
+          player={playerA}
+          style={[StyleSheet.absoluteFill, !(isVideo && videoReady && activeKey === 'A') && styles.hidden]}
+          contentFit="contain"
+          nativeControls={false}
+        />
+        <VideoView
+          player={playerB}
+          style={[StyleSheet.absoluteFill, !(isVideo && videoReady && activeKey === 'B') && styles.hidden]}
           contentFit="contain"
           nativeControls={false}
         />
@@ -201,6 +321,18 @@ export default function StoryScreen() {
               >
                 <PencilSimpleIcon size={16} color={theme.colors.textPrimary} />
                 <Text style={styles.menuItemText}>Sửa ghi chú</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.menuItem}
+                testID="story-menu-soundtrack"
+                onPress={() => {
+                  setMenuOpen(false);
+                  setPickerOpen(true);
+                }}
+              >
+                <MusicNotesIcon size={16} color={theme.colors.textPrimary} />
+                <Text style={styles.menuItemText}>Nhạc nền</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -257,6 +389,15 @@ export default function StoryScreen() {
             ]}
           />
         </View>
+
+        {pickerOpen && (
+          <SoundtrackPickerSheet
+            albumId={albumId}
+            date={date}
+            currentSoundtrackId={daySoundtrack?.id ?? null}
+            onClose={() => setPickerOpen(false)}
+          />
+        )}
       </View>
     </GestureDetector>
   );
