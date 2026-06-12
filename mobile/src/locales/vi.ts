@@ -52,6 +52,7 @@ export const vi = {
     title:              'Cài đặt',
     push_label:         'Thông báo đẩy',
     signout:            'Đăng xuất',
+    feedback:           'Góp ý',
     version:            'Phiên bản {{v}}',
     legal_section:      'Pháp lý',
     privacy_policy:     'Chính sách bảo mật',
@@ -80,6 +81,20 @@ export const vi = {
     // profile errors
     avatar_upload_error:'Không thể tải ảnh lên.',
     save_error:         'Không thể lưu thông tin.',
+  },
+  feedback: {
+    title:               'Bạn thấy Daylog thế nào?',
+    rating: {
+      '1':               'Rất tệ',
+      '2':               'Tệ',
+      '3':               'Bình thường',
+      '4':               'Tốt',
+      '5':               'Rất tốt',
+    },
+    message_placeholder: 'Kể cho mình nghe thêm (lỗi, mong muốn, lời khen)…',
+    submit:              'Gửi',
+    success:             'Cảm ơn bạn đã góp ý!',
+    error:               'Không gửi được. Thử lại nhé.',
   },
   language: {
     title:        'Ngôn ngữ',
