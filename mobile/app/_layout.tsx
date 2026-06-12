@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -32,13 +32,8 @@ const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 const ONBOARDING_KEY = 'onboarding.seen';
 
-// TODO: set back to false before shipping — forces onboarding to show on every
-// cold start so we can iterate on the new mascot illustrations.
-const FORCE_ONBOARDING_FOR_TEST = true;
-
 function RootLayout() {
   const { setAuth, clearAuth } = useAuthStore();
-  const token = useAuthStore((s) => s.token);
   const setSeen = useOnboardingStore((s) => s.setSeen);
   const [ready, setReady] = useState(false);
   const updateStatus = useAppUpdate();
@@ -98,21 +93,6 @@ function RootLayout() {
       setReady(true);
     })();
   }, []);
-
-  useEffect(() => {
-    if (ready && FORCE_ONBOARDING_FOR_TEST) {
-      router.replace('/onboarding');
-    }
-  }, [ready]);
-
-  // TEST: also re-show onboarding after sign-out. Watches token; when it
-  // drops to null after the app is ready, navigate back to onboarding.
-  useEffect(() => {
-    if (ready && FORCE_ONBOARDING_FOR_TEST && token == null) {
-      setSeen(false);
-      router.replace('/onboarding');
-    }
-  }, [token, ready, setSeen]);
 
   if (!fontsLoaded || updateStatus === 'checking') return null;
   if (updateStatus === 'force-update') {
