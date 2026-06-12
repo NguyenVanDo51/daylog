@@ -28,8 +28,9 @@ export async function renderOverlayPng(opts: {
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
-  // Bottom scrim — matches story-view LinearGradient(transparent → 0.55 → 0.82)
-  const scrimTop = Math.round(H * 0.667);
+  // Bottom scrim — matches story-view LinearGradient(transparent → 0.55 → 0.82).
+  // Spec says y=1280 — exactly H*2/3, not the rounded 0.667 approximation.
+  const scrimTop = Math.round((H * 2) / 3);
   const grad = ctx.createLinearGradient(0, scrimTop, 0, H);
   grad.addColorStop(0, 'rgba(0,0,0,0)');
   grad.addColorStop(0.5, 'rgba(0,0,0,0.55)');
