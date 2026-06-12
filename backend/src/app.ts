@@ -19,6 +19,7 @@ import waitlistRoutes from './routes/waitlist';
 import usersRoutes from './routes/users';
 import soundtracksRoutes from './routes/soundtracks';
 import daySoundtracksRoutes from './routes/day-soundtracks';
+import feedbackRoutes from './routes/feedback';
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/stories', storiesRoutes);
 app.use('/version', versionRoutes);
 app.use('/waitlist', waitlistRoutes);
 app.use('/soundtracks', soundtracksRoutes);
+app.use('/feedback', feedbackRoutes);
 
 Sentry.setupExpressErrorHandler(app);
 
