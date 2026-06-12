@@ -142,6 +142,39 @@ export const dayLabels = pgTable(
   })
 );
 
+export const soundtracks = pgTable('soundtracks', {
+  id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+  key: varchar('key', { length: 64 }).notNull().unique(),
+  title: varchar('title', { length: 128 }).notNull(),
+  artist: varchar('artist', { length: 128 }),
+  durationMs: integer('duration_ms').notNull(),
+  filePath: text('file_path').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const daySoundtracks = pgTable(
+  'day_soundtracks',
+  {
+    id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+    albumId: uuid('album_id')
+      .notNull()
+      .references(() => albums.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    soundtrackId: uuid('soundtrack_id')
+      .notNull()
+      .references(() => soundtracks.id),
+    updatedBy: uuid('updated_by')
+      .notNull()
+      .references(() => users.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqAlbumDate: uniqueIndex('day_soundtracks_album_date_uniq').on(t.albumId, t.date),
+  })
+);
+
 export const invites = pgTable('invites', {
   id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
   albumId: uuid('album_id')
