@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { pool, db } from '../db';
+import { db } from '../db';
 import { feedback } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { createTestUser, authHeader } from '../../tests/setup';
