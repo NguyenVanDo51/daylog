@@ -276,7 +276,13 @@ jest.mock('expo-video', () => {
     play: jest.fn(),
     pause: jest.fn(),
     replace: jest.fn(),
+    replaceAsync: jest.fn(() => Promise.resolve()),
     seekBy: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    status: 'idle',
+    duration: 0,
+    currentTime: 0,
+    muted: false,
   };
   return {
     VideoView: ({ style, ...props }) =>
@@ -287,6 +293,18 @@ jest.mock('expo-video', () => {
     }),
   };
 });
+
+// expo-audio — used by story screen for day soundtrack playback.
+jest.mock('expo-audio', () => ({
+  useAudioPlayer: jest.fn(() => ({
+    play: jest.fn(),
+    pause: jest.fn(),
+    replace: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    loop: false,
+    volume: 1,
+  })),
+}));
 
 // @react-native-async-storage/async-storage — used by captureStore persist middleware.
 jest.mock('@react-native-async-storage/async-storage', () => ({

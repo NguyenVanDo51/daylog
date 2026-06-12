@@ -1,33 +1,45 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
-import { Alert } from 'react-native';
 import { API_URL } from '@/constants/api';
 import { useAuthStore } from '@/stores/authStore';
+import { success as successHaptic } from '@/lib/haptics';
+import { DayPhoto } from './useDayPhotos';
+
+export type ExportStatus = 'idle' | 'loading' | 'success' | 'permission' | 'error';
+
+export interface UseStoryExport {
+  status: ExportStatus;
+  error: string | null;
+  exportStory: () => Promise<void>;
+  reset: () => void;
+}
 
 export function useStoryExport(
   photos: DayPhoto[],
   date: string,
   soundtrackId?: string | null,
-) {
-  const [exporting, setExporting] = useState(false);
+): UseStoryExport {
+  const [status, setStatus] = useState<ExportStatus>('idle');
+  const [error, setError] = useState<string | null>(null);
 
-  async function exportStory() {
-    setExporting(true);
-    if (photos.length === 0) {
-      setExporting(false);
-      return;
-    }
+  const reset = useCallback(() => {
+    setStatus('idle');
+    setError(null);
+  }, []);
+
+  const exportStory = useCallback(async () => {
+    if (photos.length === 0) return;
+
+    setStatus('loading');
+    setError(null);
 
     const outputPath = `${FileSystem.cacheDirectory}story_${date}.mp4`;
 
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Cần quyền truy cập',
-          'Cần quyền truy cập Ảnh. Vui lòng bật trong Cài đặt.',
-        );
+      const perm = await MediaLibrary.requestPermissionsAsync();
+      if (perm.status !== 'granted') {
+        setStatus('permission');
         return;
       }
 
@@ -38,18 +50,26 @@ export function useStoryExport(
       let url = `${API_URL}/stories/export?photo_ids=${encodeURIComponent(photoIds)}`;
       if (soundtrackId) url += `&soundtrack_id=${encodeURIComponent(soundtrackId)}`;
 
-      const result = await FileSystem.downloadAsync(url, outputPath, { headers });
-      if (result.status !== 200) throw new Error(`Export failed: ${result.status}`);
+      const result = await FileSystem.downloadAsync(url, outputPath, {
+        headers: headers as Record<string, string>,
+      });
+      if (result.status !== 200) {
+        let body = '';
+        try { body = await FileSystem.readAsStringAsync(outputPath); } catch { /* ignored */ }
+        throw new Error(`HTTP ${result.status}${body ? ` — ${body.slice(0, 300)}` : ''}`);
+      }
 
-      await MediaLibrary.saveToLibraryAsync(outputPath);
-      success();
-    } catch {
-      Alert.alert('Lỗi', 'Không thể xuất video. Thử lại nhé.');
+      await MediaLibrary.Asset.create(outputPath);
+      successHaptic();
+      setStatus('success');
+    } catch (err) {
+      console.error('[useStoryExport] failed', err);
+      setError(err instanceof Error ? err.message : String(err));
+      setStatus('error');
     } finally {
       await FileSystem.deleteAsync(outputPath, { idempotent: true });
-      setExporting(false);
     }
-  }
+  }, [photos, date, soundtrackId]);
 
-  return { exporting, exportStory };
+  return { status, error, exportStory, reset };
 }

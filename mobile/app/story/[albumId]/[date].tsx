@@ -6,7 +6,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { PencilSimpleIcon, ArrowCircleDownIcon, TrashIcon, DotsThreeIcon, MusicNotesIcon } from 'phosphor-react-native';
+import { ImagesIcon, ArrowCircleDownIcon, TrashIcon, DotsThreeIcon, MusicNotesIcon } from 'phosphor-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useAudioPlayer } from 'expo-audio';
 import { Image as ExpoImage } from 'expo-image';
@@ -16,11 +16,12 @@ import { useStoryExport } from '@/hooks/useStoryExport';
 import { useDaySoundtrack } from '@/hooks/useDaySoundtrack';
 import { ensureSoundtrackCached } from '@/hooks/useSoundtrackCache';
 import { SoundtrackPickerSheet } from '@/components/story/SoundtrackPickerSheet';
+import { ExportSheet } from '@/components/story/ExportSheet';
 import { theme, spacing, typography } from '@/constants/theme';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
 import { OutlinedText } from '@/components/ui/OutlinedText';
-import { PhotoItem, VlogOverlay } from './_components';
+import { PhotoItem, VlogOverlay } from '@/components/story';
 
 const PRELOAD_RADIUS = 2;
 
@@ -46,7 +47,21 @@ export default function StoryScreen() {
   const daySoundtrack = SOUNDTRACK_ENABLED ? rawDaySoundtrack : null;
   const audioPlayer = useAudioPlayer(null);
 
-  const { exporting, exportStory } = useStoryExport(photos ?? [], date, daySoundtrack?.id ?? null);
+  const { status: exportStatus, error: exportError, exportStory, reset: resetExport } =
+    useStoryExport(photos ?? [], date, daySoundtrack?.id ?? null);
+  const [exportSheetOpen, setExportSheetOpen] = useState(false);
+
+  const openExport = useCallback(() => {
+    setMenuOpen(false);
+    resetExport();
+    setExportSheetOpen(true);
+    exportStory();
+  }, [exportStory, resetExport]);
+
+  const closeExport = useCallback(() => {
+    setExportSheetOpen(false);
+    resetExport();
+  }, [resetExport]);
 
   // Dual persistent video players: one playing, the other pre-buffering the next item.
   // Per expo-video v56 docs, a VideoPlayer fills its buffers even when not attached to a VideoView.
@@ -222,20 +237,28 @@ export default function StoryScreen() {
     return () => clearInterval(id);
   }, [currentIndex, photos, isPaused, activeKey]);
 
+  // expo-audio's useReleasingSharedObject can drop the native player out from under
+  // a stale JS reference (e.g. after Fast Refresh). Calls then throw
+  // NativeSharedObjectNotFoundException — bail out of the story view in that case.
+  const safeAudio = useCallback((fn: () => void) => {
+    try { fn(); } catch { router.back(); }
+  }, []);
+
   // Load + play day soundtrack
   useEffect(() => {
     if (!daySoundtrack || daySoundtrack.is_active === false) {
-      audioPlayer.pause();
-      audioPlayer.replace(null);
+      safeAudio(() => audioPlayer.pause());
       return;
     }
     let cancelled = false;
     ensureSoundtrackCached(daySoundtrack.key).then((localUri) => {
       if (cancelled) return;
-      audioPlayer.replace(localUri);
-      audioPlayer.loop = true;
-      audioPlayer.volume = 0.7;
-      if (!isPaused) audioPlayer.play();
+      safeAudio(() => {
+        audioPlayer.replace(localUri);
+        audioPlayer.loop = true;
+        audioPlayer.volume = 0.7;
+        if (!isPaused) audioPlayer.play();
+      });
     }).catch(() => { });
     return () => { cancelled = true; };
   }, [daySoundtrack?.key, daySoundtrack?.is_active]);
@@ -243,14 +266,15 @@ export default function StoryScreen() {
   // Sync audio pause/play with story pause/play
   useEffect(() => {
     if (!daySoundtrack || daySoundtrack.is_active === false) return;
-    if (isPaused) audioPlayer.pause();
-    else audioPlayer.play();
+    safeAudio(() => {
+      if (isPaused) audioPlayer.pause();
+      else audioPlayer.play();
+    });
   }, [isPaused, daySoundtrack?.id]);
 
-  // Cleanup audio when leaving story
+  // Cleanup audio when leaving story. Already unmounting — swallow silently.
   useEffect(() => () => {
-    audioPlayer.pause();
-    audioPlayer.replace(null);
+    try { audioPlayer.pause(); } catch { }
   }, []);
 
   if (isLoading || !photos || photos.length === 0) {
@@ -318,14 +342,14 @@ export default function StoryScreen() {
             <StickerCard shadow="heavy" style={styles.menuDropdown} testID="story-menu-dropdown">
               <TouchableOpacity
                 style={styles.menuItem}
-                testID="story-menu-edit"
+                testID="story-menu-library"
                 onPress={() => {
                   setMenuOpen(false);
-                  router.push(`/story/${albumId}/${date}/manage` as any);
+                  router.push(`/library/${albumId}` as any);
                 }}
               >
-                <PencilSimpleIcon size={16} color={theme.colors.textPrimary} />
-                <Text style={styles.menuItemText}>Sửa ghi chú</Text>
+                <ImagesIcon size={16} color={theme.colors.textPrimary} />
+                <Text style={styles.menuItemText}>Kho ảnh</Text>
               </TouchableOpacity>
 
               {SOUNDTRACK_ENABLED && (
@@ -345,15 +369,9 @@ export default function StoryScreen() {
               <TouchableOpacity
                 style={styles.menuItem}
                 testID="story-menu-export"
-                onPress={() => {
-                  setMenuOpen(false);
-                  exportStory();
-                }}
-                disabled={exporting}
+                onPress={openExport}
               >
-                {exporting
-                  ? <ActivityIndicator color={theme.colors.textPrimary} size="small" />
-                  : <ArrowCircleDownIcon size={16} color={theme.colors.textPrimary} />}
+                <ArrowCircleDownIcon size={16} color={theme.colors.textPrimary} />
                 <Text style={styles.menuItemText}>Lưu về máy</Text>
               </TouchableOpacity>
 
@@ -384,7 +402,6 @@ export default function StoryScreen() {
           currentIndex={currentIndex}
           total={photos.length}
           bottomInset={insets.bottom}
-          isPaused={isPaused}
         />
 
         <View style={styles.progressLine} pointerEvents="none" testID="story-progress-line">
@@ -405,6 +422,14 @@ export default function StoryScreen() {
             onClose={() => setPickerOpen(false)}
           />
         )}
+
+        <ExportSheet
+          visible={exportSheetOpen}
+          status={exportStatus}
+          error={exportError}
+          onClose={closeExport}
+          onRetry={exportStory}
+        />
       </View>
     </GestureDetector>
   );

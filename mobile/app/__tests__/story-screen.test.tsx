@@ -48,8 +48,16 @@ jest.mock('@/hooks/useAlbumDays', () => ({
   useAlbumDays: jest.fn(() => ({ data: [{ date: '2026-05-01' }] })),
 }));
 
+jest.mock('@/hooks/useDaySoundtrack', () => ({
+  useDaySoundtrack: jest.fn(() => ({ data: null })),
+}));
+
+jest.mock('@/hooks/useSoundtrackCache', () => ({
+  ensureSoundtrackCached: jest.fn(() => Promise.resolve('file://soundtrack.mp3')),
+}));
+
 jest.mock('@/hooks/useStoryExport', () => ({
-  useStoryExport: jest.fn(() => ({ exporting: false, exportStory: jest.fn() })),
+  useStoryExport: jest.fn(() => ({ status: 'idle', error: null, exportStory: jest.fn(), reset: jest.fn() })),
 }));
 
 import { router } from 'expo-router';
@@ -105,17 +113,17 @@ describe('StoryScreen navigation', () => {
     expect(getByTestId('story-menu-dropdown')).toBeTruthy();
   });
 
-  it('Sửa ghi chú navigates to manage screen', () => {
+  it('Kho ảnh navigates to library screen', () => {
     const { getByTestId } = render(<StoryScreen />);
     fireEvent.press(getByTestId('story-menu-btn'));
-    fireEvent.press(getByTestId('story-menu-edit'));
-    expect(router.push).toHaveBeenCalledWith('/story/test-album/2026-05-01/manage');
+    fireEvent.press(getByTestId('story-menu-library'));
+    expect(router.push).toHaveBeenCalledWith('/library/test-album');
   });
 
   it('Lưu về máy calls exportStory', () => {
     const exportStoryMock = jest.fn();
     const { useStoryExport } = require('@/hooks/useStoryExport');
-    useStoryExport.mockReturnValue({ exporting: false, exportStory: exportStoryMock });
+    useStoryExport.mockReturnValue({ status: 'idle', error: null, exportStory: exportStoryMock, reset: jest.fn() });
     const { getByTestId } = render(<StoryScreen />);
     fireEvent.press(getByTestId('story-menu-btn'));
     fireEvent.press(getByTestId('story-menu-export'));
