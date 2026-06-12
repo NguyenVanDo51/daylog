@@ -53,7 +53,7 @@ function toSnakeAlbum(a: typeof albums.$inferSelect): TestAlbum {
 
 // Truncate all tables before each test. Single TRUNCATE statement is faster than 6 queries.
 beforeEach(async () => {
-  await db.execute(sql`TRUNCATE day_soundtracks, soundtracks, presign_tokens, invites, day_labels, photos, album_members, albums, users CASCADE`);
+  await db.execute(sql`TRUNCATE feedback, day_soundtracks, soundtracks, presign_tokens, invites, day_labels, photos, album_members, albums, users CASCADE`);
 });
 
 afterAll(async () => {

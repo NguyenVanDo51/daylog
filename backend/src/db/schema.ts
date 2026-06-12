@@ -106,6 +106,18 @@ export const reactions = pgTable('reactions', {
   byPhoto: index('idx_reactions_photo').on(t.photoId),
 }));
 
+export const feedback = pgTable('feedback', {
+  id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  rating: integer('rating').notNull(),
+  message: text('message'),
+  appVersion: varchar('app_version', { length: 64 }),
+  platform: varchar('platform', { length: 16 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byUserCreated: index('idx_feedback_user_created').on(t.userId, t.createdAt),
+}));
+
 export const albumPhotos = pgTable(
   'album_photos',
   {
