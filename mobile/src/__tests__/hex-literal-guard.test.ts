@@ -15,6 +15,7 @@ const THEME_CLEAN_FILES = [
   'src/components/album/DayCell.tsx',
   'src/components/family/AlbumMenuSheet.tsx',
   'src/components/tabs/SettingsSheet.tsx',
+  'src/components/tabs/FeedbackSheet.tsx',
   'src/components/ui/SheetModal.tsx',
   'src/components/family/MembersSheet.tsx',
   'src/components/family/MemberList.tsx',
