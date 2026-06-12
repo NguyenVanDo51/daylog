@@ -20,8 +20,9 @@ function applyLanguage(pref: AppLanguage): void {
   i18n.locale = pref === 'device' ? deviceLocale() : pref;
 }
 
-// Synchronous default so the first render has a locale set.
-applyLanguage('device');
+// Vietnamese-first: default to 'vi' until user explicitly picks another preference.
+// Users can still choose "Theo thiết bị" in Settings to follow device locale.
+applyLanguage('vi');
 
 // Prevents race condition: if setLanguage() is called while AsyncStorage load is pending,
 // we won't overwrite the explicit choice with the late-resolving stored preference.

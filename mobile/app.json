@@ -5,6 +5,9 @@
     "version": "1.0.0",
     "scheme": "daylog",
     "orientation": "portrait",
+    "locales": {
+      "vi": "./locales/ios-vi.json"
+    },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {

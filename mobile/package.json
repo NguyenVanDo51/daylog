@@ -73,7 +73,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest",
-    "bundle": "git bundle create family-guy.bundle --all"
+    "bundle": "git bundle create family-guy.bundle --all",
+    "release:preview": "npx eas build --profile preview --platform ios",
+    "release:production": "npx eas build --profile production --platform ios",
+    "prebuild:ios": "npx expo prebuild --clean --platform ios"
   },
   "private": true
 }
