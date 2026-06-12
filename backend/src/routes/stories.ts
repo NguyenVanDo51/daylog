@@ -9,7 +9,7 @@ import { randomUUID } from 'crypto';
 import ffmpegPath from 'ffmpeg-static';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../db';
-import { photos, albumPhotos, albumMembers } from '../db/schema';
+import { photos, albumPhotos, albumMembers, soundtracks } from '../db/schema';
 import { getObjectBuffer } from '../services/r2';
 import { isValidUUID } from '../lib/validation';
 
@@ -35,6 +35,11 @@ router.get('/export', async (req: Request, res: Response, next: NextFunction) =>
   }
   if (!ids.every(isValidUUID)) {
     return res.status(400).json({ error: 'Every photo_id must be a valid UUID' });
+  }
+
+  const soundtrackId = req.query.soundtrack_id as string | undefined;
+  if (soundtrackId !== undefined && !isValidUUID(soundtrackId)) {
+    return res.status(400).json({ error: 'soundtrack_id must be a valid UUID' });
   }
 
   try {
@@ -74,6 +79,17 @@ router.get('/export', async (req: Request, res: Response, next: NextFunction) =>
     const rowById = new Map(rows.map((r) => [r.id, r]));
     const ordered = ids.map((id) => rowById.get(id)!);
 
+    let soundtrackFilePath: string | null = null;
+    if (soundtrackId) {
+      const [track] = await db.select().from(soundtracks)
+        .where(and(eq(soundtracks.id, soundtrackId), eq(soundtracks.isActive, true)))
+        .limit(1);
+      if (track) {
+        const candidatePath = path.join(__dirname, '../../assets/soundtracks', track.filePath);
+        if (fs.existsSync(candidatePath)) soundtrackFilePath = candidatePath;
+      }
+    }
+
     const tempDir = path.join(os.tmpdir(), `story-export-${randomUUID()}`);
     fs.mkdirSync(tempDir);
     const outputPath = path.join(tempDir, 'output.mp4');
@@ -97,26 +113,38 @@ router.get('/export', async (req: Request, res: Response, next: NextFunction) =>
           ffArgs.push('-loop', '1', '-t', '3', '-i', filePath);
         }
       }
+      if (soundtrackFilePath) {
+        ffArgs.push('-stream_loop', '-1', '-i', soundtrackFilePath);
+      }
 
+      const videoCount = localPaths.length;
       const filterParts = localPaths.map((_, i) =>
         `[${i}:v]scale=1080:1920:force_original_aspect_ratio=decrease,` +
         `pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1[v${i}]`
       );
       const concatInputs = localPaths.map((_, i) => `[v${i}]`).join('');
-      const filterComplex = [
+      const filterArr: string[] = [
         ...filterParts,
-        `${concatInputs}concat=n=${localPaths.length}:v=1:a=0[out]`,
-      ].join('; ');
+        `${concatInputs}concat=n=${videoCount}:v=1:a=0[out]`,
+      ];
+      if (soundtrackFilePath) {
+        filterArr.push(`[${videoCount}:a]volume=0.7[a]`);
+      }
+      const filterComplex = filterArr.join('; ');
+
+      const audioArgs = soundtrackFilePath
+        ? ['-map', '[a]', '-c:a', 'aac', '-b:a', '128k', '-shortest']
+        : ['-an'];
 
       await execFileAsync(ffmpegPath!, [
         ...ffArgs,
         '-filter_complex', filterComplex,
         '-map', '[out]',
+        ...audioArgs,
         '-c:v', 'libx264',
         '-preset', 'fast',
         '-crf', '23',
         '-r', '30',
-        '-an',
         '-y', outputPath,
       ]);
 

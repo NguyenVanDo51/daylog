@@ -11,7 +11,7 @@ import fs from 'fs';
 import { execFile } from 'child_process';
 import { getObjectBuffer } from '../services/r2';
 import { db } from '../db';
-import { photos, albumPhotos } from '../db/schema';
+import { photos, albumPhotos, soundtracks } from '../db/schema';
 import { createTestUser, createTestAlbum, authHeader } from '../../tests/setup';
 
 const app = require('../app');
@@ -58,6 +58,7 @@ describe('GET /stories/export', () => {
     headers = authHeader(user);
 
     mockGetObjectBuffer.mockResolvedValue(TINY_WEBP);
+    mockExecFile.mockClear();
 
     // Write a fake MP4 at the output path (last arg) and call callback with no error
     mockExecFile.mockImplementation((_bin: string, args: string[], cb: Function) => {
@@ -149,5 +150,78 @@ describe('GET /stories/export', () => {
       .set(headers);
 
     expect(res.status).toBe(403);
+  });
+
+  it('passes soundtrack input + audio map to ffmpeg when soundtrack_id provided', async () => {
+    const photo = await createTestPhoto(album.id, user.id, 'photo');
+    const [track] = await db.insert(soundtracks).values({
+      key: 'lullaby_01', title: 'Mây trắng', durationMs: 30000, filePath: 'lullaby_01.mp3', isActive: true,
+    }).returning();
+    // Ensure the placeholder file exists (Task 4 should have committed it)
+    const fs2 = require('fs');
+    const path2 = require('path');
+    const fixturePath = path2.join(__dirname, '../../assets/soundtracks/lullaby_01.mp3');
+    if (!fs2.existsSync(fixturePath)) {
+      throw new Error('lullaby_01.mp3 fixture missing — Task 4 must run first');
+    }
+
+    mockExecFile.mockImplementation(((_bin: string, _args: string[], cb: any) => {
+      fs.writeFileSync(_args[_args.length - 1], 'fake mp4 data');
+      cb(null, { stdout: '', stderr: '' });
+    }) as any);
+
+    const res = await request(app)
+      .get(`/stories/export?photo_ids=${photo.id}&soundtrack_id=${track.id}`)
+      .set(headers);
+    expect(res.status).toBe(200);
+
+    const ffmpegArgs = mockExecFile.mock.calls[0][1] as string[];
+    expect(ffmpegArgs).toContain('-stream_loop');
+    expect(ffmpegArgs.some((a) => a.endsWith('lullaby_01.mp3'))).toBe(true);
+    expect(ffmpegArgs).toContain('-shortest');
+    expect(ffmpegArgs).toContain('-c:a');
+    expect(ffmpegArgs).toContain('aac');
+    expect(ffmpegArgs).not.toContain('-an');
+  });
+
+  it('silent fallback when soundtrack_id is non-existent UUID', async () => {
+    const photo = await createTestPhoto(album.id, user.id, 'photo');
+    mockExecFile.mockImplementation(((_bin: string, _args: string[], cb: any) => {
+      fs.writeFileSync(_args[_args.length - 1], 'fake mp4');
+      cb(null, { stdout: '', stderr: '' });
+    }) as any);
+
+    const res = await request(app)
+      .get(`/stories/export?photo_ids=${photo.id}&soundtrack_id=00000000-0000-0000-0000-000000000000`)
+      .set(headers);
+    expect(res.status).toBe(200);
+    const ffmpegArgs = mockExecFile.mock.calls[0][1] as string[];
+    expect(ffmpegArgs).toContain('-an');
+  });
+
+  it('silent fallback when soundtrack is inactive', async () => {
+    const photo = await createTestPhoto(album.id, user.id, 'photo');
+    const [track] = await db.insert(soundtracks).values({
+      key: 'old', title: 'Old', durationMs: 10000, filePath: 'lullaby_01.mp3', isActive: false,
+    }).returning();
+    mockExecFile.mockImplementation(((_bin: string, _args: string[], cb: any) => {
+      fs.writeFileSync(_args[_args.length - 1], 'fake mp4');
+      cb(null, { stdout: '', stderr: '' });
+    }) as any);
+
+    const res = await request(app)
+      .get(`/stories/export?photo_ids=${photo.id}&soundtrack_id=${track.id}`)
+      .set(headers);
+    expect(res.status).toBe(200);
+    const ffmpegArgs = mockExecFile.mock.calls[0][1] as string[];
+    expect(ffmpegArgs).toContain('-an');
+  });
+
+  it('rejects invalid soundtrack_id format with 400', async () => {
+    const photo = await createTestPhoto(album.id, user.id, 'photo');
+    const res = await request(app)
+      .get(`/stories/export?photo_ids=${photo.id}&soundtrack_id=not-a-uuid`)
+      .set(headers);
+    expect(res.status).toBe(400);
   });
 });
