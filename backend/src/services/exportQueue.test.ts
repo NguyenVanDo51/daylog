@@ -42,8 +42,11 @@ describe('exportQueue', () => {
   it('throws QueueFullError when a 5th caller arrives with 4 already pending', async () => {
     // Shared latch — every slot's fn awaits the same promise so we can unblock
     // all 4 (active + queued) with one call. The per-slot `release[]` pattern
-    // used in earlier tests deadlocks here because queued slots only push their
-    // own resolvers after they acquire — too late if forEach already drained.
+    // used in earlier tests deadlocks here: slots 3 and 4 are parked inside
+    // semaphore.acquire() and their fn hasn't been invoked yet, so they never
+    // push to release[]. A forEach over [slot1, slot2] only unblocks the two
+    // active slots; slots 3 and 4 then wake, call block(), push resolvers —
+    // but the forEach is already done, so those resolvers are never called.
     let releaseAll!: () => void;
     const allDone = new Promise<void>((r) => { releaseAll = r; });
 

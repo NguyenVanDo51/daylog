@@ -1,4 +1,5 @@
 const SLOTS = 2;
+// Maximum total callers (active + queued) allowed before further calls are rejected.
 const MAX_PENDING = 4;
 
 class Semaphore {
@@ -12,14 +13,20 @@ class Semaphore {
       this.inUse++;
       return;
     }
+    // Wait without incrementing. release() transfers the slot directly to us
+    // — bumping inUse here would let a fast-path caller racing between the
+    // resolve and this microtask exceed capacity.
     await new Promise<void>((resolve) => this.waiters.push(resolve));
-    this.inUse++;
   }
 
   release(): void {
-    this.inUse--;
     const next = this.waiters.shift();
-    if (next) next();
+    if (next) {
+      // Slot transfers to the waiter; inUse stays at capacity.
+      next();
+    } else {
+      this.inUse--;
+    }
   }
 }
 
