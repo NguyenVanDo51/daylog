@@ -38,7 +38,9 @@ export const en = {
     permissionDenied: 'No permission to access photo library',
   },
   capture: {
-    hint_video:        'Hold to record 2s video',
+    hint_video:        'Tap to record 2s video',
+    mode_photo:        'Photo',
+    mode_video:        'Video',
     review_caption_ph: 'Add a note...',
     send:              'Send',
     retake:            'Retake',

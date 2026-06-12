@@ -178,7 +178,9 @@ export const vi = {
     permissionDenied: 'Không có quyền truy cập thư viện ảnh',
   },
   capture: {
-    hint_video:        'Giữ để quay video 2s',
+    hint_video:        'Chạm để quay video 2s',
+    mode_photo:        'Ảnh',
+    mode_video:        'Video',
     review_caption_ph: 'Note một dòng...',
     send:              'Gửi',
     retake:            'Chụp lại',
