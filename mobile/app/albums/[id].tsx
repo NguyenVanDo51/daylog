@@ -186,7 +186,7 @@ export default function AlbumScreen() {
         </View>
       ) : !days || days.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Mascot size={80} tilt="default" />
+          <Mascot pose="empty-day" size={140} tilt="default" />
           <Text style={styles.empty}>{t('albums.day_grid_empty')}</Text>
           <Text style={styles.emptySub}>{t('albums.day_grid_empty_hint')}</Text>
         </View>

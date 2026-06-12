@@ -149,7 +149,7 @@ function HeroWelcome() {
           <Text style={styles.speechText}>{t('onboarding.p1_speech')}</Text>
         </StickerCard>
       </View>
-      <Mascot size={130} tilt="playful" flip />
+      <Mascot size={220} tilt="playful" flip />
     </View>
   );
 }
@@ -158,7 +158,7 @@ function HeroCapture() {
   return (
     <View style={styles.heroBox}>
       <View style={styles.captureScene}>
-        <Mascot size={90} tilt="default" />
+        <Mascot pose="camera" size={150} tilt="default" />
         <View style={styles.miniCamera} />
       </View>
       <View style={styles.captureChips}>
@@ -181,7 +181,7 @@ function HeroStory() {
         <View style={styles.playArrow}>
           <Text style={styles.playArrowText}>▶</Text>
         </View>
-        <Mascot size={70} tilt="playful" flip />
+        <Mascot pose="story" size={120} tilt="playful" flip />
       </View>
     </View>
   );
@@ -193,9 +193,9 @@ function HeroFamily() {
       <View style={styles.familyScene}>
         <View style={styles.heartFloat}><Text style={styles.heartText}>💛</Text></View>
         <View style={styles.heartFloat2}><Text style={styles.heartText}>💖</Text></View>
-        <Mascot size={80} tilt="default" flip />
-        <View style={styles.smallMascot}><Mascot size={70} tilt="subtle" /></View>
-        <View style={styles.smallerMascot}><Mascot size={60} tilt="default" flip /></View>
+        <Mascot size={140} tilt="default" flip />
+        <View style={styles.smallMascot}><Mascot size={120} tilt="subtle" /></View>
+        <View style={styles.smallerMascot}><Mascot size={100} tilt="default" flip /></View>
       </View>
     </View>
   );
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   pager:        { flex: 1 },
   pageWrap:     { flex: 1 },
   page:         { flex: 1, alignItems: 'center', paddingHorizontal: spacing['2xl'], paddingTop: spacing['4xl'] },
-  heroArea:     { height: 260, justifyContent: 'center', alignItems: 'center', marginTop: spacing['2xl'] },
+  heroArea:     { height: 320, justifyContent: 'center', alignItems: 'center', marginTop: spacing['2xl'] },
   textArea:     { marginTop: spacing['3xl'], alignItems: 'center', gap: spacing.md },
   title:        { ...typography.displayCute, textAlign: 'center' },
   body:         { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center', maxWidth: 280, lineHeight: 22 },

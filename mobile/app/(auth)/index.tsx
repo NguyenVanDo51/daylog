@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, type DimensionValue } from 'react-native';
 import * as Linking from 'expo-linking';
 import { PRIVACY_URL } from '@/constants/urls';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -30,7 +31,18 @@ GoogleSignin.configure({
   scopes: ['profile', 'email'],
 });
 
-function FloatingDot({ x, y, size, color, delay }: { x: string; y: number; size: number; color: string; delay: number }) {
+function GoogleIcon({ size = 18 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+      <Path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" />
+      <Path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+      <Path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+    </Svg>
+  );
+}
+
+function FloatingDot({ x, y, size, color, delay }: { x: DimensionValue; y: number; size: number; color: string; delay: number }) {
   const yShared = useSharedValue(0);
   useEffect(() => {
     yShared.value = withRepeat(withSequence(withTiming(-10, { duration: 2200 + delay }), withTiming(0, { duration: 2200 + delay })), -1);
@@ -110,20 +122,20 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      <FloatingDot x="10%" y={100} size={18} color={theme.colors.accent1} delay={0} />
-      <FloatingDot x="85%" y={140} size={14} color={theme.colors.primary}  delay={300} />
-      <FloatingDot x="15%" y={300} size={12} color={theme.colors.accent2}  delay={600} />
-      <FloatingDot x="80%" y={360} size={16} color={theme.colors.accent4}  delay={900} />
-
       <LinearGradient
         colors={[theme.colors.backgroundHighlight, theme.colors.background]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.hero}
       >
-        <Mascot size={80} tilt="playful" flip />
+        <FloatingDot x="10%" y={100} size={18} color={theme.colors.accent1} delay={0} />
+        <FloatingDot x="85%" y={140} size={14} color={theme.colors.primary}  delay={300} />
+        <FloatingDot x="15%" y={300} size={12} color={theme.colors.accent2}  delay={600} />
+        <FloatingDot x="80%" y={450} size={16} color={theme.colors.accent4}  delay={900} />
+
+        <Mascot size={160} tilt="playful" flip />
         <View style={styles.logoWrap}>
-          <StickerChip label="Nhật ký" variant="yellow" tilt="default" flip />
+          <StickerChip label="Daylog" variant="yellow" tilt="default" flip />
         </View>
         <Text style={styles.tagline}>{t('signin.tagline')}</Text>
         <Text style={styles.subCopy}>{t('signin.sub_copy')}</Text>
@@ -144,6 +156,7 @@ export default function SignInScreen() {
             fullWidth
             loading={loading === 'google'}
             onPress={handleGoogle}
+            icon={<GoogleIcon size={20} />}
           />
         </View>
         <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_URL)}>
@@ -159,7 +172,7 @@ const styles = StyleSheet.create({
   dot:       { position: 'absolute', borderRadius: theme.radii.pill, opacity: 0.7, borderWidth: theme.border.medium, borderColor: theme.colors.border, ...theme.shadows.sticker },
   hero:      { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['3xl'], gap: spacing.md },
   logoWrap:  { marginTop: spacing.lg },
-  tagline:   { ...typography.body, color: theme.colors.textPrimary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: spacing.md },
+  tagline:   { ...typography.title, color: theme.colors.textPrimary, fontFamily: theme.fonts.semiBold, textAlign: 'center', marginTop: spacing.md },
   subCopy:   { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center', fontSize: 13 },
   bottom:    { backgroundColor: theme.colors.background, paddingHorizontal: spacing['3xl'], paddingTop: spacing['3xl'], paddingBottom: spacing['4xl'] },
   buttons:   { gap: spacing.md },

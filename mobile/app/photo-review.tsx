@@ -154,7 +154,7 @@ export default function PhotoReviewScreen() {
 
             <StickerButton
               testID="review-save"
-              label="Lưu vào nhật ký"
+              label="Lưu lại"
               variant="inverted"
               shadow="heavy"
               fullWidth

@@ -24,6 +24,10 @@ import { PhotoItem, VlogOverlay } from './_components';
 
 const PRELOAD_RADIUS = 2;
 
+// TODO: flip back to true to re-enable the day-soundtrack feature (music picker
+// in the story menu, audio playback during story, soundtrack baked into export).
+const SOUNDTRACK_ENABLED = false;
+
 export default function StoryScreen() {
   const { albumId, date } = useLocalSearchParams<{ albumId: string; date: string }>();
   const insets = useSafeAreaInsets();
@@ -38,7 +42,8 @@ export default function StoryScreen() {
   const [videoReady, setVideoReady] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const { data: daySoundtrack } = useDaySoundtrack(albumId, date);
+  const { data: rawDaySoundtrack } = useDaySoundtrack(albumId, date);
+  const daySoundtrack = SOUNDTRACK_ENABLED ? rawDaySoundtrack : null;
   const audioPlayer = useAudioPlayer(null);
 
   const { exporting, exportStory } = useStoryExport(photos ?? [], date, daySoundtrack?.id ?? null);
@@ -323,17 +328,19 @@ export default function StoryScreen() {
                 <Text style={styles.menuItemText}>Sửa ghi chú</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.menuItem}
-                testID="story-menu-soundtrack"
-                onPress={() => {
-                  setMenuOpen(false);
-                  setPickerOpen(true);
-                }}
-              >
-                <MusicNotesIcon size={16} color={theme.colors.textPrimary} />
-                <Text style={styles.menuItemText}>Nhạc nền</Text>
-              </TouchableOpacity>
+              {SOUNDTRACK_ENABLED && (
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  testID="story-menu-soundtrack"
+                  onPress={() => {
+                    setMenuOpen(false);
+                    setPickerOpen(true);
+                  }}
+                >
+                  <MusicNotesIcon size={16} color={theme.colors.textPrimary} />
+                  <Text style={styles.menuItemText}>Nhạc nền</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.menuItem}
@@ -390,7 +397,7 @@ export default function StoryScreen() {
           />
         </View>
 
-        {pickerOpen && (
+        {SOUNDTRACK_ENABLED && pickerOpen && (
           <SoundtrackPickerSheet
             albumId={albumId}
             date={date}

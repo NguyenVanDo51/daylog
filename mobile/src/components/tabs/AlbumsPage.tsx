@@ -86,8 +86,8 @@ export function AlbumsPage({ onCameraPress }: Props) {
       </Modal>
 
       <View style={styles.header}>
-        <Mascot size={24} tilt="playful" flip />
-        <Text style={styles.heading}>Nhật ký</Text>
+        <Mascot size={40} tilt="playful" flip />
+        <Text style={styles.heading}>Daylog</Text>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuBtn} testID="menu-btn">
           <DotsThree size={22} color={theme.colors.textPrimary} />
         </TouchableOpacity>
@@ -99,7 +99,7 @@ export function AlbumsPage({ onCameraPress }: Props) {
         </View>
       ) : sorted.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Mascot size={80} tilt="default" />
+          <Mascot pose="empty-albums" size={140} tilt="default" />
           <Text style={styles.empty}>{t('albums.empty')}</Text>
           <StickerButton
             label={t('albums.empty_cta')}
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   menuBtn:         { padding: spacing.sm },
   emptyWrap:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg, paddingHorizontal: spacing['3xl'] },
   empty:           { ...typography.body, color: theme.colors.textSecondary, textAlign: 'center' },
-  list:            { paddingHorizontal: spacing['2xl'], gap: spacing.md, paddingBottom: spacing['2xl'] },
+  list:            { paddingHorizontal: spacing['2xl'], paddingTop: spacing.sm, gap: spacing.md, paddingBottom: spacing['2xl'] },
   row:             { marginBottom: spacing.sm },
   rowInner:        { flexDirection: 'row', alignItems: 'center', padding: spacing.md, gap: spacing.md, minHeight: 64 },
   rowInfo:         { flex: 1 },
