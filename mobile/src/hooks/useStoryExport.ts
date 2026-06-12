@@ -5,7 +5,11 @@ import { Alert } from 'react-native';
 import { API_URL } from '@/constants/api';
 import { useAuthStore } from '@/stores/authStore';
 
-export function useStoryExport(photos: DayPhoto[], date: string) {
+export function useStoryExport(
+  photos: DayPhoto[],
+  date: string,
+  soundtrackId?: string | null,
+) {
   const [exporting, setExporting] = useState(false);
 
   async function exportStory() {
@@ -31,7 +35,8 @@ export function useStoryExport(photos: DayPhoto[], date: string) {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const photoIds = photos.map((p) => p.id).join(',');
-      const url = `${API_URL}/stories/export?photo_ids=${encodeURIComponent(photoIds)}`;
+      let url = `${API_URL}/stories/export?photo_ids=${encodeURIComponent(photoIds)}`;
+      if (soundtrackId) url += `&soundtrack_id=${encodeURIComponent(soundtrackId)}`;
 
       const result = await FileSystem.downloadAsync(url, outputPath, { headers });
       if (result.status !== 200) throw new Error(`Export failed: ${result.status}`);
