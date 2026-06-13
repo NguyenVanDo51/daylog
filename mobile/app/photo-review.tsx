@@ -60,6 +60,10 @@ export default function PhotoReviewScreen() {
   useEffect(() => {
     if (initializedRef.current || savedIds === null || albums.length === 0) return;
     initializedRef.current = true;
+    if (albums.length === 1) {
+      setSelectedIds(new Set([albums[0].id]));
+      return;
+    }
     const valid = savedIds.filter((id) => albums.some((a) => a.id === id));
     if (valid.length > 0) setSelectedIds(new Set(valid));
   }, [savedIds, albums]);
@@ -155,7 +159,7 @@ export default function PhotoReviewScreen() {
             <StickerButton
               testID="review-save"
               label="Lưu lại"
-              variant="inverted"
+              variant="primary"
               shadow="heavy"
               fullWidth
               loading={saving}

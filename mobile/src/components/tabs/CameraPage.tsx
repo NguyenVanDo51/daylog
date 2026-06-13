@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, AppState, Linking, Modal } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { router } from 'expo-router';
 import { X, CameraRotate } from 'phosphor-react-native';
@@ -44,13 +44,18 @@ export function CameraPage({ onTabPress }: Props) {
 
   const progress = useSharedValue(0);
   const recordMorph = useSharedValue(0);
+  const recordPulse = useSharedValue(1);
   const progressFillStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
   }));
   const shutterInnerStyle = useAnimatedStyle(() => {
-    const size = 56 - recordMorph.value * 28;
-    const radius = 28 - recordMorph.value * 22;
-    return { width: size, height: size, borderRadius: radius };
+    const size = 56 - recordMorph.value * 16;
+    return {
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      transform: [{ scale: recordPulse.value }],
+    };
   });
 
   React.useEffect(() => {
@@ -123,6 +128,14 @@ export function CameraPage({ onTabPress }: Props) {
     recordingRef.current = true;
     setRecordingActive(true);
     recordMorph.value = withTiming(1, { duration: 150 });
+    recordPulse.value = withRepeat(
+      withSequence(
+        withTiming(0.85, { duration: 500, easing: Easing.inOut(Easing.quad) }),
+        withTiming(1, { duration: 500, easing: Easing.inOut(Easing.quad) }),
+      ),
+      -1,
+      false,
+    );
     const start = Date.now();
     progress.value = withTiming(1, { duration: 2000, easing: Easing.linear });
     const finalizingTimer = setTimeout(() => setFinalizing(true), 2000);
@@ -133,7 +146,9 @@ export function CameraPage({ onTabPress }: Props) {
     const durationMs = Math.min(Date.now() - start, 2000);
     recordingRef.current = false;
     cancelAnimation(progress);
+    cancelAnimation(recordPulse);
     progress.value = 0;
+    recordPulse.value = withTiming(1, { duration: 150 });
     recordMorph.value = withTiming(0, { duration: 150 });
     if (video) handleMediaCaptured({ type: 'video', uri: video.uri, durationMs });
   }
@@ -195,13 +210,13 @@ export function CameraPage({ onTabPress }: Props) {
       <MediaCaption time={clock} style={styles.clockArea} />
 
       {showHint && !finalizing && (
-        <View style={styles.hintArea} pointerEvents="none">
+        <View style={[styles.hintArea, { bottom: insets.bottom + 200 }]} pointerEvents="none">
           <StickerChip label={t('capture.hint_video')} variant="ink" />
         </View>
       )}
 
       {finalizing && (
-        <View style={styles.hintArea} pointerEvents="none">
+        <View style={[styles.hintArea, { bottom: insets.bottom + 200 }]} pointerEvents="none">
           <StickerChip label={t('capture.finalizing')} variant="yellow" />
         </View>
       )}
@@ -255,7 +270,7 @@ const styles = StyleSheet.create({
   topBar:       { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, zIndex: 10 },
   iconBtn:      { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', padding: 0 },
   clockArea:    { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  hintArea:     { position: 'absolute', bottom: 160, left: 0, right: 0, alignItems: 'center' },
+  hintArea:     { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   shutterArea:  { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' },
   modeToggle:   { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   shutterOuter: {
