@@ -51,6 +51,8 @@ export const vi = {
   settings: {
     title:              'Cài đặt',
     push_label:         'Thông báo đẩy',
+    reminders_label:    'Nhắc ghi khoảnh khắc',
+    reminders_hint:     '7 nhắc/ngày từ 9h sáng đến 9h tối',
     signout:            'Đăng xuất',
     feedback:           'Góp ý',
     version:            'Phiên bản {{v}}',

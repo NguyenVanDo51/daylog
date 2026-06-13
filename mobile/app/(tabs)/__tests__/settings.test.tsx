@@ -66,6 +66,9 @@ beforeEach(() => {
   mockAuthState.clearAuth.mockReset();
   mockAuthState.user = { id: 'u1', display_name: 'Andy', email: 'andy@example.com', avatar_url: null };
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const { api } = require('@/lib/api');
+  (api.get as jest.Mock).mockResolvedValue({ data: { reminders_enabled: true } });
+  (api.patch as jest.Mock).mockResolvedValue({ data: {} });
 });
 
 afterEach(() => {
@@ -92,59 +95,59 @@ describe('SettingsTab', () => {
 
   it('initialises the notification switch from hasPushPermission (granted)', async () => {
     mockHasPushPermission.mockResolvedValue(true);
-    const { UNSAFE_getByType } = render(<Screen />);
+    const { getByTestId } = render(<Screen />);
     await waitFor(() => {
-      expect(UNSAFE_getByType(Switch).props.value).toBe(true);
+      expect(getByTestId('settings-push-toggle').props.value).toBe(true);
     });
   });
 
   it('initialises the notification switch as false when permission not granted', async () => {
     mockHasPushPermission.mockResolvedValue(false);
-    const { UNSAFE_getByType } = render(<Screen />);
+    const { getByTestId } = render(<Screen />);
     await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
-    expect(UNSAFE_getByType(Switch).props.value).toBe(false);
+    expect(getByTestId('settings-push-toggle').props.value).toBe(false);
   });
 
   it('handles a rejection from hasPushPermission silently (catch branch)', async () => {
     mockHasPushPermission.mockRejectedValue(new Error('boom'));
-    const { UNSAFE_getByType } = render(<Screen />);
+    const { getByTestId } = render(<Screen />);
     await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
-    expect(UNSAFE_getByType(Switch).props.value).toBe(false);
+    expect(getByTestId('settings-push-toggle').props.value).toBe(false);
   });
 
   it('turning the switch OFF sets local state to false without calling register', async () => {
     mockHasPushPermission.mockResolvedValue(true);
-    const { UNSAFE_getByType } = render(<Screen />);
-    await waitFor(() => expect(UNSAFE_getByType(Switch).props.value).toBe(true));
+    const { getByTestId } = render(<Screen />);
+    await waitFor(() => expect(getByTestId('settings-push-toggle').props.value).toBe(true));
 
     await act(async () => {
-      UNSAFE_getByType(Switch).props.onValueChange(false);
+      fireEvent(getByTestId('settings-push-toggle'), 'valueChange', false);
     });
-    expect(UNSAFE_getByType(Switch).props.value).toBe(false);
+    expect(getByTestId('settings-push-toggle').props.value).toBe(false);
     expect(mockRegisterPushToken).not.toHaveBeenCalled();
   });
 
   it('turning the switch ON registers the push token and reflects success', async () => {
     mockRegisterPushToken.mockResolvedValue(true);
-    const { UNSAFE_getByType } = render(<Screen />);
+    const { getByTestId } = render(<Screen />);
     await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
 
     await act(async () => {
-      UNSAFE_getByType(Switch).props.onValueChange(true);
+      fireEvent(getByTestId('settings-push-toggle'), 'valueChange', true);
     });
 
     expect(mockRegisterPushToken).toHaveBeenCalled();
-    expect(UNSAFE_getByType(Switch).props.value).toBe(true);
+    expect(getByTestId('settings-push-toggle').props.value).toBe(true);
     expect(Alert.alert).not.toHaveBeenCalled();
   });
 
   it('turning ON shows a permission-denied alert when registerPushToken returns false', async () => {
     mockRegisterPushToken.mockResolvedValue(false);
-    const { UNSAFE_getByType } = render(<Screen />);
+    const { getByTestId } = render(<Screen />);
     await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
 
     await act(async () => {
-      UNSAFE_getByType(Switch).props.onValueChange(true);
+      fireEvent(getByTestId('settings-push-toggle'), 'valueChange', true);
     });
 
     // Vietnamese error alert
@@ -152,16 +155,16 @@ describe('SettingsTab', () => {
       'Có lỗi xảy ra',
       'Vào Cài đặt thiết bị để bật thông báo.',
     );
-    expect(UNSAFE_getByType(Switch).props.value).toBe(false);
+    expect(getByTestId('settings-push-toggle').props.value).toBe(false);
   });
 
   it('turning ON shows an unavailable alert if registerPushToken throws', async () => {
     mockRegisterPushToken.mockRejectedValue(new Error('nope'));
-    const { UNSAFE_getByType } = render(<Screen />);
+    const { getByTestId } = render(<Screen />);
     await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
 
     await act(async () => {
-      UNSAFE_getByType(Switch).props.onValueChange(true);
+      fireEvent(getByTestId('settings-push-toggle'), 'valueChange', true);
     });
 
     // Vietnamese error alert
@@ -197,6 +200,40 @@ describe('SettingsTab', () => {
     await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
     fireEvent.press(getByTestId('settings-terms'));
     expect(mockOpenURL).toHaveBeenCalledWith('https://getdaylog.com/terms');
+  });
+
+  it('renders the reminders toggle only when push permission is granted', async () => {
+    mockHasPushPermission.mockResolvedValue(true);
+    const { findByTestId, queryByTestId } = render(<Screen />);
+    await findByTestId('settings-reminders-toggle');
+    expect(queryByTestId('settings-reminders-toggle')).toBeTruthy();
+  });
+
+  it('hides the reminders toggle when push permission is not granted', async () => {
+    mockHasPushPermission.mockResolvedValue(false);
+    const { queryByTestId } = render(<Screen />);
+    await waitFor(() => expect(mockHasPushPermission).toHaveBeenCalled());
+    expect(queryByTestId('settings-reminders-toggle')).toBeNull();
+  });
+
+  it('initialises reminders toggle from GET /users/me', async () => {
+    mockHasPushPermission.mockResolvedValue(true);
+    const { api } = require('@/lib/api');
+    (api.get as jest.Mock).mockResolvedValue({ data: { reminders_enabled: false } });
+    const { findByTestId } = render(<Screen />);
+    const toggle = await findByTestId('settings-reminders-toggle');
+    await waitFor(() => expect(toggle.props.value).toBe(false));
+  });
+
+  it('PATCHes reminders_enabled=false when toggled off', async () => {
+    mockHasPushPermission.mockResolvedValue(true);
+    const { api } = require('@/lib/api');
+    const { findByTestId } = render(<Screen />);
+    const toggle = await findByTestId('settings-reminders-toggle');
+    await act(async () => {
+      fireEvent(toggle, 'valueChange', false);
+    });
+    expect(api.patch).toHaveBeenCalledWith('/users/me', { reminders_enabled: false });
   });
 
   it('Sign Out deletes the secure-store token, clears auth + album, and navigates to /(auth)', async () => {
