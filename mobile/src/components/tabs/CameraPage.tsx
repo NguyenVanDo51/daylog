@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, AppState, Linking, Modal } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { router } from 'expo-router';
 import { X, CameraRotate } from 'phosphor-react-native';
@@ -35,15 +35,28 @@ export function CameraPage({ onTabPress }: Props) {
   const [mode, setModeState] = useState<'photo' | 'video'>('video');
   const [permissionResponse, requestPermission] = useCameraPermissions();
   const [showHint, setShowHint] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+  const [recordingActive, setRecordingActive] = useState(false);
   const [clock, setClock] = useState<string>(formatClock);
   const cameraRef = useRef<CameraView>(null);
   const recordingRef = useRef(false);
   const insets = useSafeAreaInsets();
 
   const progress = useSharedValue(0);
-  const progressStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${progress.value * 360}deg` }],
+  const recordMorph = useSharedValue(0);
+  const recordPulse = useSharedValue(1);
+  const progressFillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
   }));
+  const shutterInnerStyle = useAnimatedStyle(() => {
+    const size = 56 - recordMorph.value * 16;
+    return {
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      transform: [{ scale: recordPulse.value }],
+    };
+  });
 
   React.useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
@@ -113,13 +126,30 @@ export function CameraPage({ onTabPress }: Props) {
   async function startRecord() {
     if (recordingRef.current) return;
     recordingRef.current = true;
+    setRecordingActive(true);
+    recordMorph.value = withTiming(1, { duration: 150 });
+    recordPulse.value = withRepeat(
+      withSequence(
+        withTiming(0.85, { duration: 500, easing: Easing.inOut(Easing.quad) }),
+        withTiming(1, { duration: 500, easing: Easing.inOut(Easing.quad) }),
+      ),
+      -1,
+      false,
+    );
     const start = Date.now();
     progress.value = withTiming(1, { duration: 2000, easing: Easing.linear });
-    const video = await cameraRef.current?.recordAsync({ maxDuration: 2 });
+    const finalizingTimer = setTimeout(() => setFinalizing(true), 2000);
+    const video = await cameraRef.current?.recordAsync({ maxDuration: 2, videoQuality: '1080p' });
+    clearTimeout(finalizingTimer);
+    setFinalizing(false);
+    setRecordingActive(false);
     const durationMs = Math.min(Date.now() - start, 2000);
     recordingRef.current = false;
     cancelAnimation(progress);
+    cancelAnimation(recordPulse);
     progress.value = 0;
+    recordPulse.value = withTiming(1, { duration: 150 });
+    recordMorph.value = withTiming(0, { duration: 150 });
     if (video) handleMediaCaptured({ type: 'video', uri: video.uri, durationMs });
   }
 
@@ -179,9 +209,15 @@ export function CameraPage({ onTabPress }: Props) {
 
       <MediaCaption time={clock} style={styles.clockArea} />
 
-      {showHint && (
-        <View style={styles.hintArea} pointerEvents="none">
+      {showHint && !finalizing && (
+        <View style={[styles.hintArea, { bottom: insets.bottom + 200 }]} pointerEvents="none">
           <StickerChip label={t('capture.hint_video')} variant="ink" />
+        </View>
+      )}
+
+      {finalizing && (
+        <View style={[styles.hintArea, { bottom: insets.bottom + 200 }]} pointerEvents="none">
+          <StickerChip label={t('capture.finalizing')} variant="yellow" />
         </View>
       )}
 
@@ -212,11 +248,19 @@ export function CameraPage({ onTabPress }: Props) {
         </View>
         <GestureDetector gesture={tapGesture}>
           <View style={styles.shutterOuter}>
-            <Animated.View style={[styles.progressArc, progressStyle]} />
-            <View style={styles.shutterInner} />
+            <Animated.View style={[styles.shutterInner, shutterInnerStyle]} />
           </View>
         </GestureDetector>
       </View>
+
+      {recordingActive && (
+        <View
+          style={[styles.progressTrack, { bottom: insets.bottom + spacing.sm }]}
+          pointerEvents="none"
+        >
+          <Animated.View style={[styles.progressFill, progressFillStyle]} />
+        </View>
+      )}
     </View>
   );
 }
@@ -226,7 +270,7 @@ const styles = StyleSheet.create({
   topBar:       { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.xl, zIndex: 10 },
   iconBtn:      { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', padding: 0 },
   clockArea:    { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  hintArea:     { position: 'absolute', bottom: 160, left: 0, right: 0, alignItems: 'center' },
+  hintArea:     { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   shutterArea:  { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' },
   modeToggle:   { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   shutterOuter: {
@@ -236,8 +280,22 @@ const styles = StyleSheet.create({
     ...theme.shadows.stickerHeavy,
     backgroundColor: theme.colors.surface,
   },
-  progressArc:  { position: 'absolute', width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: theme.colors.primary, borderTopColor: 'transparent', borderRightColor: 'transparent' },
   shutterInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.primary, borderWidth: theme.border.medium, borderColor: theme.colors.border },
+  progressTrack: {
+    position: 'absolute',
+    left: spacing['2xl'], right: spacing['2xl'],
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.surface,
+    borderWidth: theme.border.medium,
+    borderColor: theme.colors.border,
+    overflow: 'hidden',
+    ...theme.shadows.stickerHeavy,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: theme.colors.primary,
+  },
   permOverlay:  { flex: 1, backgroundColor: theme.overlays.scrimDeep, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: spacing['2xl'], paddingBottom: spacing['3xl'] },
   permSheet:    { width: '100%', padding: spacing['2xl'], gap: spacing.md },
   permTitle:    { ...typography.title, color: theme.colors.textPrimary },

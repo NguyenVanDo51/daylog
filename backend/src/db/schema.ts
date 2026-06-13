@@ -26,6 +26,11 @@ export const users = pgTable('users', {
   pushToken: text('push_token'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  timezone: text('timezone').notNull().default('Asia/Ho_Chi_Minh'),
+  language: text('language').notNull().default('vi'),
+  remindersEnabled: boolean('reminders_enabled').notNull().default(true),
+  lastReminderSentAt: timestamp('last_reminder_sent_at', { withTimezone: true }),
+  lastReminderMessageIds: integer('last_reminder_message_ids').array().notNull().default([]),
 });
 
 // NOTE: albums.cover_photo_id references photos.id, creating a circular dependency

@@ -10,6 +10,18 @@ Sentry.init({
 // require() in body — runs AFTER Sentry.init() so pg and Express are instrumented
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const app: import('express').Application = require('./app');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const cron = require('node-cron');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { runReminderCron } = require('./services/reminderCron');
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(port, () => console.log(`API running on port ${port}`));
+
+cron.schedule(
+  '*/30 * * * *',
+  () => {
+    runReminderCron().catch((err: unknown) => console.error('reminderCron failed:', err));
+  },
+  { timezone: 'UTC' },
+);

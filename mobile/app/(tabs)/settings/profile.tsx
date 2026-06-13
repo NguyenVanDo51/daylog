@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
+import { putLocalFile } from '@/lib/uploadFile';
 import { Avatar } from '@/components/ui/Avatar';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StickerCard } from '@/components/ui/StickerCard';
@@ -35,11 +36,11 @@ export default function ProfileScreen() {
     try {
       const { data } = await api.post('/users/me/avatar-presign');
       const { upload_url, key } = data;
-      const blob = await (await fetch(asset.uri)).blob();
-      await fetch(upload_url, { method: 'PUT', body: blob, headers: { 'Content-Type': 'image/jpeg' } });
+      await putLocalFile(upload_url, asset.uri, 'image/jpeg');
       setPendingKey(key);
       setAvatarUri(asset.uri);
-    } catch {
+    } catch (err) {
+      console.warn('avatar upload failed', err);
       Alert.alert(t('common.error'), t('settings.avatar_upload_error'));
     } finally {
       setUploading(false);

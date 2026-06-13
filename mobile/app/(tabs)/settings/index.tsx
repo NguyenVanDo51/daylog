@@ -30,11 +30,24 @@ export default function SettingsTab() {
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
   const [currentLang, setCurrentLang] = useState<AppLanguage>('device');
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
 
   useEffect(() => {
     hasPushPermission().then(setNotifEnabled).catch(() => {});
     getCurrentLanguage().then(setCurrentLang);
+    api.get('/users/me')
+      .then((res) => setRemindersEnabled(res.data.reminders_enabled ?? true))
+      .catch(() => {});
   }, []);
+
+  async function toggleReminders(val: boolean) {
+    setRemindersEnabled(val);
+    try {
+      await api.patch('/users/me', { reminders_enabled: val });
+    } catch {
+      setRemindersEnabled(!val);
+    }
+  }
 
   async function toggleNotifications(val: boolean) {
     if (!val) { setNotifEnabled(false); return; }
@@ -126,6 +139,7 @@ export default function SettingsTab() {
             <RowIcon icon={<Bell size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent1" />
             <Text style={styles.rowLabel}>{t('settings.push_label')}</Text>
             <Switch
+              testID="settings-push-toggle"
               value={notifEnabled}
               onValueChange={toggleNotifications}
               trackColor={{ true: theme.colors.primary, false: theme.colors.borderSoft }}
@@ -133,6 +147,24 @@ export default function SettingsTab() {
             />
           </View>
         </StickerCard>
+
+        {notifEnabled && (
+          <StickerCard style={styles.rowCard}>
+            <View style={styles.row}>
+              <RowIcon icon={<Bell size={14} color={theme.colors.textPrimary} weight="bold" />} bg="accent2" />
+              <View style={styles.rowLabelGroup}>
+                <Text style={styles.rowLabelTitle}>{t('settings.reminders_label')}</Text>
+                <Text style={styles.rowLabelHint}>{t('settings.reminders_hint')}</Text>
+              </View>
+              <Switch
+                testID="settings-reminders-toggle"
+                value={remindersEnabled}
+                onValueChange={toggleReminders}
+                trackColor={{ true: theme.colors.primary, false: theme.colors.borderSoft }}
+              />
+            </View>
+          </StickerCard>
+        )}
 
         {/* App preferences */}
         <Text style={styles.sectionHeader}>{t('settings.app_section')}</Text>
@@ -206,6 +238,9 @@ const styles = StyleSheet.create({
   rowIcon:       { width: 28, height: 28, borderRadius: theme.radii.sm, borderWidth: theme.border.thin, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },
   rowRight:      { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   rowLabel:      { ...typography.body, color: theme.colors.textPrimary, flex: 1, marginLeft: spacing.sm },
+  rowLabelGroup: { flex: 1, marginLeft: spacing.sm },
+  rowLabelTitle: { ...typography.body, color: theme.colors.textPrimary },
+  rowLabelHint:  { ...typography.bodySmall, color: theme.colors.textSecondary, marginTop: 2 },
   rowValue:      { ...typography.bodySmall, color: theme.colors.textSecondary },
   sectionHeader: { ...typography.caption, color: theme.colors.textMuted, marginTop: spacing.lg, paddingHorizontal: spacing.xs },
   danger:        { color: theme.colors.error },

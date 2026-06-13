@@ -58,9 +58,30 @@ describe('notifications', () => {
       const result = await registerPushToken();
 
       expect(result).toBe(true);
-      expect(api.patch).toHaveBeenCalledWith('/users/me', {
-        push_token: 'tok-123',
+      expect(api.patch).toHaveBeenCalledWith(
+        '/users/me',
+        expect.objectContaining({ push_token: 'tok-123' }),
+      );
+    });
+
+    it('also sends timezone and language with the push token', async () => {
+      (Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValueOnce({
+        status: 'granted',
       });
+      (Notifications.getExpoPushTokenAsync as jest.Mock).mockResolvedValueOnce({
+        data: 'tok-abc',
+      });
+
+      await registerPushToken();
+
+      expect(api.patch).toHaveBeenCalledWith(
+        '/users/me',
+        expect.objectContaining({
+          push_token: 'tok-abc',
+          timezone: expect.any(String),
+          language: expect.stringMatching(/^(vi|en)$/),
+        }),
+      );
     });
   });
 

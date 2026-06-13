@@ -16,6 +16,7 @@ async function toClientUser(u: typeof users.$inferSelect) {
     email: u.email ?? '',
     avatar_url: await resolveAvatarUrl(u.avatarUrl),
     push_token: u.pushToken,
+    reminders_enabled: u.remindersEnabled,
   };
 }
 
@@ -49,6 +50,20 @@ router.patch('/me', requireAuth, async (req: Request, res: Response, next: NextF
     }
     if ('avatar_url' in body && (typeof body.avatar_url === 'string' || body.avatar_url === null)) {
       updates.avatarUrl = body.avatar_url;
+    }
+    if ('timezone' in body && typeof body.timezone === 'string') {
+      try {
+        new Intl.DateTimeFormat('en-US', { timeZone: body.timezone });
+      } catch {
+        return res.status(400).json({ error: 'invalid_timezone' });
+      }
+      updates.timezone = body.timezone;
+    }
+    if ('language' in body && typeof body.language === 'string') {
+      updates.language = body.language === 'en' ? 'en' : 'vi';
+    }
+    if ('reminders_enabled' in body && typeof body.reminders_enabled === 'boolean') {
+      updates.remindersEnabled = body.reminders_enabled;
     }
     if (Object.keys(updates).length === 0) return res.status(204).send();
     const [updated] = await db.update(users).set(updates).where(eq(users.id, req.user!.id)).returning();

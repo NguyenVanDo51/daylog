@@ -51,6 +51,8 @@ export const vi = {
   settings: {
     title:              'Cài đặt',
     push_label:         'Thông báo đẩy',
+    reminders_label:    'Nhắc ghi khoảnh khắc',
+    reminders_hint:     '7 nhắc/ngày từ 9h sáng đến 9h tối',
     signout:            'Đăng xuất',
     feedback:           'Góp ý',
     version:            'Phiên bản {{v}}',
@@ -201,6 +203,7 @@ export const vi = {
     retake:            'Chụp lại',
     cancel:            'Huỷ',
     uploading:         'đang tải lên...',
+    finalizing:        'Đang xử lý…',
     cooldown_title:    'Mỗi khoảnh khắc đáng được giữ riêng',
     cooldown_body:     'Bạn có thể chụp tiếp sau {{minutes}} phút.',
     cooldown_fallback: 'Hoặc upload từ máy',
