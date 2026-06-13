@@ -39,6 +39,12 @@ describe('GET /users/me', () => {
     expect(res.status).toBe(200);
     expect(res.body.avatar_url).toBe('https://lh3.googleusercontent.com/a/photo.jpg');
   });
+
+  it('returns reminders_enabled (default true)', async () => {
+    const user = await createTestUser();
+    const res = await request(app).get('/users/me').set(authHeader(user));
+    expect(res.body.reminders_enabled).toBe(true);
+  });
 });
 
 describe('PATCH /users/me', () => {
@@ -71,6 +77,35 @@ describe('PATCH /users/me', () => {
     const user = await createTestUser();
     const res = await request(app).patch('/users/me').set(authHeader(user)).send({});
     expect(res.status).toBe(204);
+  });
+
+  it('updates timezone, language, reminders_enabled', async () => {
+    const user = await createTestUser();
+    const res = await request(app)
+      .patch('/users/me')
+      .set(authHeader(user))
+      .send({ timezone: 'America/Los_Angeles', language: 'en', reminders_enabled: false });
+    expect(res.status).toBe(200);
+    const [row] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(row.timezone).toBe('America/Los_Angeles');
+    expect(row.language).toBe('en');
+    expect(row.remindersEnabled).toBe(false);
+  });
+
+  it('rejects invalid timezone with 400', async () => {
+    const user = await createTestUser();
+    const res = await request(app)
+      .patch('/users/me')
+      .set(authHeader(user))
+      .send({ timezone: 'Not/A/Real/Zone' });
+    expect(res.status).toBe(400);
+  });
+
+  it('coerces non-whitelisted language to vi', async () => {
+    const user = await createTestUser();
+    await request(app).patch('/users/me').set(authHeader(user)).send({ language: 'xx' });
+    const [row] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(row.language).toBe('vi');
   });
 });
 
