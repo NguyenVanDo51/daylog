@@ -3,15 +3,15 @@ import { render } from '@testing-library/react-native';
 import { Mascot } from './Mascot';
 
 describe('Mascot', () => {
-  it('renders the theme mascot emoji', () => {
+  it('renders the mascot image source', () => {
     const { getByTestId } = render(<Mascot testID="m" />);
-    expect(getByTestId('m').props.children).toBe('🐱');
+    expect(getByTestId('m').props.source).toBeTruthy();
   });
 
-  it('applies the requested size to fontSize', () => {
+  it('applies the requested size to width and height', () => {
     const { getByTestId } = render(<Mascot size={64} testID="m" />);
     expect(getByTestId('m').props.style).toEqual(
-      expect.objectContaining({ fontSize: 64 }),
+      expect.objectContaining({ width: 64, height: 64 }),
     );
   });
 

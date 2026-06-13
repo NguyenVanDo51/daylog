@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
-import { CaretLeft, DotsThree, Archive } from 'phosphor-react-native';
+import { CaretLeft, DotsThree, Archive, Images } from 'phosphor-react-native';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { DayCell } from '@/components/album/DayCell';
@@ -163,6 +163,15 @@ export default function AlbumScreen() {
           </StickerCard>
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{albumName ?? ''}</Text>
+        <TouchableOpacity
+          onPress={() => router.push(`/library/${albumId}` as any)}
+          hitSlop={8}
+          testID="album-library-btn"
+        >
+          <StickerCard style={styles.iconBtn}>
+            <Images size={18} color={theme.colors.textPrimary} weight="bold" />
+          </StickerCard>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => setMenuOpen(true)} hitSlop={8}>
           <StickerCard style={styles.iconBtn}>
             <DotsThree size={18} color={theme.colors.textPrimary} weight="bold" />
@@ -186,7 +195,7 @@ export default function AlbumScreen() {
         </View>
       ) : !days || days.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Mascot size={80} tilt="default" />
+          <Mascot pose="empty-day" size={140} tilt="default" />
           <Text style={styles.empty}>{t('albums.day_grid_empty')}</Text>
           <Text style={styles.emptySub}>{t('albums.day_grid_empty_hint')}</Text>
         </View>

@@ -91,7 +91,7 @@ export function CustomTabBar({ activePage, onTabPress }: Props) {
         activeOpacity={0.8}
       >
         <Text style={[styles.label, activePage === 1 ? styles.labelActive : styles.labelInactive]}>
-          Nhật ký
+          Daylog
         </Text>
       </TouchableOpacity>
     </View>

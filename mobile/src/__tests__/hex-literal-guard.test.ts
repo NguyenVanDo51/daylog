@@ -15,11 +15,16 @@ const THEME_CLEAN_FILES = [
   'src/components/album/DayCell.tsx',
   'src/components/family/AlbumMenuSheet.tsx',
   'src/components/tabs/SettingsSheet.tsx',
+  'src/components/tabs/FeedbackSheet.tsx',
   'src/components/ui/SheetModal.tsx',
   'src/components/family/MembersSheet.tsx',
   'src/components/family/MemberList.tsx',
   'src/components/family/InviteSheet.tsx',
   'src/components/family/QRSheet.tsx',
+  'src/components/story/VlogOverlay.tsx',
+  'src/components/library/ThumbnailCell.tsx',
+  'src/components/library/DayHeader.tsx',
+  'src/components/library/PhotoEditSheet.tsx',
 ];
 
 // app/photo-review.tsx is at a different relative root; use the app/ prefix.
@@ -29,9 +34,8 @@ const THEME_CLEAN_APP_FILES = [
   'app/(auth)/index.tsx',
   'app/albums/[id].tsx',
   'app/story/[albumId]/[date].tsx',
-  'app/story/[albumId]/_components/VlogOverlay.tsx',
   'app/photo/[id].tsx',
-  'app/story/[albumId]/[date]/manage.tsx',
+  'app/library/[albumId].tsx',
   'app/(tabs)/settings/index.tsx',
   'app/(tabs)/settings/profile.tsx',
   'app/(tabs)/settings/language.tsx',

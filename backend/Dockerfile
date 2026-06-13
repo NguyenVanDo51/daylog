@@ -18,6 +18,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
+COPY src/db/migrations ./src/db/migrations
+COPY assets ./assets
 
 ENV NODE_ENV=production
 ENV PORT=8080

@@ -106,6 +106,18 @@ export const reactions = pgTable('reactions', {
   byPhoto: index('idx_reactions_photo').on(t.photoId),
 }));
 
+export const feedback = pgTable('feedback', {
+  id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  rating: integer('rating').notNull(),
+  message: text('message'),
+  appVersion: varchar('app_version', { length: 64 }),
+  platform: varchar('platform', { length: 16 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byUserCreated: index('idx_feedback_user_created').on(t.userId, t.createdAt),
+}));
+
 export const albumPhotos = pgTable(
   'album_photos',
   {
@@ -139,6 +151,39 @@ export const dayLabels = pgTable(
   },
   (t) => ({
     uniqAlbumDate: uniqueIndex('day_labels_album_date_uniq').on(t.albumId, t.date),
+  })
+);
+
+export const soundtracks = pgTable('soundtracks', {
+  id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+  key: varchar('key', { length: 64 }).notNull().unique(),
+  title: varchar('title', { length: 128 }).notNull(),
+  artist: varchar('artist', { length: 128 }),
+  durationMs: integer('duration_ms').notNull(),
+  filePath: text('file_path').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const daySoundtracks = pgTable(
+  'day_soundtracks',
+  {
+    id: uuid('id').primaryKey().default(sql`uuid_generate_v4()`),
+    albumId: uuid('album_id')
+      .notNull()
+      .references(() => albums.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    soundtrackId: uuid('soundtrack_id')
+      .notNull()
+      .references(() => soundtracks.id),
+    updatedBy: uuid('updated_by')
+      .notNull()
+      .references(() => users.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqAlbumDate: uniqueIndex('day_soundtracks_album_date_uniq').on(t.albumId, t.date),
   })
 );
 

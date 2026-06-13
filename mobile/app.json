@@ -5,6 +5,9 @@
     "version": "1.0.0",
     "scheme": "daylog",
     "orientation": "portrait",
+    "locales": {
+      "vi": "./locales/ios-vi.json"
+    },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
@@ -16,7 +19,9 @@
         "NSCameraUsageDescription": "Cho phép chụp ảnh và quay video kỷ niệm của bé",
         "NSPhotoLibraryUsageDescription": "Cho phép xóa ảnh đã được lưu an toàn trên ứng dụng",
         "NSPhotoLibraryAddUsageDescription": "Cho phép lưu ảnh vào thư viện",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "vi",
+        "CFBundleLocalizations": ["vi"]
       }
     },
     "extra": {
@@ -52,7 +57,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Cho phép truy cập thư viện ảnh để thêm vào nhật ký"
+          "photosPermission": "Cho phép truy cập thư viện ảnh để thêm vào Daylog"
         }
       ],
       [
@@ -73,7 +78,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#F8F4FF"
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true

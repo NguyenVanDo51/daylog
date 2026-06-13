@@ -1,10 +1,48 @@
 import React from 'react';
-import { Text, TextStyle } from 'react-native';
+import { Image, ImageSourcePropType, ImageStyle } from 'react-native';
 import { theme } from '@/constants/theme';
 
 type TiltKey = keyof typeof theme.tilts;
 
+export type MascotPose =
+  | 'welcome'
+  | 'empty-albums'
+  | 'empty-day'
+  | 'camera'
+  | 'story'
+  | 'milestone'
+  | 'loading'
+  | 'success'
+  | 'error'
+  | 'search-empty'
+  | 'soundtrack'
+  | 'settings'
+  | 'permission'
+  | 'archived'
+  | '404';
+
+const WELCOME = require('../../../assets/mascot/mascot-welcome.png');
+
+const POSE_SOURCE: Record<MascotPose, ImageSourcePropType> = {
+  'welcome':       WELCOME,
+  'empty-albums':  require('../../../assets/mascot/mascot-empty-albums.png'),
+  'empty-day':     require('../../../assets/mascot/mascot-empty-day.png'),
+  'camera':        require('../../../assets/mascot/mascot-camera.png'),
+  'story':         require('../../../assets/mascot/mascot-story.png'),
+  'milestone':     WELCOME,
+  'loading':       WELCOME,
+  'success':       WELCOME,
+  'error':         WELCOME,
+  'search-empty':  WELCOME,
+  'soundtrack':    WELCOME,
+  'settings':      WELCOME,
+  'permission':    WELCOME,
+  'archived':      WELCOME,
+  '404':           WELCOME,
+};
+
 interface MascotProps {
+  pose?: MascotPose;
   size?: number;
   tilt?: TiltKey;
   flip?: boolean;
@@ -13,26 +51,28 @@ interface MascotProps {
 }
 
 export function Mascot({
+  pose = 'welcome',
   size = 32,
   tilt = 'none',
   flip = false,
-  withShadow = true,
+  withShadow: _withShadow = true,
   testID,
 }: MascotProps) {
-  if (theme.mascot.emoji == null) return null;
-
   const magnitude = theme.tilts[tilt];
   const deg = flip ? -magnitude : magnitude;
 
-  const style: TextStyle = {
-    fontSize: size,
+  const style: ImageStyle = {
+    width: size,
+    height: size,
     ...(magnitude !== 0 && { transform: [{ rotate: `${deg}deg` }] }),
-    ...(withShadow && {
-      textShadowColor: theme.colors.border,
-      textShadowOffset: { width: Math.max(1, size / 20), height: Math.max(1, size / 20) },
-      textShadowRadius: 0,
-    }),
   };
 
-  return <Text testID={testID} style={style}>{theme.mascot.emoji}</Text>;
+  return (
+    <Image
+      testID={testID}
+      source={POSE_SOURCE[pose]}
+      style={style}
+      resizeMode="contain"
+    />
+  );
 }

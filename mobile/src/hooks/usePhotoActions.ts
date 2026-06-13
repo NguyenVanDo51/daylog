@@ -10,6 +10,7 @@ export function useDeletePhoto(albumId: string, date: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['day-photos', albumId, date] });
       qc.invalidateQueries({ queryKey: ['album-days', albumId] });
+      qc.invalidateQueries({ queryKey: ['album-photos', albumId] });
     },
   });
 }
@@ -29,6 +30,7 @@ export function useUpdateCaption(albumId: string, date: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['day-photos', albumId, date] });
+      qc.invalidateQueries({ queryKey: ['album-photos', albumId] });
     },
   });
 }

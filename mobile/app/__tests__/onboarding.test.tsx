@@ -38,7 +38,7 @@ beforeEach(() => {
 describe('OnboardingScreen', () => {
   it('renders page 1 title and skip button', () => {
     const { getByText, getByTestId } = render(<OnboardingScreen />);
-    expect(getByText('Chào mừng đến Nhật ký!')).toBeTruthy();
+    expect(getByText('Chào mừng đến Daylog!')).toBeTruthy();
     expect(getByTestId('onboarding-skip')).toBeTruthy();
     expect(getByTestId('onboarding-next')).toBeTruthy();
   });
@@ -54,7 +54,7 @@ describe('OnboardingScreen', () => {
   it('next button advances the page', () => {
     const { getByTestId, getByText } = render(<OnboardingScreen />);
     fireEvent.press(getByTestId('onboarding-next'));
-    expect(getByText('Mỗi ngày một khoảnh khắc')).toBeTruthy();
+    expect(getByText('Ghi lại mọi khoảnh khắc đáng nhớ')).toBeTruthy();
   });
 
   it('last page CTA finishes onboarding', async () => {

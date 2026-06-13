@@ -13,10 +13,14 @@ import membersRoutes from './routes/members';
 import reactionsRoutes from './routes/reactions';
 import dayLabelsRoutes from './routes/day-labels';
 import albumDaysRoutes from './routes/album-days';
+import albumPhotosRoutes from './routes/album-photos';
 import storiesRoutes from './routes/stories';
 import versionRoutes from './routes/version';
 import waitlistRoutes from './routes/waitlist';
 import usersRoutes from './routes/users';
+import soundtracksRoutes from './routes/soundtracks';
+import daySoundtracksRoutes from './routes/day-soundtracks';
+import feedbackRoutes from './routes/feedback';
 
 const app = express();
 
@@ -46,9 +50,13 @@ app.use('/albums/:id/members', membersRoutes);
 app.use('/photos/:photoId/reactions', reactionsRoutes);
 app.use('/albums/:id/day-labels', dayLabelsRoutes);
 app.use('/albums/:id/days', albumDaysRoutes);
+app.use('/albums/:id/photos', albumPhotosRoutes);
+app.use('/albums/:id/days', daySoundtracksRoutes);
 app.use('/stories', storiesRoutes);
 app.use('/version', versionRoutes);
 app.use('/waitlist', waitlistRoutes);
+app.use('/soundtracks', soundtracksRoutes);
+app.use('/feedback', feedbackRoutes);
 
 Sentry.setupExpressErrorHandler(app);
 

@@ -15,6 +15,7 @@
     "expo": "~56.0.9",
     "expo-apple-authentication": "~56.0.4",
     "expo-application": "~56.0.3",
+    "expo-audio": "~56.0.12",
     "expo-auth-session": "~56.0.13",
     "expo-blur": "~56.0.3",
     "expo-camera": "~56.0.7",
@@ -72,7 +73,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest",
-    "bundle": "git bundle create family-guy.bundle --all"
+    "bundle": "git bundle create family-guy.bundle --all",
+    "release:preview": "npx eas build --profile preview --platform ios",
+    "release:production": "npx eas build --profile production --platform ios",
+    "prebuild:ios": "npx expo prebuild --clean --platform ios"
   },
   "private": true
 }

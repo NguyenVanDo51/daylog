@@ -60,7 +60,7 @@ export function Avatar({
           contentFit="cover"
         />
       ) : (
-        <Mascot size={size * 0.55} withShadow={false} />
+        <Mascot size={size * 0.9} withShadow={false} />
       )}
       {withCameraOverlay && (
         <View testID={`${testID}-camera-overlay`} style={overlay} />

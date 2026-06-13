@@ -17,6 +17,7 @@ import { StickerButton } from '@/components/ui/StickerButton';
 import { MediaCaption } from '@/components/ui/MediaCaption';
 
 const HINT_KEY = 'capture.hint_seen';
+const MODE_KEY = 'capture.mode';
 
 interface Props {
   onTabPress: (index: number) => void;
@@ -31,6 +32,7 @@ function formatClock(): string {
 
 export function CameraPage({ onTabPress }: Props) {
   const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [mode, setModeState] = useState<'photo' | 'video'>('video');
   const [permissionResponse, requestPermission] = useCameraPermissions();
   const [showHint, setShowHint] = useState(false);
   const [clock, setClock] = useState<string>(formatClock);
@@ -54,6 +56,18 @@ export function CameraPage({ onTabPress }: Props) {
   }, []);
 
   React.useEffect(() => {
+    SecureStore.getItemAsync(MODE_KEY).then((saved) => {
+      if (saved === 'photo' || saved === 'video') setModeState(saved);
+    });
+  }, []);
+
+  function setMode(next: 'photo' | 'video') {
+    setModeState(next);
+    SecureStore.setItemAsync(MODE_KEY, next).catch(() => {});
+  }
+
+  React.useEffect(() => {
+    if (mode !== 'video') return;
     SecureStore.getItemAsync(HINT_KEY).then((seen) => {
       if (!seen) {
         setShowHint(true);
@@ -61,7 +75,7 @@ export function CameraPage({ onTabPress }: Props) {
         SecureStore.setItemAsync(HINT_KEY, '1');
       }
     });
-  }, []);
+  }, [mode]);
 
   React.useEffect(() => {
     if (permissionResponse && !permissionResponse.granted && permissionResponse.canAskAgain !== false) {
@@ -109,14 +123,12 @@ export function CameraPage({ onTabPress }: Props) {
     if (video) handleMediaCaptured({ type: 'video', uri: video.uri, durationMs });
   }
 
-  function stopRecord() {
-    if (recordingRef.current) cameraRef.current?.stopRecording();
+  function handleShutter() {
+    if (mode === 'photo') takePhoto();
+    else startRecord();
   }
 
-  const tapGesture = Gesture.Tap().runOnJS(true).onStart(takePhoto);
-  const longPressGesture = Gesture.LongPress().minDuration(250).runOnJS(true)
-    .onStart(startRecord).onFinalize(stopRecord);
-  const composed = Gesture.Exclusive(longPressGesture, tapGesture);
+  const tapGesture = Gesture.Tap().runOnJS(true).onStart(handleShutter);
 
   if (!permissionResponse) return <View style={styles.container} />;
 
@@ -144,7 +156,13 @@ export function CameraPage({ onTabPress }: Props) {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} mode="video" mute />
+      <CameraView
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        facing={facing}
+        mode={mode === 'photo' ? 'picture' : 'video'}
+        mute
+      />
 
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}>
         <TouchableOpacity testID="close-btn" onPress={() => onTabPress(1)} hitSlop={8}>
@@ -168,7 +186,31 @@ export function CameraPage({ onTabPress }: Props) {
       )}
 
       <View style={[styles.shutterArea, { paddingBottom: insets.bottom + spacing['2xl'] }]}>
-        <GestureDetector gesture={composed}>
+        <View style={styles.modeToggle}>
+          <TouchableOpacity
+            testID="mode-photo"
+            onPress={() => setMode('photo')}
+            disabled={recordingRef.current}
+            hitSlop={8}
+          >
+            <StickerChip
+              label={t('capture.mode_photo')}
+              variant={mode === 'photo' ? 'yellow' : 'ink'}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="mode-video"
+            onPress={() => setMode('video')}
+            disabled={recordingRef.current}
+            hitSlop={8}
+          >
+            <StickerChip
+              label={t('capture.mode_video')}
+              variant={mode === 'video' ? 'yellow' : 'ink'}
+            />
+          </TouchableOpacity>
+        </View>
+        <GestureDetector gesture={tapGesture}>
           <View style={styles.shutterOuter}>
             <Animated.View style={[styles.progressArc, progressStyle]} />
             <View style={styles.shutterInner} />
@@ -186,6 +228,7 @@ const styles = StyleSheet.create({
   clockArea:    { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
   hintArea:     { position: 'absolute', bottom: 160, left: 0, right: 0, alignItems: 'center' },
   shutterArea:  { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' },
+  modeToggle:   { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   shutterOuter: {
     width: 76, height: 76, borderRadius: 38,
     borderWidth: theme.border.thick, borderColor: theme.colors.border,

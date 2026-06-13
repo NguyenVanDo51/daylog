@@ -1,0 +1,5 @@
+NSCameraUsageDescription = "Cho phép chụp ảnh và quay video kỷ niệm của bé";
+NSPhotoLibraryUsageDescription = "Cho phép xóa ảnh đã được lưu an toàn trên ứng dụng";
+NSPhotoLibraryAddUsageDescription = "Cho phép lưu ảnh vào thư viện";
+NSMicrophoneUsageDescription = "Cho phép thu âm khi quay video kỷ niệm";
+CFBundleDisplayName = "Daylog";

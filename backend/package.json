@@ -20,9 +20,12 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1059.0",
     "@aws-sdk/s3-request-presigner": "^3.1059.0",
+    "@napi-rs/canvas": "^0.1.65",
     "@sentry/node": "^10.56.0",
     "apple-signin-auth": "^2.0.0",
     "cors": "^2.8.6",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "expo-server-sdk": "^6.1.0",

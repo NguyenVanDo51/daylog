@@ -1,0 +1,76 @@
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { DayPhoto } from '@/hooks/useDayPhotos';
+import { theme, spacing } from '@/constants/theme';
+import { MediaCaption } from '@/components/ui/MediaCaption';
+
+export function VlogOverlay({
+  photo,
+  currentIndex,
+  total,
+  bottomInset = 0,
+}: {
+  photo: DayPhoto;
+  currentIndex: number;
+  total: number;
+  bottomInset?: number;
+}) {
+  const dt = new Date(photo.taken_at);
+  const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const caption = photo.caption?.trim() ?? '';
+
+  return (
+    <>
+      <MediaCaption
+        time={timeStr}
+        caption={caption.length > 0 ? caption : undefined}
+      />
+
+      <LinearGradient
+        colors={['transparent', theme.overlays.scrimSoft, theme.overlays.scrimDeep]}
+        style={[styles.container, { paddingBottom: spacing.xl + bottomInset }]}
+        pointerEvents="none"
+      >
+        <View style={styles.dots}>
+          {Array.from({ length: total }).map((_, i) => (
+            <View
+              key={i}
+              testID={i === currentIndex ? 'story-dot-active' : 'story-dot'}
+              style={[styles.dot, i === currentIndex && styles.dotActive]}
+            />
+          ))}
+        </View>
+      </LinearGradient>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    zIndex: 10,
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2.5,
+    backgroundColor: theme.overlays.surfaceOnDark,
+  },
+  dotActive: {
+    width: 18,
+    height: 4,
+    borderRadius: 3,
+    backgroundColor: theme.colors.surface,
+  },
+});
