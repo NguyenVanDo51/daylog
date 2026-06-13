@@ -54,6 +54,7 @@ export const en = {
     retake:            'Retake',
     cancel:            'Cancel',
     uploading:         'uploading...',
+    finalizing:        'Processing…',
     cooldown_title:    'Each moment deserves its own space',
     cooldown_body:     'You can capture again in {{minutes}} minutes.',
     cooldown_fallback: 'Or upload from camera roll',

@@ -201,6 +201,7 @@ export const vi = {
     retake:            'Chụp lại',
     cancel:            'Huỷ',
     uploading:         'đang tải lên...',
+    finalizing:        'Đang xử lý…',
     cooldown_title:    'Mỗi khoảnh khắc đáng được giữ riêng',
     cooldown_body:     'Bạn có thể chụp tiếp sau {{minutes}} phút.',
     cooldown_fallback: 'Hoặc upload từ máy',
