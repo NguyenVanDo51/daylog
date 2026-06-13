@@ -55,15 +55,9 @@ afterEach(() => {
 
 describe('SignInScreen', () => {
   it('renders Apple and Google sign-in buttons', () => {
-    const { getByText, UNSAFE_getAllByType } = render(<SignIn />);
-    // Google button rendered by our own <Button> component, identified by label.
+    const { getByText } = render(<SignIn />);
+    expect(getByText('Đăng nhập với Apple')).toBeTruthy();
     expect(getByText('Đăng nhập với Google')).toBeTruthy();
-    // Apple button mocked as host component name 'AppleAuthenticationButton'.
-    expect(
-      UNSAFE_getAllByType('AppleAuthenticationButton' as never).length,
-    ).toBeGreaterThan(0);
-    // Tagline rendered (vi locale)
-    expect(getByText('lưu giữ từng khoảnh khắc bé yêu')).toBeTruthy();
   });
 
   describe('handleApple', () => {
@@ -79,13 +73,12 @@ describe('SignInScreen', () => {
         data: [{ id: 'a1', name: 'My Album', child_birthdate: null }],
       } as never);
 
-      const { UNSAFE_getAllByType } = render(<SignIn />);
-      const appleBtn = UNSAFE_getAllByType('AppleAuthenticationButton' as never)[0];
-      fireEvent.press(appleBtn);
+      const { getByText } = render(<SignIn />);
+      fireEvent.press(getByText('Đăng nhập với Apple'));
 
       await waitFor(() => {
         expect(mockApi.post).toHaveBeenCalledWith('/auth/apple', {
-          identityToken: 'apple-id-token',
+          idToken: 'apple-id-token',
           fullName: { givenName: 'Ada', familyName: 'Lovelace' },
         });
       });
@@ -121,9 +114,8 @@ describe('SignInScreen', () => {
       err.code = 'ERR_REQUEST_CANCELED';
       mockAppleSignInAsync.mockRejectedValueOnce(err);
 
-      const { UNSAFE_getAllByType } = render(<SignIn />);
-      const appleBtn = UNSAFE_getAllByType('AppleAuthenticationButton' as never)[0];
-      fireEvent.press(appleBtn);
+      const { getByText } = render(<SignIn />);
+      fireEvent.press(getByText('Đăng nhập với Apple'));
 
       await waitFor(() => {
         expect(mockAppleSignInAsync).toHaveBeenCalled();
@@ -139,9 +131,8 @@ describe('SignInScreen', () => {
       err.code = 'ERR_SOMETHING_ELSE';
       mockAppleSignInAsync.mockRejectedValueOnce(err);
 
-      const { UNSAFE_getAllByType } = render(<SignIn />);
-      const appleBtn = UNSAFE_getAllByType('AppleAuthenticationButton' as never)[0];
-      fireEvent.press(appleBtn);
+      const { getByText } = render(<SignIn />);
+      fireEvent.press(getByText('Đăng nhập với Apple'));
 
       await waitFor(() => {
         expect(Alert.alert).toHaveBeenCalledWith('Đăng nhập thất bại', 'apple-blew-up');
@@ -272,8 +263,8 @@ describe('SignInScreen', () => {
       mockApi.post.mockResolvedValueOnce({ data: { token: 'jwt-push', user: { id: 'u-push' } } } as never);
       mockApi.get.mockResolvedValueOnce({ data: [] } as never);
 
-      const { UNSAFE_getAllByType } = render(<SignIn />);
-      fireEvent.press(UNSAFE_getAllByType('AppleAuthenticationButton' as never)[0]);
+      const { getByText } = render(<SignIn />);
+      fireEvent.press(getByText('Đăng nhập với Apple'));
 
       await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/(tabs)'));
     });
@@ -284,8 +275,8 @@ describe('SignInScreen', () => {
       mockApi.get.mockReset();
       mockApi.get.mockRejectedValueOnce(new Error('albums fetch failed'));
 
-      const { UNSAFE_getAllByType } = render(<SignIn />);
-      fireEvent.press(UNSAFE_getAllByType('AppleAuthenticationButton' as never)[0]);
+      const { getByText } = render(<SignIn />);
+      fireEvent.press(getByText('Đăng nhập với Apple'));
 
       await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/(tabs)'));
       expect(mockSetAlbum).not.toHaveBeenCalled();
@@ -301,9 +292,8 @@ describe('SignInScreen', () => {
       } as never);
       mockApi.get.mockResolvedValueOnce({ data: [] } as never);
 
-      const { UNSAFE_getAllByType } = render(<SignIn />);
-      const appleBtn = UNSAFE_getAllByType('AppleAuthenticationButton' as never)[0];
-      fireEvent.press(appleBtn);
+      const { getByText } = render(<SignIn />);
+      fireEvent.press(getByText('Đăng nhập với Apple'));
 
       await waitFor(() => {
         expect(mockRouter.replace).toHaveBeenCalledWith('/(tabs)');
