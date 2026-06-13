@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, useWindowDimensions, ActivityIndicator,
+  View, Text, Pressable, TouchableOpacity, TextInput, StyleSheet, Alert, useWindowDimensions, ActivityIndicator,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { PlayIcon, TrashIcon } from 'phosphor-react-native';
 import { useDeletePhoto, useUpdateCaption } from '@/hooks/usePhotoActions';
 import { theme, spacing, typography } from '@/constants/theme';
@@ -26,20 +27,39 @@ export function PhotoEditSheet({ albumId, photo, onClose }: Props) {
   const { height: screenH } = useWindowDimensions();
 
   const [caption, setCaption] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const isVideo = photo?.media_type === 'video';
+  const videoUri = isVideo ? (photo?.photo_url ?? '') : '';
+  const player = useVideoPlayer(videoUri, (p) => {
+    p.loop = true;
+  });
 
   // Width = sheet content, height derived from photo aspect ratio.
   // maxHeight caps very tall portraits (e.g., 9:16) at 70% of screen.
   const ratio =
     photo?.width && photo?.height
       ? photo.width / photo.height
-      : photo?.media_type === 'video'
+      : isVideo
         ? FALLBACK_RATIO_VIDEO
         : FALLBACK_RATIO_PHOTO;
   const maxH = Math.round(screenH * PREVIEW_MAX_H_RATIO);
+  const previewBoxStyle = [styles.previewWrap, { aspectRatio: ratio, maxHeight: maxH }];
+
+  function setVideoPlaying(playing: boolean): void {
+    if (playing) player.play();
+    else player.pause();
+    setIsPlaying(playing);
+  }
 
   useEffect(() => {
     setCaption(photo?.caption ?? '');
+    setVideoPlaying(isVideo);
   }, [photo?.id]);
+
+  function toggleVideo(): void {
+    if (isVideo) setVideoPlaying(!isPlaying);
+  }
 
   const pending = updateCaption.isPending || deletePhoto.isPending;
 
@@ -82,19 +102,34 @@ export function PhotoEditSheet({ albumId, photo, onClose }: Props) {
     <SheetModal visible={photo !== null} onClose={onClose}>
       {photo && (
         <View style={styles.body} testID="photo-edit-sheet">
-          <View style={[styles.previewWrap, { aspectRatio: ratio, maxHeight: maxH }]}>
-            <ExpoImage
-              source={{ uri: photo.photo_url }}
-              style={styles.preview}
-              contentFit="contain"
-              transition={120}
-            />
-            {photo.media_type === 'video' && (
-              <View style={styles.videoBadge}>
-                <PlayIcon size={20} color={theme.colors.surface} weight="fill" />
-              </View>
-            )}
-          </View>
+          {isVideo ? (
+            <Pressable
+              style={previewBoxStyle}
+              onPress={toggleVideo}
+              testID="photo-edit-video-toggle"
+            >
+              <VideoView
+                player={player}
+                style={styles.preview}
+                contentFit="contain"
+                nativeControls={false}
+              />
+              {!isPlaying && (
+                <View style={styles.videoBadge} pointerEvents="none">
+                  <PlayIcon size={20} color={theme.colors.surface} weight="fill" />
+                </View>
+              )}
+            </Pressable>
+          ) : (
+            <View style={previewBoxStyle}>
+              <ExpoImage
+                source={{ uri: photo.photo_url }}
+                style={styles.preview}
+                contentFit="contain"
+                transition={120}
+              />
+            </View>
+          )}
 
           <TextInput
             value={caption}
