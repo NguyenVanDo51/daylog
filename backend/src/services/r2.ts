@@ -60,3 +60,10 @@ export async function putObject(
 export async function deleteObject(key: string): Promise<void> {
   await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
+
+// TODO: sweep orphaned R2 objects. Both presign flows (POST /users/me/avatar-presign
+// and POST /photos/presign) hand out keys that may never be referenced by the DB
+// — e.g. user picks an avatar then closes the screen without saving, or capture
+// uploads succeed but POST /photos fails. List bucket objects, diff against
+// users.avatarUrl + photos.r2Key + photos.thumbnailKey, delete anything older
+// than a grace window (e.g. 24h) with no DB reference.
